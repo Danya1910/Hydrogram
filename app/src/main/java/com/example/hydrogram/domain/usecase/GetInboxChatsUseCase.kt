@@ -5,7 +5,7 @@ import com.example.hydrogram.domain.repository.InboxRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
-class GetInboxChats @Inject constructor(
+class GetInboxChatsUseCase @Inject constructor(
     private val inboxRepository: InboxRepository,
 ) {
 
