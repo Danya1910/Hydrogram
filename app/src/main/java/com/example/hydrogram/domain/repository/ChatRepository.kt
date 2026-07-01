@@ -12,6 +12,6 @@ interface ChatRepository {
         type: String,
     ) : Result<Unit>
 
-    suspend fun getChat(chatId: String) : Flow<List<Message>>
+    fun getChatHistory(chatId: String) : Flow<List<Message>>
 
 }
