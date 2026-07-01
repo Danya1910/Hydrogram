@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "543231415231",
+    "project_id": "hydrogram",
+    "storage_bucket": "hydrogram.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:543231415231:android:23e2184650cb5705c7870a",
+        "android_client_info": {
+          "package_name": "com.example.hydrogram"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdO9w9mm_p6u_rwsheIE5BZZutXClxy6w"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
