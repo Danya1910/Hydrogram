@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.di
 
+import com.example.hydrogram.domain.repository.AuthRepository
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.example.hydrogram.domain.repository.InboxRepository
 import com.example.hydrogram.domain.repository.UserRepository
@@ -31,5 +32,11 @@ abstract class RepositoryModule {
     abstract fun bindUserRepository(
         userRepository: UserRepository,
     ) : UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAuthRepository(
+        authRepository: AuthRepository,
+    ) : AuthRepository
 
 }
