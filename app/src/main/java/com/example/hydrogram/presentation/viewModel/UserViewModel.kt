@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.viewModel
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.User
@@ -28,6 +29,9 @@ class UserViewModel @Inject constructor(
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
+
+    private val _isSaving = mutableStateOf(false)
+    val isSaving = _isSaving.value
 
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess = _isSuccess.asStateFlow()
@@ -69,12 +73,39 @@ class UserViewModel @Inject constructor(
             _errorMessage.value = "Пользователь не найден"
             return
         }
+        if(_isSaving.value) return
         viewModelScope.launch {
+            _isSaving.value = true
             _isLoading.value = true
             val result = saveUserProfileUseCase(
-
+                uid = uid,
+                name = name,
+                avatarUrl = avatarUrl,
+                email = email,
+                isOnline = isOnline,
+                createdAt = System.currentTimeMillis()
             )
+            _isSaving.value = false
             _isLoading.value = false
+
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = "Ошибка обновления данных пользователя" }
+        }
+    }
+
+    fun setUserOnlineStats(
+        isOnline: Boolean,
+        uid: String,
+    ) {
+        viewModelScope.launch {
+            val result = setUserOnlineStatsUseCase(
+                uid = uid,
+                isOnline = isOnline,
+            )
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = "Ошибка смены состояния в сети" }
         }
     }
 
