@@ -9,8 +9,21 @@ class SaveUserProfileUseCase @Inject constructor(
 ) {
 
     suspend operator fun invoke(
-        user: User,
+        uid: String,
+        name: String,
+        avatarUrl: String,
+        email: String,
+        isOnline: Boolean,
+        createdAt: Long,
     ) : Result<Unit> {
+        val user = User(
+            uid = uid,
+            name = name,
+            avatarUrl = avatarUrl,
+            email = email,
+            isOnline = isOnline,
+            createdAt = createdAt,
+        )
         return userRepository.saveUserProfile(user = user)
     }
 
