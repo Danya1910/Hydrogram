@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.SendMessageUseCase
-import com.example.hydrogram.presentation.states.ChatScreenState
+import com.example.hydrogram.presentation.states.ChatUiState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -18,7 +18,7 @@ class ChatViewModel @Inject constructor(
     chatId: String,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ChatScreenState>(ChatScreenState.Loading)
+    private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     private val _isSending = mutableStateOf(false)
@@ -70,19 +70,19 @@ class ChatViewModel @Inject constructor(
     ) {
         if(chatId.isBlank())
         {
-            _uiState.value = ChatScreenState.Error("Чат не найден")
+            _uiState.value = ChatUiState.Error("Чат не найден")
             return
         }
         viewModelScope.launch {
             getChatHistoryUseCase(
                 chatId = chatId
             ).catch { exception ->
-                _uiState.value = ChatScreenState.Error(
+                _uiState.value = ChatUiState.Error(
                     exception.localizedMessage ?: "Не удалось загрузить сообщения"
                 )
             }
                 .collect { messages ->
-                _uiState.value = ChatScreenState.Success(messages)
+                _uiState.value = ChatUiState.Success(messages)
             }
         }
     }
