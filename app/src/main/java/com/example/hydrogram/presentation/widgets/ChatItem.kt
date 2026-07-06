@@ -1,10 +1,12 @@
 package com.example.hydrogram.presentation.widgets
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,6 +30,7 @@ import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
+import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
@@ -85,28 +88,24 @@ fun ChatItem(
             )
         }
         Column(
-            verticalArrangement = Arrangement.Top,
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .padding(top = 3.dp)
-                .weight(0.2f)
+                .fillMaxHeight()
+                .padding(top = 3.dp, bottom = 5.dp)
+                .weight(0.15f)
         ) {
             Text(
                 //text = chat.lastMessageTimestamp,
-                text = "9:41",
+                text = "19:45",
                 fontFamily = SfProText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 color = Gray,
                 maxLines = 1,
             )
-            Text(
-                text = chat.lastMessage,
-                fontFamily = SfProText,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Normal,
-                color = Gray,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
+            UnreadMessageWidget(
+                count = "1"
             )
         }
     }
@@ -120,14 +119,17 @@ private fun UnreadMessageWidget(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(20.dp)
-            .clip(shape = CircleShape)
+            .background(
+                color = Blue,
+                shape = CircleShape
+            )
     ) {
         Text(
             text = "1",
             fontFamily = SfProText,
-            fontSize = 14.dp,
+            fontSize = 14.sp,
             color = Color.White,
-
+            fontWeight = FontWeight.Normal,
         )
     }
 }
