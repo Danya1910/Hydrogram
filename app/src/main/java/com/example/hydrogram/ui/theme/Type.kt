@@ -35,7 +35,7 @@ val Typography = Typography(
     */
 )
 
-val sfProText = FontFamily(
+val SfProText = FontFamily(
     Font(resId = R.font.sf_pro_text_regular, weight = FontWeight.Normal),
     Font(resId = R.font.sf_pro_text_medium, weight = FontWeight.Medium),
     Font(resId = R.font.sf_pro_text_bold, weight = FontWeight.Bold),
