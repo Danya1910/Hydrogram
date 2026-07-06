@@ -26,7 +26,9 @@ import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
+import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.SfProDisplay
+import com.example.hydrogram.ui.theme.SfProText
 import java.nio.file.WatchEvent
 import java.util.UUID
 
@@ -43,7 +45,7 @@ fun ChatItem(
             .padding(start = 10.dp, end = 16.dp)
     ) {
         Icon(
-            painter = painterResource(R.drawable.avatar),
+            painter = painterResource(R.drawable.ic_avatar),
             contentDescription = null,
             tint = Color.Unspecified,
             modifier = Modifier
@@ -69,11 +71,11 @@ fun ChatItem(
             Spacer(modifier = Modifier)
             Text(
                 text = chat.lastMessage,
-                fontFamily = SfP,
+                fontFamily = SfProText,
                 fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                color = Color.Black,
-                maxLines = 1,
+                fontWeight = FontWeight.Normal,
+                color = Gray,
+                maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
         }
