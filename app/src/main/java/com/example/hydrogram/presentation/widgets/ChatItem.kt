@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.widgets
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -38,11 +40,15 @@ fun ChatItem(
     chat: Chat,
 ) {
     Row(
-        verticalAlignment = Alignment.CenterVertically,
+        verticalAlignment = Alignment.Top,
         modifier = Modifier
             .height(78.dp)
             .fillMaxWidth()
-            .padding(start = 10.dp, end = 16.dp)
+            .padding(
+                start = 10.dp,
+                end = 16.dp,
+            )
+            .padding(vertical = 8.dp)
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_avatar),
@@ -56,8 +62,8 @@ fun ChatItem(
         Column(
             verticalArrangement = Arrangement.Top,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp)
+                .padding(top = 3.dp)
+                .weight(1f)
         ) {
             Text(
                 text = "Pepe",
@@ -68,7 +74,6 @@ fun ChatItem(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            Spacer(modifier = Modifier)
             Text(
                 text = chat.lastMessage,
                 fontFamily = SfProText,
@@ -79,6 +84,51 @@ fun ChatItem(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .padding(top = 3.dp)
+                .weight(0.2f)
+        ) {
+            Text(
+                //text = chat.lastMessageTimestamp,
+                text = "9:41",
+                fontFamily = SfProText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Gray,
+                maxLines = 1,
+            )
+            Text(
+                text = chat.lastMessage,
+                fontFamily = SfProText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Normal,
+                color = Gray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
+private fun UnreadMessageWidget(
+    count: String,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(20.dp)
+            .clip(shape = CircleShape)
+    ) {
+        Text(
+            text = "1",
+            fontFamily = SfProText,
+            fontSize = 14.dp,
+            color = Color.White,
+
+        )
     }
 }
 
