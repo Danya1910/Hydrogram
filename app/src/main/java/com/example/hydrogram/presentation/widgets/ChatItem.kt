@@ -31,17 +31,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
+import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
 import java.util.UUID
+import coil3.compose.AsyncImage
 
 
 @Composable
 fun ChatItem(
     chat: Chat,
+    user: User?,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -75,7 +78,7 @@ fun ChatItem(
                 .weight(1f)
         ) {
             Text(
-                text = "Pepe",
+                text = user?.name ?: "неизвестно",
                 fontFamily = SfProDisplay,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.Medium,
@@ -155,7 +158,17 @@ fun ChatItemPreview(
         lastMessageTimestamp = System.currentTimeMillis() // Время отправки в миллисекундах
     )
 
+    val sampleUser = User(
+        uid = "s123",
+        name = "Pepe Shnele",
+        avatarUrl = "",
+        email = "user@example.com",
+        isOnline = false,
+        createdAt = System.currentTimeMillis()
+    )
+
     ChatItem(
-        chat = sampleChat
+        chat = sampleChat,
+        user = sampleUser,
     )
 }
