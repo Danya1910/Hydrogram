@@ -115,9 +115,11 @@ fun ChatItem(
                 color = Gray,
                 maxLines = 1,
             )
-            UnreadMessageWidget(
-                count = chat.unreadCount.toString()
-            )
+            if(chat.unreadCount != 0) {
+                UnreadMessageWidget(
+                    count = chat.unreadCount.toString()
+                )
+            }
         }
     }
 }
@@ -138,7 +140,7 @@ fun UnreadMessageWidget(
             .padding(horizontal = 4.dp)
     ) {
         Text(
-            text = "123",
+            text = count,
             fontFamily = SfProText,
             fontSize = 14.sp,
             color = Color.White,
@@ -158,7 +160,8 @@ fun ChatItemPreview(
         lastMessage = "Привет! Как продвигается копия ТГ?", // Текст последнего сообщения
         lastMessageType = "TEXT",                       // Тип (TEXT, IMAGE, VOICE и т.д.)
         lastMessageSenderId = "user_12345",             // Кто отправил последнее сообщение
-        lastMessageTimestamp = System.currentTimeMillis() // Время отправки в миллисекундах
+        lastMessageTimestamp = System.currentTimeMillis(),// Время отправки в миллисекундах
+        unreadCount = 2
     )
 
     val sampleUser = User(

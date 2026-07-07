@@ -30,7 +30,8 @@ fun ChatListScreenPreview() {
             lastMessage = "Проверь новые обновления безопасности, код отправлен на ревью.",
             lastMessageType = "TEXT",
             lastMessageSenderId = "user_pavel_durov",
-            lastMessageTimestamp = currentTimestamp // Только что
+            lastMessageTimestamp = currentTimestamp,
+            unreadCount = 3// Только что
         ),
         Chat(
             senderId = "user_android_dev",
@@ -38,7 +39,8 @@ fun ChatListScreenPreview() {
             lastMessage = "Я перевел список чатов на LazyColumn, теперь все скроллится просто идеально! 🚀",
             lastMessageType = "TEXT",
             lastMessageSenderId = "my_current_user_id", // Отправлено нами
-            lastMessageTimestamp = currentTimestamp - 5 * 60 * 1000 // 5 минут назад
+            lastMessageTimestamp = currentTimestamp - 5 * 60 * 1000, // 5 минут назад
+            unreadCount = 4,
         ),
         Chat(
             senderId = "user_mom",
