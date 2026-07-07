@@ -7,4 +7,5 @@ data class Chat(
     val lastMessageType: String = "",
     val lastMessageSenderId: String = "",
     val lastMessageTimestamp: Long = 0L,
+    val unreadCount: Int = 0,
 )
