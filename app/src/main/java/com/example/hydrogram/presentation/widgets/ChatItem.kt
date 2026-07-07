@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
@@ -118,14 +121,16 @@ private fun UnreadMessageWidget(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(20.dp)
+            .height(20.dp)
+            .widthIn(min = 20.dp)
             .background(
                 color = Blue,
-                shape = CircleShape
+                shape = RoundedCornerShape(1000.dp)
             )
+            .padding(horizontal = 4.dp)
     ) {
         Text(
-            text = "1",
+            text = "123",
             fontFamily = SfProText,
             fontSize = 14.sp,
             color = Color.White,
