@@ -94,7 +94,8 @@ private fun ChatsList(
         ) { index, chat ->
 
             ChatItem(
-                chat = chat
+                chat = chat,
+                user = null,
             )
 
             if (index != chats.size - 1) {

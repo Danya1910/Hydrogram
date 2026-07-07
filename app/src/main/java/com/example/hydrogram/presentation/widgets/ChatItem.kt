@@ -23,12 +23,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.model.User
@@ -38,7 +40,6 @@ import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
 import java.util.UUID
-import coil3.compose.AsyncImage
 
 
 @Composable
@@ -62,10 +63,12 @@ fun ChatItem(
             )
             .padding(vertical = 8.dp)
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_avatar),
+        AsyncImage(
+            model = user?.avatarUrl,
             contentDescription = null,
-            tint = Color.Unspecified,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error =  painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(62.dp)
                 .clip(shape = CircleShape)
@@ -113,7 +116,7 @@ fun ChatItem(
                 maxLines = 1,
             )
             UnreadMessageWidget(
-                count = "1"
+                count = chat.unreadCount.toString()
             )
         }
     }
@@ -161,7 +164,7 @@ fun ChatItemPreview(
     val sampleUser = User(
         uid = "s123",
         name = "Pepe Shnele",
-        avatarUrl = "",
+        avatarUrl = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT000ICVOKtrsxkvyZ7Ujc5zQNcS-x0YJJ97x7jJxKc_9xqJL07OEju7Fs1&s=10",
         email = "user@example.com",
         isOnline = false,
         createdAt = System.currentTimeMillis()
