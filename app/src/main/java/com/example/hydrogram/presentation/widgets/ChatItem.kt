@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.widgets
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,14 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
@@ -37,7 +35,7 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
-import java.nio.file.WatchEvent
+import java.util.Date
 import java.util.UUID
 
 
@@ -45,6 +43,11 @@ import java.util.UUID
 fun ChatItem(
     chat: Chat,
 ) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(chat.lastMessageTimestamp)
+    ).toString()
+
     Row(
         verticalAlignment = Alignment.Top,
         modifier = Modifier
@@ -99,8 +102,7 @@ fun ChatItem(
                 .weight(0.15f)
         ) {
             Text(
-                //text = chat.lastMessageTimestamp,
-                text = "19:45",
+                text = formattedTime,
                 fontFamily = SfProText,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
@@ -115,7 +117,7 @@ fun ChatItem(
 }
 
 @Composable
-private fun UnreadMessageWidget(
+fun UnreadMessageWidget(
     count: String,
 ) {
     Box(
