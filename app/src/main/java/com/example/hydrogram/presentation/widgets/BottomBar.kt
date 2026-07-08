@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.BlurEffect
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +60,20 @@ fun BottomBar(
         )
     )
 
+    val glassBrush = Brush.linearGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.55f),
+            Color.White.copy(alpha = 0.25f),
+        )
+    )
+
+    val borderBrush = Brush.linearGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.65f),
+            Color.White.copy(alpha = 0.10f),
+        )
+    )
+
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -73,12 +88,12 @@ fun BottomBar(
                 .height(62.dp)
                 .weight(1f)
                 .background(
-                    color = Color.White.copy(alpha = 0.6f),
+                    brush = glassBrush,
                     shape = CircleShape
                 )
                 .border(
                     width = 1.dp,
-                    color = Color.White,
+                    brush = borderBrush,
                     shape = CircleShape
                 )
                 .padding(all = 5.dp)
@@ -132,7 +147,7 @@ fun BottomBarPreview() {
         Text(
             text = "GLKFKGDKFJGKLJFD",
             fontFamily = SfProText,
-            fontSize = 34.sp,
+            fontSize = 80.sp,
             fontWeight = FontWeight.Bold,
         )
         BottomBar(
