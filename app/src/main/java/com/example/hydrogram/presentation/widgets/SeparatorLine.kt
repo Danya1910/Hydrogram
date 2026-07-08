@@ -9,7 +9,7 @@ import androidx.compose.ui.unit.dp
 import com.example.hydrogram.ui.theme.Separator
 
 @Composable
-fun DividingLine(
+fun SeparatorLine(
     modifier: Modifier
 ) {
     Box(
