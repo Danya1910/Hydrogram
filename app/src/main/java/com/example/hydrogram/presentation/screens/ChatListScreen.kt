@@ -13,7 +13,7 @@ import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.states.ChatAndUserUiState
 import com.example.hydrogram.presentation.widgets.ChatItem
-import com.example.hydrogram.presentation.widgets.DividingLine
+import com.example.hydrogram.presentation.widgets.SeparatorLine
 import java.util.UUID
 
 
@@ -88,7 +88,7 @@ private fun ChatsList(
             )
 
             if (index != uiState.size - 1) {
-                DividingLine(
+                SeparatorLine(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(
