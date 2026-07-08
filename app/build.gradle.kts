@@ -57,7 +57,8 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
 
     // Dagger Hilt (Генерирует код через стабильный KSP)
-    implementation("com.google.dagger:hilt-android:2.55") 
+    implementation("com.google.dagger:hilt-android:2.55")
+    implementation(libs.material)
     ksp("com.google.dagger:hilt-compiler:2.55")
 
     // Coil
