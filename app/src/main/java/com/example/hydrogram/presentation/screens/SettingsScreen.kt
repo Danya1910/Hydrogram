@@ -81,13 +81,16 @@ private fun SettingsScreenPreview() {
         UserInfoHat(user = user)
         Box(
             modifier = Modifier
+                .fillMaxSize()
                 .background(
                     color = LightGrayBackground,
                 )
         ) {
             Column(
                 modifier = Modifier
-                    .padding(horizontal = 16.dp)
+                    .padding(
+                        all = 16.dp
+                    )
             ) {
                 MenuRow(
                     items = profileList
@@ -187,7 +190,7 @@ private fun GlassButton(
                 shape = CircleShape,
                 brush = borderBrush,
             )
-            .padding(horizontal = 5.dp)
+            .padding(horizontal = 10.dp)
     ) {
         if (text != null) {
             Text(
