@@ -71,7 +71,7 @@ private fun MineTextMessage(
                 .widthIn(max = maxBubbleWidth)
                 .clip(
                     shape = RoundedCornerShape(
-                        bottomEnd = 0.dp,
+                        bottomEnd = 2.dp,
                         topStart = 16.dp,
                         topEnd = 16.dp,
                         bottomStart = 16.dp,
@@ -188,7 +188,7 @@ private fun PenpalTextMessage(
                         bottomEnd = 16.dp,
                         topStart = 16.dp,
                         topEnd = 16.dp,
-                        bottomStart = 0.dp,
+                        bottomStart = 2.dp,
                     )
                 )
                 .background(
