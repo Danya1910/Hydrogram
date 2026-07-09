@@ -2,10 +2,8 @@ package com.example.hydrogram.presentation.screens
 
 import android.text.format.DateFormat
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +13,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -23,7 +23,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,8 +44,30 @@ fun ChatScreen() {
 }
 
 @Composable
-private fun Content() {
-
+private fun Content(
+    messages: List<Message>,
+) {
+    val mineId = "1"
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = Green,
+            )
+            .padding(all = 16.dp)
+    ) {
+        items(
+            items = messages,
+            key = { message -> message.messageId }
+        ) { message ->
+            if(message.senderId == "1") {
+                MineTextMessage(message = message)
+            } else {
+                PenpalTextMessage(message = message)
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
 }
 
 @Composable
@@ -81,7 +102,7 @@ private fun MineTextMessage(
                     color = LightGreen,
                 )
         ) {
-            if(message.text.length <= 20) {
+            if (message.text.length <= 20) {
                 Text(
                     text = message.text,
                     fontFamily = SfProText,
@@ -195,7 +216,7 @@ private fun PenpalTextMessage(
                     color = Color.White,
                 )
         ) {
-            if(message.text.length <= 20) {
+            if (message.text.length <= 20) {
                 Text(
                     text = message.text,
                     fontFamily = SfProText,
@@ -282,49 +303,43 @@ private fun PenpalTextMessage(
 @Preview(showBackground = true)
 private fun ChatScreenPreview() {
 
-    val myMessage = Message(
-        messageId = "msg_849201",
-        senderId = "213", // Ваше сообщение
-        text = "Короткое сообщение",
-        type = "text",
-        timestamp = System.currentTimeMillis(), // Текущее время в миллисекундах
-        status = "sent"
+    val currentUserId = "1"
+    val penpalId = "2"
+
+    val sampleMessages: List<Message> = listOf(
+        Message(
+            messageId = "msg_001",
+            senderId = penpalId,
+            text = "Привет! Рад познакомиться, буду твоим новым penpal!",
+            timestamp = 1718870400000L, // Пример TimeStamp в миллисекундах
+            status = "read"
+        ),
+        Message(
+            messageId = "msg_002",
+            senderId = currentUserId, // Ваше сообщение (id = "1")
+            text = "Привет! Взаимно. Я как раз сейчас верстаю экран нашего чата на Jetpack Compose.",
+            timestamp = 1718870460000L,
+            status = "read"
+        ),
+        Message(
+            messageId = "msg_003",
+            senderId = penpalId,
+            text = "Ого, круто! Покажешь потом, как получилось? Особенно интересно, как облачка сообщений выглядят.",
+            timestamp = 1718870520000L,
+            status = "read"
+        ),
+        Message(
+            messageId = "msg_004",
+            senderId = currentUserId, // Ваше сообщение (id = "1")
+            text = "Да, конечно! Реализовал резиновую ширину до 85% экрана и адаптивный перенос времени.",
+            timestamp = 1718870580000L,
+            status = "sent" // Ещё не прочитано собеседником
+        )
     )
 
-    val myMessageLong = Message(
-        messageId = "msg_849201",
-        senderId = "213", // Ваше сообщение
-        text = "Короткое но длинное нормальное унифицированное запалм узргм",
-        type = "text",
-        timestamp = System.currentTimeMillis(), // Текущее время в миллисекундах
-        status = "sent"
+    Content(
+        messages = sampleMessages
     )
-
-    Column (
-        verticalArrangement = Arrangement.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = Green,
-            )
-            .padding(horizontal = 16.dp)
-    ) {
-        MineTextMessage(
-            message = myMessage
-        )
-        Spacer(modifier = Modifier.height(5.dp))
-        PenpalTextMessage(
-            message = myMessage
-        )
-        Spacer(modifier = Modifier.height(5.dp))
-        MineTextMessage(
-            message = myMessageLong
-        )
-        Spacer(modifier = Modifier.height(5.dp))
-        PenpalTextMessage(
-            message = myMessageLong
-        )
-    }
 
 }
 
