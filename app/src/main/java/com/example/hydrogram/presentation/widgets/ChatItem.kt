@@ -135,7 +135,7 @@ fun UnreadMessageWidget(
             .widthIn(min = 20.dp)
             .background(
                 color = Blue,
-                shape = RoundedCornerShape(1000.dp)
+                shape = CircleShape
             )
             .padding(horizontal = 4.dp)
     ) {
