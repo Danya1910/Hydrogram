@@ -33,6 +33,8 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
+import com.example.hydrogram.ui.theme.MineMessageTimeColor
+import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
 
@@ -105,16 +107,16 @@ private fun MineTextMessage(
                 ) {
                     Text(
                         text = formattedTime,
-                        fontSize = 11.sp,
+                        fontSize = 12.sp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = SfProText,
-                        color = Color.Black,
+                        color = MineMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Icon(
                         painter = painterResource(R.drawable.ic_status_read),
                         contentDescription = null,
-                        tint = Color.Black,
+                        tint = MineMessageTimeColor,
                     )
                 }
             } else {
@@ -124,6 +126,121 @@ private fun MineTextMessage(
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black,
+                    letterSpacing = (-0.43).sp,
+                    modifier = Modifier
+                        .padding(
+                            top = 5.dp,
+                            start = 10.dp,
+                            end = 16.dp,
+                            bottom = 16.dp
+                        )
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
+                        .padding(bottom = 2.dp)
+                        .align(
+                            Alignment.BottomEnd
+                        ),
+                ) {
+                    Text(
+                        text = formattedTime,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = SfProText,
+                        color = MineMessageTimeColor,
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_status_read),
+                        contentDescription = null,
+                        tint = MineMessageTimeColor,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun PenpalTextMessage(
+    message: Message,
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
+        Box(
+            modifier = Modifier
+                .heightIn(min = 32.dp)
+                .widthIn(max = maxBubbleWidth)
+                .clip(
+                    shape = RoundedCornerShape(
+                        bottomEnd = 16.dp,
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = 0.dp,
+                    )
+                )
+                .background(
+                    color = Color.White,
+                )
+        ) {
+            if(message.text.length <= 20) {
+                Text(
+                    text = message.text,
+                    fontFamily = SfProText,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    modifier = Modifier
+                        .padding(
+                            top = 5.dp,
+                            start = 10.dp,
+                            end = 62.dp,
+                            bottom = 5.dp
+                        )
+                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
+                        .padding(bottom = 3.dp)
+                        .align(
+                            Alignment.BottomEnd
+                        ),
+                ) {
+                    Text(
+                        text = formattedTime,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Normal,
+                        fontFamily = SfProText,
+                        color = PenpalMessageTimeColor,
+                    )
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.ic_status_read),
+                        contentDescription = null,
+                        tint = PenpalMessageTimeColor,
+                    )
+                }
+            } else {
+                Text(
+                    text = message.text,
+                    fontFamily = SfProText,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black,
+                    letterSpacing = (-0.43).sp,
                     modifier = Modifier
                         .padding(
                             top = 5.dp,
@@ -146,18 +263,19 @@ private fun MineTextMessage(
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Normal,
                         fontFamily = SfProText,
-                        color = Color.Black,
+                        color = PenpalMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Icon(
                         painter = painterResource(R.drawable.ic_status_read),
                         contentDescription = null,
-                        tint = Color.Black,
+                        tint = PenpalMessageTimeColor,
                     )
                 }
             }
         }
     }
+
 }
 
 @Composable
@@ -176,7 +294,7 @@ private fun ChatScreenPreview() {
     val myMessageLong = Message(
         messageId = "msg_849201",
         senderId = "213", // Ваше сообщение
-        text = "Короткое но длинное сообщение",
+        text = "Короткое но длинное нормальное унифицированное запалм узргм",
         type = "text",
         timestamp = System.currentTimeMillis(), // Текущее время в миллисекундах
         status = "sent"
@@ -194,8 +312,16 @@ private fun ChatScreenPreview() {
         MineTextMessage(
             message = myMessage
         )
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(5.dp))
+        PenpalTextMessage(
+            message = myMessage
+        )
+        Spacer(modifier = Modifier.height(5.dp))
         MineTextMessage(
+            message = myMessageLong
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        PenpalTextMessage(
             message = myMessageLong
         )
     }
