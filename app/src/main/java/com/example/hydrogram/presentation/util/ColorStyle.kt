@@ -11,7 +11,7 @@ val GlassBackground = Brush.linearGradient(
     ),
 )
 
-val BorderBrush = Brush.linearGradient(
+val GlassBorder = Brush.linearGradient(
     colors = listOf(
         Color.White.copy(alpha = 0.65f),
         Color.White.copy(alpha = 0.10f),

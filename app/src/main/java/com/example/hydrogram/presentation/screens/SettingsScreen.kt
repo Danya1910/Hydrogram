@@ -32,6 +32,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.util.GlassBackground
+import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MenuRowItem
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
@@ -162,33 +164,19 @@ private fun GlassButton(
     text: String? = null,
 ) {
 
-    val glassBrush = Brush.linearGradient(
-        colors = listOf(
-            Color.White.copy(alpha = 0.55f),
-            Color.White.copy(alpha = 0.25f),
-        )
-    )
-
-    val borderBrush = Brush.linearGradient(
-        colors = listOf(
-            Color.White.copy(alpha = 0.65f),
-            Color.White.copy(alpha = 0.10f),
-        )
-    )
-
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .height(44.dp)
             .widthIn(min = 44.dp)
             .background(
-                brush = glassBrush,
+                brush = GlassBackground,
                 shape = CircleShape
             )
             .border(
                 width = 1.dp,
                 shape = CircleShape,
-                brush = borderBrush,
+                brush = GlassBorder,
             )
             .padding(horizontal = 10.dp)
     ) {
