@@ -20,3 +20,5 @@ val LightGreen = Color(0xFFEFFEDD)
 val Green = Color(0xFF92B788)
 val MineMessageTimeColor = Color(0xFFABDB7E)
 val PenpalMessageTimeColor = Color(0xFF7F7F7F)
+
+val OfflineStatusColor = Color(0xFF999999)
