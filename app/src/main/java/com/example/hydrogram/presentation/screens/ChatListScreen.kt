@@ -1,10 +1,13 @@
 package com.example.hydrogram.presentation.screens
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -12,17 +15,35 @@ import androidx.compose.ui.unit.dp
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.states.ChatAndUserUiState
+import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.ChatItem
+import com.example.hydrogram.presentation.widgets.ChatListTopBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import java.util.UUID
 
 
-class ChatListScreen {
+@Composable
+fun ChatListScreen() {
+    Scaffold(
+        topBar = {
+            ChatListTopBar()
+        },
+        bottomBar = {
+            BottomBar(
+                currentRoute = "Chats",
+            )
+        },
+    ) { paddingValues ->
+        Content(
+            paddingValues = paddingValues
+        )
+    }
 }
 
 @Composable
-@Preview(showBackground = true)
-fun ChatListScreenPreview() {
+private fun Content(
+    paddingValues: PaddingValues,
+) {
 
     val currentTimestamp = System.currentTimeMillis()
     val previewChats = listOf(
@@ -63,9 +84,15 @@ fun ChatListScreenPreview() {
         )
     }
 
-    ChatsList(
-        uiState = uiStates
-    )
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues = paddingValues)
+    ) {
+        ChatsList(
+            uiState = uiStates,
+        )
+    }
 }
 
 
@@ -99,5 +126,13 @@ private fun ChatsList(
             }
         }
     }
+
+}
+
+@Composable
+@Preview(showBackground = true)
+fun ChatListScreenPreview() {
+
+    ChatListScreen()
 
 }
