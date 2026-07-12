@@ -39,7 +39,7 @@ import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-private fun ChatInputField(
+fun ChatInputField(
     inputText: String,
     onValueChange: (String) -> Unit,
     onSendClick: () -> Unit,
