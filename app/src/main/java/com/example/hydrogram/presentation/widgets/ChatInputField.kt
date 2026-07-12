@@ -52,9 +52,13 @@ fun ChatInputField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
+            .padding(
+                top = 4.dp,
+                bottom = 28.dp,
+            )
     ) {
         AttachButton(
-            onAttachClick = {}
+            onAttachClick = onAttachClick
         )
         Spacer(modifier = Modifier.width(6.dp))
         MessageInputField(
@@ -65,7 +69,7 @@ fun ChatInputField(
         )
         Spacer(modifier = Modifier.width(6.dp))
         SendButton(
-            onSendClick = {},
+            onSendClick = onSendClick,
             isTextMessage = isTextMessage
         )
 
