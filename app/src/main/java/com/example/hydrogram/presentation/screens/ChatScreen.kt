@@ -1,9 +1,11 @@
 package com.example.hydrogram.presentation.screens
 
 import android.text.format.DateFormat
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,12 +19,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +38,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.widgets.ChatInputField
+import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
@@ -41,26 +52,95 @@ import java.util.Date
 @Composable
 fun ChatScreen() {
 
+    var textState by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        Image(
+            painter = painterResource(R.drawable.light_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                TopChatBar(
+                    user = User(
+                        name = "Dinosaur",
+                    )
+                )
+            },
+            bottomBar = {
+                ChatInputField(
+                    inputText = textState,
+                    onValueChange = { newValue ->
+                        textState = newValue
+                    },
+                    onSendClick = {
+                        println("Отправлено: $textState")
+                        textState = ""
+                    },
+                    onAttachClick = {
+                        println("Нажата скрепка")
+                    }
+                )
+            }
+        ) { paddingValues ->
+            Content(
+                paddingValues = paddingValues,
+            )
+        }
+
+    }
+
 }
 
 @Composable
 private fun Content(
-    messages: List<Message>,
+    paddingValues: PaddingValues,
 ) {
-    val mineId = "1"
+
+    val currentUserId = "1"
+    val penpalId = "2"
+
+    val messages: List<Message> = listOf(
+        Message(
+            messageId = "msg_001",
+            senderId = penpalId,
+            text = "Привет! Рад познакомиться, буду твоим новым penpal!",
+            timestamp = 1718870400000L, // Пример TimeStamp в миллисекундах
+            status = "read"
+        ),
+        Message(
+            messageId = "msg_002",
+            senderId = currentUserId, // Ваше сообщение (id = "1")
+            text = "Привет! Взаимно. Я как раз сейчас верстаю экран нашего чата на Jetpack Compose.",
+            timestamp = 1718870460000L,
+            status = "read"
+        ),
+        Message(
+            messageId = "msg_003",
+            senderId = penpalId,
+            text = "Ого, круто! Покажешь потом, как получилось? Особенно интересно, как облачка сообщений выглядят.",
+            timestamp = 1718870520000L,
+            status = "read"
+        ),
+    )
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                color = Green,
-            )
+            .padding(paddingValues = paddingValues)
             .padding(all = 16.dp)
     ) {
         items(
             items = messages,
             key = { message -> message.messageId }
         ) { message ->
-            if(message.senderId == "1") {
+            if (message.senderId == "1") {
                 MineTextMessage(message = message)
             } else {
                 PenpalTextMessage(message = message)
@@ -303,50 +383,7 @@ private fun PenpalTextMessage(
 @Preview(showBackground = true)
 private fun ChatScreenPreview() {
 
-    val currentUserId = "1"
-    val penpalId = "2"
 
-    val sampleMessages: List<Message> = listOf(
-        Message(
-            messageId = "msg_001",
-            senderId = penpalId,
-            text = "Привет! Рад познакомиться, буду твоим новым penpal!",
-            timestamp = 1718870400000L, // Пример TimeStamp в миллисекундах
-            status = "read"
-        ),
-        Message(
-            messageId = "msg_002",
-            senderId = currentUserId, // Ваше сообщение (id = "1")
-            text = "Привет! Взаимно. Я как раз сейчас верстаю экран нашего чата на Jetpack Compose.",
-            timestamp = 1718870460000L,
-            status = "read"
-        ),
-        Message(
-            messageId = "msg_003",
-            senderId = penpalId,
-            text = "Ого, круто! Покажешь потом, как получилось? Особенно интересно, как облачка сообщений выглядят.",
-            timestamp = 1718870520000L,
-            status = "read"
-        ),
-        Message(
-            messageId = "msg_004",
-            senderId = currentUserId, // Ваше сообщение (id = "1")
-            text = "Да, конечно! Реализовал резиновую ширину до 85% экрана и адаптивный перенос времени.",
-            timestamp = 1718870580000L,
-            status = "sent" // Ещё не прочитано собеседником
-        ),
-        Message(
-            messageId = "msg_004",
-            senderId = currentUserId, // Ваше сообщение (id = "1")
-            text = "Да, конечно! Реализовал резиновую ширину до 85% экрана и адаптивный перенос времени.",
-            timestamp = 1718870580000L,
-            status = "sent" // Ещё не прочитано собеседником
-        )
-    )
-
-    Content(
-        messages = sampleMessages
-    )
+    ChatScreen()
 
 }
-
