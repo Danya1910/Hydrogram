@@ -59,7 +59,46 @@ private fun Content(
             lastMessage = "Я перевел список чатов на LazyColumn! 🚀",
             lastMessageTimestamp = currentTimestamp - 5 * 60 * 1000,
             unreadCount = 4
-        )
+        ),
+        Chat(
+            senderId = "user_pavel_durov",
+            chatId = UUID.randomUUID().toString(),
+            lastMessage = "Проверь новые обновления безопасности, код отправлен на ревью.",
+            lastMessageTimestamp = currentTimestamp
+        ),
+        Chat(
+            senderId = "user_android_dev",
+            chatId = UUID.randomUUID().toString(),
+            lastMessage = "Я перевел список чатов на LazyColumn! 🚀",
+            lastMessageTimestamp = currentTimestamp - 5 * 60 * 1000,
+            unreadCount = 4
+        ),
+        Chat(
+            senderId = "user_pavel_durov",
+            chatId = UUID.randomUUID().toString(),
+            lastMessage = "Проверь новые обновления безопасности, код отправлен на ревью.",
+            lastMessageTimestamp = currentTimestamp
+        ),
+        Chat(
+            senderId = "user_android_dev",
+            chatId = UUID.randomUUID().toString(),
+            lastMessage = "Я перевел список чатов на LazyColumn! 🚀",
+            lastMessageTimestamp = currentTimestamp - 5 * 60 * 1000,
+            unreadCount = 4
+        ),
+        Chat(
+            senderId = "user_pavel_durov",
+            chatId = UUID.randomUUID().toString(),
+            lastMessage = "Проверь новые обновления безопасности, код отправлен на ревью.",
+            lastMessageTimestamp = currentTimestamp
+        ),
+        Chat(
+            senderId = "user_android_dev",
+            chatId = UUID.randomUUID().toString(),
+            lastMessage = "Я перевел список чатов на LazyColumn! 🚀",
+            lastMessageTimestamp = currentTimestamp - 5 * 60 * 1000,
+            unreadCount = 4
+        ),
     )
 
     // 2. Создаем тестовых пользователей, сопоставленных с ID из чатов
