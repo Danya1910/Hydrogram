@@ -60,6 +60,7 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.55")
     implementation(libs.material)
     ksp("com.google.dagger:hilt-compiler:2.55")
+    implementation(libs.androidx.hilt.navigation.compose)
 
     // Coil
     implementation(libs.coil.compose)

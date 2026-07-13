@@ -1,4 +1,24 @@
 package com.example.hydrogram.presentation.navigation
 
-class MainNavGraph {
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.runtime.remember
+import androidx.navigation.NavController
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.compose.composable
+import com.example.hydrogram.presentation.viewModel.AuthViewModel
+import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
+import androidx.hilt.navigation.compose.hiltViewModel
+@RequiresApi(Build.VERSION_CODES.S)
+fun NavGraphBuilder.MainNavGraph(
+    navController: NavController,
+) {
+    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("main_graph")
+        }
+        val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
+
+        PhoneRegistrationScreen()
+    }
 }
