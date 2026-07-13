@@ -70,7 +70,7 @@ private fun Content(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)

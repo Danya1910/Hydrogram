@@ -70,17 +70,17 @@ private fun Content(
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Top,
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_avatar),
+                painter = painterResource(R.drawable.mailbox),
                 contentDescription = null,
                 tint = Color.Unspecified,
                 modifier = Modifier
-                    .size(100.dp),
+                    .size(200.dp),
             )
             Spacer(modifier = Modifier.height(26.dp))
             Text(
