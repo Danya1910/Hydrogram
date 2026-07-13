@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.usecase.SignInUseCase
 import com.example.hydrogram.domain.usecase.SignUpUseCase
+import com.example.hydrogram.presentation.util.AuthData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,6 +27,9 @@ class AuthViewModel @Inject constructor(
 
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess = _isSuccess.asStateFlow()
+
+    private val _authData = MutableStateFlow(AuthData())
+    val authData = _authData.asStateFlow()
 
     fun signIn(
         email: String,
@@ -69,6 +74,25 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun savePhone(
+        phone: String
+    ) {
+        _authData.update {
+            it.copy(
+                phone = phone,
+            )
+        }
+    }
+
+    fun saveEmail(
+        email: String
+    ) {
+        _authData.update {
+            it.copy(
+                email = email,
+            )
+        }
+    }
 
     fun clearError() {
         _errorMessage.value = null
@@ -76,3 +100,4 @@ class AuthViewModel @Inject constructor(
 
 
 }
+
