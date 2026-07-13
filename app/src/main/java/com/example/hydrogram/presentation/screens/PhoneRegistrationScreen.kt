@@ -2,6 +2,7 @@ package com.example.hydrogram.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
@@ -41,7 +43,9 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.hydrogram.R
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.viewModel.AuthViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
@@ -52,13 +56,14 @@ import com.example.hydrogram.ui.theme.SfProText
 @Composable
 fun PhoneRegistrationScreen(
     authViewModel: AuthViewModel,
+    navController: NavController,
 ) {
     Scaffold(
-        topBar = {},
     ) { paddingValues ->
         Content(
             authViewModel = authViewModel,
             paddingValues = paddingValues,
+            navController = navController,
         )
     }
 }
@@ -67,7 +72,12 @@ fun PhoneRegistrationScreen(
 private fun Content(
     authViewModel: AuthViewModel,
     paddingValues: PaddingValues,
+    navController: NavController,
 ) {
+
+    val maxPhoneLength = 10
+
+    var phone by remember { mutableStateOf("") }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -111,23 +121,33 @@ private fun Content(
                 color = Color.Black,
             )
             Spacer(modifier = Modifier.height(16.dp))
-            InputNumberField()
+            InputNumberField(
+                number = phone,
+                onValueChange = {
+                    if (it.length <= maxPhoneLength && it.all { it.isDigit() }) {
+                        phone = it
+                    }
+                }
+            )
         }
 
         AcceptButton(
             isAvailable = false,
-            onClick = {},
+            onClick = {
+                authViewModel.savePhone(
+                    phone = phone,
+                )
+                navController.navigate(Screen.EmailRegistration.route)
+            },
         )
     }
 }
 
 @Composable
 private fun InputNumberField(
-
+    number: String,
+    onValueChange: (String) -> Unit,
 ) {
-    var number by remember { mutableStateOf("999-999-9999") }
-    val maxPhoneLength = 10
-
 
     Column(
         modifier = Modifier
@@ -163,11 +183,7 @@ private fun InputNumberField(
             Spacer(modifier = Modifier.width(10.dp))
             BasicTextField(
                 value = number,
-                onValueChange = { it ->
-                    if (it.length <= maxPhoneLength && it.all { it.isDigit() }) {
-                        number = it
-                    }
-                },
+                onValueChange = onValueChange,
                 textStyle = TextStyle(
                     fontFamily = SfProText,
                     fontWeight = FontWeight.Medium,
@@ -208,6 +224,12 @@ private fun AcceptButton(
                 width = 1.dp,
                 shape = CircleShape,
             )
+            .clip(shape = CircleShape)
+            .clickable(
+                enabled = isAvailable
+            ) {
+                onClick()
+            }
     ) {
         Text(
             text = "Применить",
@@ -292,5 +314,10 @@ class PhoneDashMaskTransformation(
 @Composable
 @Preview(showBackground = true)
 private fun PhoneRegistrationScreenPreview() {
-    PhoneRegistrationScreen()
+    PhoneRegistrationScreen(
+        authViewModel = AuthViewModel(
+            signInUseCase = {},
+            signUpUseCase = {}
+        )
+    )
 }

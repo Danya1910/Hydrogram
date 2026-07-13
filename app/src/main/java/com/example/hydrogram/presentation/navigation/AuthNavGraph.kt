@@ -16,7 +16,7 @@ import com.example.hydrogram.presentation.viewModel.AuthViewModel
 fun NavGraphBuilder.AuthNavGraph(
     navController: NavController,
 ) {
-    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
+    composable(route = Screen.PhoneRegistration.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry("main_graph")
         }
@@ -24,10 +24,11 @@ fun NavGraphBuilder.AuthNavGraph(
 
         PhoneRegistrationScreen(
             authViewModel = authViewModel,
+            navController = navController,
         )
     }
 
-    composable(route = Screen.EmailRegistration.route) {backStackEntry ->
+    composable(route = Screen.EmailRegistration.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry("main_graph")
         }
@@ -36,7 +37,7 @@ fun NavGraphBuilder.AuthNavGraph(
         EmailRegistrationScreen()
     }
 
-    composable(route = Screen.PasswordInput.route) {backStackEntry ->
+    composable(route = Screen.PasswordInput.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry("main_graph")
         }
