@@ -42,6 +42,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
+import com.example.hydrogram.presentation.viewModel.AuthViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Separator
@@ -49,11 +50,14 @@ import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-fun PhoneRegistrationScreen() {
+fun PhoneRegistrationScreen(
+    authViewModel: AuthViewModel,
+) {
     Scaffold(
         topBar = {},
     ) { paddingValues ->
         Content(
+            authViewModel = authViewModel,
             paddingValues = paddingValues,
         )
     }
@@ -61,6 +65,7 @@ fun PhoneRegistrationScreen() {
 
 @Composable
 private fun Content(
+    authViewModel: AuthViewModel,
     paddingValues: PaddingValues,
 ) {
 

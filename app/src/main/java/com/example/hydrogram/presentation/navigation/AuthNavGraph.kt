@@ -3,14 +3,17 @@ package com.example.hydrogram.presentation.navigation
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.remember
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.example.hydrogram.presentation.viewModel.AuthViewModel
+import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
+import com.example.hydrogram.presentation.screens.PasswordInputScreen
 import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
-import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.hydrogram.presentation.viewModel.AuthViewModel
+
 @RequiresApi(Build.VERSION_CODES.S)
-fun NavGraphBuilder.MainNavGraph(
+fun NavGraphBuilder.AuthNavGraph(
     navController: NavController,
 ) {
     composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
@@ -22,21 +25,21 @@ fun NavGraphBuilder.MainNavGraph(
         PhoneRegistrationScreen()
     }
 
-    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
+    composable(route = Screen.EmailRegistration.route) {backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry("main_graph")
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
-        PhoneRegistrationScreen()
+        EmailRegistrationScreen()
     }
 
-    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
+    composable(route = Screen.PasswordInput.route) {backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry("main_graph")
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
-        PhoneRegistrationScreen()
+        PasswordInputScreen()
     }
 }
