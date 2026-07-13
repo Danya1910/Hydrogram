@@ -45,6 +45,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.hydrogram.R
+import com.example.hydrogram.domain.usecase.SignInUseCase
+import com.example.hydrogram.domain.usecase.SignUpUseCase
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.viewModel.AuthViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -314,10 +316,4 @@ class PhoneDashMaskTransformation(
 @Composable
 @Preview(showBackground = true)
 private fun PhoneRegistrationScreenPreview() {
-    PhoneRegistrationScreen(
-        authViewModel = AuthViewModel(
-            signInUseCase = {},
-            signUpUseCase = {}
-        )
-    )
 }
