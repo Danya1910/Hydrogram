@@ -76,11 +76,11 @@ private fun Content(
                 .weight(1f)
         ) {
             Icon(
-                painter = painterResource(R.drawable.ic_avatar),
+                painter = painterResource(R.drawable.blue_key),
                 contentDescription = null,
                 tint = Color.Unspecified,
                 modifier = Modifier
-                    .size(100.dp),
+                    .size(200.dp),
             )
             Spacer(modifier = Modifier.height(26.dp))
             Text(
