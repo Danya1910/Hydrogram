@@ -37,6 +37,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,33 +65,53 @@ private fun Content(
 ) {
 
     Column(
-        verticalArrangement = Arrangement.SpaceAround,
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = paddingValues)
             .padding(
                 horizontal = 16.dp,
+                vertical = 26.dp,
             ),
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_avatar),
-            contentDescription = null,
-            tint = Color.Unspecified,
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .size(100.dp)
-        )
-        Text(
-            text = "Телефон",
-            fontWeight = FontWeight.Bold,
-            fontFamily = SfProText,
-            fontSize = 26.sp,
-            color = Color.Black,
-        )
-        InputNumberField()
+                .fillMaxWidth()
+                .weight(1f)
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_avatar),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier
+                    .size(100.dp)
+            )
+            Spacer(modifier = Modifier.height(26.dp))
+            Text(
+                text = "Телефон",
+                fontWeight = FontWeight.Bold,
+                fontFamily = SfProText,
+                fontSize = 26.sp,
+                color = Color.Black,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Введите свой номер телефона",
+                fontWeight = FontWeight.Normal,
+                fontFamily = SfProText,
+                fontSize = 20.sp,
+                color = Color.Black,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            InputNumberField()
+        }
+
         AcceptButton(
             isAvailable = false,
-            onClick = {}
+            onClick = {},
         )
     }
 }
@@ -107,9 +128,10 @@ private fun InputNumberField(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-        SeparatorLine(modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 3.dp)
+        SeparatorLine(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 3.dp)
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -137,7 +159,7 @@ private fun InputNumberField(
             BasicTextField(
                 value = number,
                 onValueChange = { it ->
-                    if(it.length <= maxPhoneLength && it.all {it.isDigit()}) {
+                    if (it.length <= maxPhoneLength && it.all { it.isDigit() }) {
                         number = it
                     }
                 },
@@ -154,9 +176,10 @@ private fun InputNumberField(
                 modifier = Modifier.weight(1f)
             )
         }
-        SeparatorLine(modifier = Modifier
-            .padding(top = 3.dp)
-            .fillMaxWidth()
+        SeparatorLine(
+            modifier = Modifier
+                .padding(top = 3.dp)
+                .fillMaxWidth()
         )
     }
 }
@@ -172,11 +195,11 @@ private fun AcceptButton(
             .fillMaxWidth()
             .height(44.dp)
             .background(
-                color = if(isAvailable) Blue else Separator,
+                color = if (isAvailable) Blue else Separator,
                 shape = CircleShape
             )
             .border(
-                color = if(isAvailable) Blue else Separator,
+                color = if (isAvailable) Blue else Separator,
                 width = 1.dp,
                 shape = CircleShape,
             )
@@ -186,7 +209,7 @@ private fun AcceptButton(
             fontFamily = SfProText,
             fontWeight = FontWeight.Medium,
             fontSize = 17.sp,
-            color = if(isAvailable) Color.White else Color.Black,
+            color = if (isAvailable) Color.White else Color.Black,
         )
     }
 
