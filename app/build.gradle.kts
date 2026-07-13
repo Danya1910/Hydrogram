@@ -65,6 +65,9 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
 
+    // Navigation
+    implementation("androidx.navigation:navigation-compose:2.8.7")
+
     // AndroidX & Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
