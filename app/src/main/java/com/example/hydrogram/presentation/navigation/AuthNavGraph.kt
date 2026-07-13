@@ -22,7 +22,9 @@ fun NavGraphBuilder.AuthNavGraph(
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
-        PhoneRegistrationScreen()
+        PhoneRegistrationScreen(
+            authViewModel = authViewModel,
+        )
     }
 
     composable(route = Screen.EmailRegistration.route) {backStackEntry ->
