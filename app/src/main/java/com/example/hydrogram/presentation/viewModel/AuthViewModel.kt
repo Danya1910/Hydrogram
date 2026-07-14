@@ -35,7 +35,7 @@ class AuthViewModel @Inject constructor(
         email: String,
         password: String,
     ) {
-        if(email.isBlank() || password.isBlank()) {
+        if (email.isBlank() || password.isBlank()) {
             _errorMessage.value = "Заполните поля"
             return
         }
@@ -54,7 +54,7 @@ class AuthViewModel @Inject constructor(
         password: String,
         name: String,
     ) {
-        if(email.isBlank() || password.isBlank() || name.isBlank()) {
+        if (email.isBlank() || password.isBlank() || name.isBlank()) {
             _errorMessage.value = "Заполните поля"
             return
         }
@@ -109,4 +109,3 @@ class AuthViewModel @Inject constructor(
     }
 
 }
-
