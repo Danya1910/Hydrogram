@@ -2,10 +2,12 @@ package com.example.hydrogram.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,6 +26,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -32,7 +35,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.hydrogram.R
+import com.example.hydrogram.presentation.navigation.Screen
+import com.example.hydrogram.presentation.viewModel.AuthViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Separator
@@ -40,11 +46,16 @@ import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-fun EmailRegistrationScreen() {
+fun EmailRegistrationScreen(
+    authViewModel: AuthViewModel,
+    navController: NavController,
+) {
     Scaffold(
         topBar = {},
     ) { paddingValues ->
         Content(
+            authViewModel = authViewModel,
+            navController = navController,
             paddingValues = paddingValues,
         )
     }
@@ -52,6 +63,8 @@ fun EmailRegistrationScreen() {
 
 @Composable
 private fun Content(
+    authViewModel: AuthViewModel,
+    navController: NavController,
     paddingValues: PaddingValues,
 ) {
 
@@ -107,13 +120,20 @@ private fun Content(
             Spacer(modifier = Modifier.height(16.dp))
             InputEmailField(
                 email = email,
-                onValueChange = {},
+                onValueChange = {
+                    email = it
+                },
             )
         }
 
         AcceptButton(
             isAvailable = false,
-            onClick = {},
+            onClick = {
+                authViewModel.saveEmail(
+                    email = email,
+                )
+                navController.navigate(Screen.EmailRegistration.route)
+            },
         )
     }
 }
@@ -140,9 +160,11 @@ private fun InputEmailField(
             modifier = Modifier
                 .padding(horizontal = 16.dp),
             decorationBox = { innerTextField ->
+                Row(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Box(
-                        modifier = Modifier
-                            .weight(1f)
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         if (email.isEmpty()) {
                             Text(
@@ -154,6 +176,7 @@ private fun InputEmailField(
                         }
                         innerTextField()
                     }
+                }
             }
         )
         SeparatorLine(
@@ -183,6 +206,14 @@ private fun AcceptButton(
                 width = 1.dp,
                 shape = CircleShape,
             )
+            .clip(
+                shape = CircleShape
+            )
+            .clickable(
+                enabled = isAvailable
+            ) {
+                onClick()
+            }
     ) {
         Text(
             text = "Применить",
@@ -198,5 +229,5 @@ private fun AcceptButton(
 @Composable
 @Preview(showBackground = true)
 private fun PhoneRegistrationScreenPreview() {
-    EmailRegistrationScreen()
+//    EmailRegistrationScreen()
 }
