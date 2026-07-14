@@ -17,7 +17,7 @@ fun RootNavGraph() {
 
     NavHost(
         navController = navController,
-        startDestination = "main_graph",
+        startDestination = "auth_graph",
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
@@ -25,7 +25,7 @@ fun RootNavGraph() {
     ) {
         navigation(
             startDestination = Screen.ChatList.route,
-            route = "main_graph"
+            route = "auth_graph"
         ) {
             MainNavGraph(navController)
         }
