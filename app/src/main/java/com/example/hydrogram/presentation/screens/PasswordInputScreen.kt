@@ -132,7 +132,7 @@ private fun Content(
         }
 
         AcceptButton(
-            isAvailable = false,
+            isAvailable = isAvailable,
             onClick = {
                 authViewModel.signUp(
                     email = authViewModel.authData.value.email,
