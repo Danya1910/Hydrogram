@@ -258,21 +258,15 @@ class PhoneDashMaskTransformation(
         // 1. Форматируем то, что уже ввел пользователь
         for (i in rawInput.indices) {
             out.append(rawInput[i])
-            if (i == 2 || i == 5 || i == 7) {
-                if (i != rawInput.lastIndex) {
-                    out.append("-")
-                }
+            // Добавляем дефис, ТОЛЬКО если это нужная позиция И в строке есть СЛЕДУЮЩИЙ символ
+            if ((i == 2 || i == 5 || i == 7) && i < rawInput.lastIndex) {
+                out.append("-")
             }
         }
 
         // 2. Дописываем серую подсказку с дефисами, если текст введен не до конца
         if (rawInput.length < 10) {
-            if (out.isNotEmpty() && (rawInput.length == 3 || rawInput.length == 6 || rawInput.length == 8)) {
-                out.append("-")
-            }
-
             val currentFormattedLength = out.length
-            // Предотвращаем падение, если длина out почему-то превысила длину маски
             val safeFormattedLength = currentFormattedLength.coerceAtMost(targetMask.length)
             val remainingMask = targetMask.substring(safeFormattedLength)
 
@@ -290,6 +284,7 @@ class PhoneDashMaskTransformation(
 
         return TransformedText(AnnotatedString(out.toString()), getOffsetMapping(rawInput))
     }
+
 
     private fun getOffsetMapping(rawInput: String) = object : OffsetMapping {
         override fun originalToTransformed(offset: Int): Int {
