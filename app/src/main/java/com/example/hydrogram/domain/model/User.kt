@@ -7,4 +7,5 @@ data class User(
     val email: String = "",
     val isOnline: Boolean = false,
     val createdAt: Long = 0L,
+    val phone: String = "",
 )

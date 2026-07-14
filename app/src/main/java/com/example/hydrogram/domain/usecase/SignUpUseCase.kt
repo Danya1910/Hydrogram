@@ -11,11 +11,13 @@ class SignUpUseCase @Inject constructor(
         email: String,
         password: String,
         name: String,
+        phone: String,
     ) : Result<Unit> {
         return authRepository.signUp(
             email = email,
             password = password,
             name = name,
+            phone = phone,
         )
     }
 

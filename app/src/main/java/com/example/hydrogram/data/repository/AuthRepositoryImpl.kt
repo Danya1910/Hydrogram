@@ -16,7 +16,7 @@ class AuthRepositoryImpl @Inject constructor(
         Unit
     }
 
-    override suspend fun signUp(email: String, password: String, name: String): Result<Unit> = runCatching{
+    override suspend fun signUp(email: String, password: String, name: String, phone: String): Result<Unit> = runCatching{
         val authResult = auth.createUserWithEmailAndPassword(email, password).await()
         val uid = authResult.user?.uid ?: throw Exception("User creation failed")
         val userMap = mapOf(
@@ -26,6 +26,7 @@ class AuthRepositoryImpl @Inject constructor(
             "avatarUrl" to "",
             "isOnline" to true,
             "createdAt" to System.currentTimeMillis(),
+            "phone" to phone,
         )
         firestore.collection("users").document(uid).set(userMap).await()
     }

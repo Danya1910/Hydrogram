@@ -69,6 +69,8 @@ private fun Content(
 
     var password by remember { mutableStateOf("") }
 
+    val isAvailable = password.length >= 8
+
     LaunchedEffect(Unit) {
         Log.d(
             "Password Input screen", "phone: ${authViewModel.authData.value.phone}," +
@@ -122,7 +124,7 @@ private fun Content(
             )
             Spacer(modifier = Modifier.height(16.dp))
             InputPasswordField(
-                password= password,
+                password = password,
                 onValueChange = {
                     password = it
                 },
@@ -136,7 +138,7 @@ private fun Content(
                     email = authViewModel.authData.value.email,
                     password = password,
                     name = authViewModel.authData.value.name,
-                    //phone = authViewModel.authData.value.phone
+                    phone = authViewModel.authData.value.phone,
                 )
             },
         )

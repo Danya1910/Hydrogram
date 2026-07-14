@@ -53,6 +53,7 @@ class AuthViewModel @Inject constructor(
         email: String,
         password: String,
         name: String,
+        phone: String,
     ) {
         if (email.isBlank() || password.isBlank() || name.isBlank()) {
             _errorMessage.value = "Заполните поля"
@@ -64,6 +65,7 @@ class AuthViewModel @Inject constructor(
                 email = email,
                 password = password,
                 name = name,
+                phone = phone,
             )
             _isLoading.value = false
 
