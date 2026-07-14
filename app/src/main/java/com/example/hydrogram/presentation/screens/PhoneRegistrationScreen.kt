@@ -81,6 +81,8 @@ private fun Content(
 
     var phone by remember { mutableStateOf("") }
 
+    val isAvailable = phone.length == 10
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -134,7 +136,7 @@ private fun Content(
         }
 
         AcceptButton(
-            isAvailable = false,
+            isAvailable = isAvailable,
             onClick = {
                 authViewModel.savePhone(
                     phone = phone,
