@@ -192,7 +192,7 @@ private fun InputNumberField(
                     fontSize = 25.sp,
                     color = Color.Black
                 ),
-                //visualTransformation = PhoneDashMaskTransformation(),
+                visualTransformation = PhoneDashMaskTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Number
                 ),
@@ -251,9 +251,6 @@ class PhoneDashMaskTransformation(
     override fun filter(text: AnnotatedString): TransformedText {
         val rawInput = text.text
         val out = StringBuilder()
-
-        // Массив индексов, где в исходном тексте (оригинальном) ставились бы дефисы
-        // Это нужно для правильного расчета позиции курсора
         val targetMask = "000-000-00-00"
 
         // 1. Форматируем то, что уже ввел пользователь
@@ -265,22 +262,20 @@ class PhoneDashMaskTransformation(
                 }
             }
         }
-        val realTextLength = out.length
 
         // 2. Дописываем серую подсказку с дефисами, если текст введен не до конца
         if (rawInput.length < 10) {
-            // Если последним символом случайно оказался дефис из-за логики выше, убираем дублирование
             if (out.isNotEmpty() && (rawInput.length == 3 || rawInput.length == 6 || rawInput.length == 8)) {
                 out.append("-")
             }
 
-            // Вычисляем, какую часть маски-подсказки нужно дорисовать
             val currentFormattedLength = out.length
-            val remainingMask = targetMask.substring(currentFormattedLength)
+            // Предотвращаем падение, если длина out почему-то превысила длину маски
+            val safeFormattedLength = currentFormattedLength.coerceAtMost(targetMask.length)
+            val remainingMask = targetMask.substring(safeFormattedLength)
 
-            // Собираем финальную строку с разделением по цветам
             val annotatedStringBuilder = AnnotatedString.Builder()
-            annotatedStringBuilder.append(out.toString().substring(0, currentFormattedLength))
+            annotatedStringBuilder.append(out.toString().substring(0, safeFormattedLength))
             annotatedStringBuilder.pushStyle(SpanStyle(color = hintColor))
             annotatedStringBuilder.append(remainingMask)
             annotatedStringBuilder.pop()
@@ -294,24 +289,30 @@ class PhoneDashMaskTransformation(
         return TransformedText(AnnotatedString(out.toString()), getOffsetMapping(rawInput))
     }
 
-    // Рассчитываем, как индексы "чистых" цифр соотносятся с индексами строки, где есть дефисы
     private fun getOffsetMapping(rawInput: String) = object : OffsetMapping {
         override fun originalToTransformed(offset: Int): Int {
+            // Смещение должно четко соответствовать количеству добавленных дефисов
             if (offset <= 3) return offset
             if (offset <= 6) return offset + 1
             if (offset <= 8) return offset + 2
-            return offset + 3
+            return (offset + 3).coerceAtMost(13)
         }
 
         override fun transformedToOriginal(offset: Int): Int {
-            if (offset <= 3) return offset
-            if (offset <= 7) return offset - 1
-            if (offset <= 10) return offset - 2
-            if (offset <= 13) return offset - 3
-            return rawInput.length
+            // ГЛАВНОЕ ИСПРАВЛЕНИЕ: Любой результат жестко ограничиваем текущей длиной rawInput
+            if (rawInput.isEmpty()) return 0
+
+            val originalOffset = when {
+                offset <= 3 -> offset
+                offset <= 7 -> offset - 1
+                offset <= 10 -> offset - 2
+                else -> offset - 3
+            }
+            return originalOffset.coerceIn(0, rawInput.length)
         }
     }
 }
+
 
 @Composable
 @Preview(showBackground = true)
