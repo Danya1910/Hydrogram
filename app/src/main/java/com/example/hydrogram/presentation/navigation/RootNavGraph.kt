@@ -24,10 +24,10 @@ fun RootNavGraph() {
         popExitTransition = { ExitTransition.None },
     ) {
         navigation(
-            startDestination = Screen.ChatList.route,
+            startDestination = Screen.PhoneRegistration.route,
             route = "auth_graph"
         ) {
-            MainNavGraph(navController)
+            AuthNavGraph(navController)
         }
     }
 
