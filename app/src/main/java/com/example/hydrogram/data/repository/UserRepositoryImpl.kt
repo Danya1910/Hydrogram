@@ -3,6 +3,7 @@ package com.example.hydrogram.data.repository
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.core.UserData
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -37,6 +38,24 @@ class UserRepositoryImpl @Inject constructor(
                 trySend(user)
             }
         awaitClose { listener.remove() }
+    }
+
+    override suspend fun findUserByPhone(phone: String): User? {
+        return try {
+            val snapshot = firestore.collection("users")
+                .whereEqualTo("phone", phone)
+                .get()
+                .await()
+
+            if(!snapshot.isEmpty) {
+                snapshot.documents.first().toObject(User::class.java)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
     override suspend fun setUserOnlineStats(uid: String, isOnline: Boolean): Result<Unit> {
