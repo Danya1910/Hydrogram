@@ -32,7 +32,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.hydrogram.R
+import com.example.hydrogram.presentation.viewModel.AuthViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Separator
@@ -40,11 +42,16 @@ import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-fun PasswordInputScreen() {
+fun PasswordInputScreen(
+    authViewModel: AuthViewModel,
+    navController: NavController,
+) {
     Scaffold(
         topBar = {},
     ) { paddingValues ->
         Content(
+            authViewModel = authViewModel,
+            navController = navController,
             paddingValues = paddingValues,
         )
     }
@@ -52,6 +59,8 @@ fun PasswordInputScreen() {
 
 @Composable
 private fun Content(
+    authViewModel: AuthViewModel,
+    navController: NavController,
     paddingValues: PaddingValues,
 ) {
 
@@ -104,13 +113,19 @@ private fun Content(
             Spacer(modifier = Modifier.height(16.dp))
             InputPasswordField(
                 password= password,
-                onValueChange = {},
+                onValueChange = {
+                    password = it
+                },
             )
         }
 
         AcceptButton(
             isAvailable = false,
-            onClick = {},
+            onClick = {
+                authViewModel.signUp(
+
+                )
+            },
         )
     }
 }
