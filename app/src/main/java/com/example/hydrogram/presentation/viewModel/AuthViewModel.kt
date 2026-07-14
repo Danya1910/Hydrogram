@@ -94,6 +94,16 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun saveName(
+        name: String
+    ) {
+        _authData.update {
+            it.copy(
+                name = name,
+            )
+        }
+    }
+
     fun clearError() {
         _errorMessage.value = null
     }
