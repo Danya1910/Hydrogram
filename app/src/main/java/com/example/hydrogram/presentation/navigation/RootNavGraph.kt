@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
+import androidx.core.graphics.rotationMatrix
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
@@ -27,7 +28,13 @@ fun RootNavGraph() {
             startDestination = Screen.PhoneRegistration.route,
             route = "auth_graph"
         ) {
-            AuthNavGraph(navController)
+            AuthNavGraph(navController = navController)
+        }
+        navigation(
+            startDestination = Screen.ContactsScreen.route,
+            route = "main_graph"
+        ) {
+            MainNavGraph(navController = navController)
         }
     }
 

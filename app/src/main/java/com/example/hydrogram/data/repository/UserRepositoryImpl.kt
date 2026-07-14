@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.repository
 
+import android.util.Log
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -42,10 +43,13 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun findUserByPhone(phone: String): User? {
         return try {
+            Log.d("FIRESTORE", "Поиск пользователя: $phone")
             val snapshot = firestore.collection("users")
                 .whereEqualTo("phone", phone)
                 .get()
                 .await()
+
+            Log.d("FIRESTORE", "Найдено документов: ${snapshot.size()}")
 
             if(!snapshot.isEmpty) {
                 snapshot.documents.first().toObject(User::class.java)
@@ -54,6 +58,7 @@ class UserRepositoryImpl @Inject constructor(
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            Log.e("FIRESTORE", "Ошибка поиска", e)
             null
         }
     }

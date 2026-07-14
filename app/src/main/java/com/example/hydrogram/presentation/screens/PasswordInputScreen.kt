@@ -45,6 +45,8 @@ import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
+import androidx.compose.runtime.collectAsState
+import com.example.hydrogram.presentation.navigation.Screen
 
 
 @Composable
@@ -79,6 +81,19 @@ private fun Content(
             "Password Input screen", "phone: ${authViewModel.authData.value.phone}," +
                     " email ${authViewModel.authData.value.email}"
         )
+    }
+
+    val isRegisted = authViewModel.isSuccess.collectAsState().value
+
+    LaunchedEffect(isRegisted) {
+        if(isRegisted) {
+            navController.navigate(Screen.ContactsScreen.route) {
+                popUpTo("auth_graph") {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        }
     }
 
     Column(
