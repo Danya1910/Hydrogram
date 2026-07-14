@@ -19,7 +19,7 @@ fun NavGraphBuilder.AuthNavGraph(
 ) {
     composable(route = Screen.PhoneRegistration.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
+            navController.getBackStackEntry("auth_graph")
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
@@ -31,7 +31,7 @@ fun NavGraphBuilder.AuthNavGraph(
 
     composable(route = Screen.EmailRegistration.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
+            navController.getBackStackEntry("auth_graph")
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
@@ -43,7 +43,7 @@ fun NavGraphBuilder.AuthNavGraph(
 
     composable(route = Screen.NameInput.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
+            navController.getBackStackEntry("auth_graph")
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
@@ -55,7 +55,7 @@ fun NavGraphBuilder.AuthNavGraph(
 
     composable(route = Screen.PasswordInput.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
+            navController.getBackStackEntry("auth_graph")
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
