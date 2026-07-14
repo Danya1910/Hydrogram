@@ -13,30 +13,5 @@ import androidx.hilt.navigation.compose.hiltViewModel
 fun NavGraphBuilder.MainNavGraph(
     navController: NavController,
 ) {
-    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
-        val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
-        }
-        val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
-        PhoneRegistrationScreen()
-    }
-
-    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
-        val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
-        }
-        val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
-
-        PhoneRegistrationScreen()
-    }
-
-    composable(route = Screen.PhoneRegistration.route) {backStackEntry ->
-        val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
-        }
-        val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
-
-        PhoneRegistrationScreen()
-    }
 }
