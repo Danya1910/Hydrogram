@@ -123,7 +123,10 @@ private fun Content(
             isAvailable = false,
             onClick = {
                 authViewModel.signUp(
-
+                    email = authViewModel.authData.value.email,
+                    password = password,
+                    name = authViewModel.authData.value.name,
+                    //phone = authViewModel.authData.value.phone
                 )
             },
         )
@@ -210,5 +213,4 @@ private fun AcceptButton(
 @Composable
 @Preview(showBackground = true)
 private fun PasswordInputScreenPreview() {
-    PasswordInputScreen()
 }
