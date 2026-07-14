@@ -8,6 +8,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
 import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
+import com.example.hydrogram.presentation.screens.NameInputScreen
 import com.example.hydrogram.presentation.screens.PasswordInputScreen
 import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
 import com.example.hydrogram.presentation.viewModel.AuthViewModel
@@ -34,7 +35,22 @@ fun NavGraphBuilder.AuthNavGraph(
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
-        EmailRegistrationScreen()
+        EmailRegistrationScreen(
+            authViewModel = authViewModel,
+            navController = navController,
+        )
+    }
+
+    composable(route = Screen.NameInput.route) { backStackEntry ->
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("main_graph")
+        }
+        val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
+
+        NameInputScreen(
+            authViewModel = authViewModel,
+            navController = navController,
+        )
     }
 
     composable(route = Screen.PasswordInput.route) { backStackEntry ->
@@ -43,6 +59,9 @@ fun NavGraphBuilder.AuthNavGraph(
         }
         val authViewModel: AuthViewModel = hiltViewModel(parentEntry)
 
-        PasswordInputScreen()
+        PasswordInputScreen(
+            authViewModel = authViewModel,
+            navController = navController,
+        )
     }
 }

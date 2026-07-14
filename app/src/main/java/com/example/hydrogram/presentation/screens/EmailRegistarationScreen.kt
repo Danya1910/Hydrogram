@@ -132,7 +132,7 @@ private fun Content(
                 authViewModel.saveEmail(
                     email = email,
                 )
-                navController.navigate(Screen.EmailRegistration.route)
+                navController.navigate(Screen..route)
             },
         )
     }

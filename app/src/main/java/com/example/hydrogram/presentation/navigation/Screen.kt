@@ -12,6 +12,10 @@ sealed interface Screen {
         override val route = "EmailRegistration"
     }
 
+    data object NameInput : Screen {
+        override val route = "NameInput"
+    }
+
     data object PasswordInput : Screen {
         override val route = "PasswordInput"
     }
