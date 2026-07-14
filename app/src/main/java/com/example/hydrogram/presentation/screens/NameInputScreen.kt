@@ -70,6 +70,8 @@ private fun Content(
 
     var name by remember { mutableStateOf("") }
 
+    val isAvailable = name.isNotEmpty()
+
     Column(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -125,7 +127,7 @@ private fun Content(
         }
 
         AcceptButton(
-            isAvailable = false,
+            isAvailable = isAvailable,
             onClick = {
                 authViewModel.saveName(
                     name = name,

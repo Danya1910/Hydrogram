@@ -68,7 +68,10 @@ private fun Content(
     paddingValues: PaddingValues,
 ) {
 
+
     var email by remember { mutableStateOf("") }
+
+    val isAvailable = email.contains("@")
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -127,7 +130,7 @@ private fun Content(
         }
 
         AcceptButton(
-            isAvailable = false,
+            isAvailable = isAvailable,
             onClick = {
                 authViewModel.saveEmail(
                     email = email,

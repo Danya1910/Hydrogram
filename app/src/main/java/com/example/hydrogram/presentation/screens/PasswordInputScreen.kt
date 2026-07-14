@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +19,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +68,13 @@ private fun Content(
 ) {
 
     var password by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        Log.d(
+            "Password Input screen", "phone: ${authViewModel.authData.value.phone}," +
+                    " email ${authViewModel.authData.value.email}"
+        )
+    }
 
     Column(
         verticalArrangement = Arrangement.Center,
