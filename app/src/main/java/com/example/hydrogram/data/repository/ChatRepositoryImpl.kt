@@ -4,6 +4,7 @@ import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -34,7 +35,12 @@ class ChatRepositoryImpl @Inject constructor(
                 status = "sent",
             )
 
+            val targetUserId = chatId.split("_").firstOrNull() { it != senderId } ?: ""
+
+
             val chatUpdate = mapOf(
+                "chatId" to chatId,
+                "members" to listOf(senderId, targetUserId),
                 "lastMessage" to text,
                 "lastMessageType" to type,
                 "lastMessageSenderId" to senderId,
@@ -43,7 +49,7 @@ class ChatRepositoryImpl @Inject constructor(
             val batch = firestore.batch()
 
             batch.set(messageRef, newMessage)
-            batch.update(chatRef, chatUpdate)
+            batch.set(chatRef, chatUpdate, SetOptions.merge())
 
             batch.commit().await()
 
@@ -59,11 +65,11 @@ class ChatRepositoryImpl @Inject constructor(
             .collection("messages")
             .orderBy("timestamp", Query.Direction.ASCENDING)
             .addSnapshotListener { snapshot, error ->
-                if(error != null) {
+                if (error != null) {
                     close(error)
                     return@addSnapshotListener
                 }
-                if(snapshot != null) {
+                if (snapshot != null) {
                     val messages = snapshot.documents.mapNotNull { doc ->
                         doc.toObject(Message::class.java)
                     }
