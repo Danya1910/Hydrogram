@@ -69,9 +69,8 @@ fun ChatScreen(
 
     var textState by remember { mutableStateOf("") }
 
-    val uiState = chatViewModel.uiState.collectAsStateWithLifecycle()
-
-    val mineId = chatViewModel.currentId.collectAsStateWithLifecycle().value
+    val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
+    val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
 
     val chatId = remember(mineId, penpalId) {
         if (mineId.isNotEmpty() && !penpalId.isNullOrEmpty()) {
@@ -84,10 +83,14 @@ fun ChatScreen(
         Log.d("ChatScreen", "mineId: $mineId, penpalId: $penpalId")
     }
 
+    LaunchedEffect(mineId) {
+        Log.d("ChatScreen", "mineId: $mineId")
+    }
+
     LaunchedEffect(chatId) {
         if (chatId.isNotEmpty()) {
             chatViewModel.observeChatHistory(chatId = chatId)
-            Log.d("ChatScreen", "Успешный старт чата: $chatId")
+            Log.d("ChatScreen", "Успешный старт чата по ID: $chatId")
         }
     }
 
@@ -160,11 +163,13 @@ fun ChatScreen(
 
                     is ChatUiState.Success -> {
                         val messages = state.messages
+                        Log.d("ChatScreen", "messages: $messages")
 
                         // Список сообщений на экране
                         Content(
                             messages = messages,
-                            paddingValues = paddingValues
+                            paddingValues = paddingValues,
+                            mineId = mineId,
                         )
                     }
                 }
@@ -179,10 +184,8 @@ fun ChatScreen(
 private fun Content(
     messages: List<Message>,
     paddingValues: PaddingValues,
+    mineId: String,
 ) {
-
-    val currentUserId = "1"
-    val penpalId = "2"
 
 
     LazyColumn(
@@ -195,7 +198,7 @@ private fun Content(
             items = messages,
             key = { message -> message.messageId }
         ) { message ->
-            if (message.senderId == "1") {
+            if (message.senderId == mineId) {
                 MineTextMessage(message = message)
             } else {
                 PenpalTextMessage(message = message)
