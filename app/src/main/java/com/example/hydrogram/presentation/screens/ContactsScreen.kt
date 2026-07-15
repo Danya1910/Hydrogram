@@ -43,6 +43,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
@@ -60,7 +61,6 @@ fun ContactsScreen(
     Scaffold(
         bottomBar = {
             BottomBar(
-                navController = navController,
                 currentRoute = "Contacts"
             )
         }
@@ -118,7 +118,9 @@ private fun Content(
                 if (user != null) {
                     UserCard(
                         user = user,
-                        onUserClick = {}
+                        onUserClick = {
+                            navController.navigate(Screen.Chat.createRoute(id = user.uid))
+                        }
                     )
                 } else {
                     Text("Пользователь не найден")

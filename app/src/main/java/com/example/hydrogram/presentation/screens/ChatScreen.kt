@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.screens
 
 import android.text.format.DateFormat
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -42,11 +43,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import coil3.util.Logger
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.example.hydrogram.presentation.states.ChatUiState
+import com.example.hydrogram.presentation.util.generateChatId
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
@@ -61,13 +64,32 @@ import java.util.Date
 fun ChatScreen(
     navController: NavController,
     chatViewModel: ChatViewModel,
+    penpalId: String?,
 ) {
 
     var textState by remember { mutableStateOf("") }
 
     val uiState = chatViewModel.uiState.collectAsStateWithLifecycle()
 
-    val mineId = chatViewModel.currentId.collectAsState().value
+    val mineId = chatViewModel.currentId.collectAsStateWithLifecycle().value
+
+    val chatId = remember(mineId, penpalId) {
+        if (mineId.isNotEmpty() && !penpalId.isNullOrEmpty()) {
+            generateChatId(userId1 = mineId, userId2 = penpalId)
+        } else ""
+    }
+
+    LaunchedEffect(Unit) {
+        chatViewModel.getCurrentUserId()
+        Log.d("ChatScreen", "mineId: $mineId, penpalId: $penpalId")
+    }
+
+    LaunchedEffect(chatId) {
+        if (chatId.isNotEmpty()) {
+            chatViewModel.observeChatHistory(chatId = chatId)
+            Log.d("ChatScreen", "Успешный старт чата: $chatId")
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -97,7 +119,7 @@ fun ChatScreen(
                     onSendClick = {
                         chatViewModel.sendMessage(
                             senderId = mineId,
-                            chatId = TODO(),
+                            chatId = chatId,
                             text = textState,
                             type = "text",
                         )
@@ -415,8 +437,4 @@ private fun PenpalTextMessage(
 @Composable
 @Preview(showBackground = true)
 private fun ChatScreenPreview() {
-
-
-    ChatScreen()
-
 }

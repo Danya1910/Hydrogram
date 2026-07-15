@@ -41,7 +41,6 @@ import com.google.android.material.shape.EdgeTreatment
 
 @Composable
 fun BottomBar(
-    navController: NavController,
     currentRoute: String,
 ) {
     val buttons = listOf(

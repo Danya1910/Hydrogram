@@ -33,7 +33,12 @@ sealed interface Screen {
     }
 
     data object Chat : Screen {
-        override val route = "Chat"
+        override val route = "Chat/{id}"
+
+        fun createRoute(id: String): String {
+            return "Chat/$id"
+        }
+
     }
 
 

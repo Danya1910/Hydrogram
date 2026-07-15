@@ -21,7 +21,6 @@ class UserViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
     private val setUserOnlineStatsUseCase: SetUserOnlineStatsUseCase,
-    uid: String,
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
@@ -38,10 +37,6 @@ class UserViewModel @Inject constructor(
 
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess = _isSuccess.asStateFlow()
-
-    init {
-        observeUser(uid = uid)
-    }
 
     private fun observeUser(
         uid: String,

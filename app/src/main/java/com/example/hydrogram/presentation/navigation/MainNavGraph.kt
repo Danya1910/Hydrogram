@@ -9,8 +9,12 @@ import androidx.navigation.compose.composable
 import com.example.hydrogram.presentation.viewModel.AuthViewModel
 import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
+import com.example.hydrogram.presentation.screens.ChatScreen
 import com.example.hydrogram.presentation.screens.ContactsScreen
 import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
+import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
@@ -26,6 +30,22 @@ fun NavGraphBuilder.MainNavGraph(
         ContactsScreen(
             searchViewModel = searchViewModel,
             navController = navController,
+        )
+    }
+
+    composable(
+        route = Screen.Chat.route,
+        arguments = listOf(
+            navArgument("id") {type = NavType.StringType}
+        )
+    ) { backStackEntry ->
+        val chatViewModel: ChatViewModel = hiltViewModel()
+        val penpalId = backStackEntry.arguments?.getString("id") ?: ""
+
+        ChatScreen(
+            chatViewModel = chatViewModel,
+            navController = navController,
+            penpalId = penpalId,
         )
     }
 }

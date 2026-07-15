@@ -23,7 +23,9 @@ import java.util.UUID
 
 
 @Composable
-fun ChatListScreen() {
+fun ChatListScreen(
+
+) {
     Scaffold(
         topBar = {
             ChatListTopBar()

@@ -7,17 +7,19 @@ import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.SendMessageUseCase
 import com.example.hydrogram.presentation.states.ChatUiState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+
+@HiltViewModel
 class ChatViewModel @Inject constructor(
     private val sendMessageUseCase: SendMessageUseCase,
     private val getChatHistoryUseCase: GetChatHistoryUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
-    chatId: String,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
@@ -35,13 +37,6 @@ class ChatViewModel @Inject constructor(
 
     private val _currentId = MutableStateFlow("")
     val currentId = _currentId.asStateFlow()
-
-    init{
-        getCurrentUserId()
-        observeChatHistory(
-            chatId = chatId
-        )
-    }
 
     fun sendMessage(
         senderId: String,
@@ -82,7 +77,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun observeChatHistory(
+    fun observeChatHistory(
         chatId: String,
     ) {
         if(chatId.isBlank())
