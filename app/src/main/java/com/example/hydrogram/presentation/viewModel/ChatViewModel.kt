@@ -37,6 +37,7 @@ class ChatViewModel @Inject constructor(
     val currentId = _currentId.asStateFlow()
 
     init{
+        getCurrentUserId()
         observeChatHistory(
             chatId = chatId
         )

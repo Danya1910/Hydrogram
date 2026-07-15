@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -38,11 +40,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.ChatRepository
+import com.example.hydrogram.presentation.states.ChatUiState
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
@@ -61,9 +65,7 @@ fun ChatScreen(
 
     var textState by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        chatViewModel.getCurrentUserId()
-    }
+    val uiState = chatViewModel.uiState.collectAsStateWithLifecycle()
 
     val mineId = chatViewModel.currentId.collectAsState().value
 
@@ -106,9 +108,45 @@ fun ChatScreen(
                 )
             }
         ) { paddingValues ->
-            Content(
-                paddingValues = paddingValues,
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+            ) {
+                when (val state = uiState) {
+                    is ChatUiState.Loading -> {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    is ChatUiState.Error -> {
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(text = state.message, color = Color.Red)
+                        }
+                    }
+
+                    is ChatUiState.Success -> {
+                        val messages = state.messages
+
+                        // Список сообщений на экране
+                        Content(
+                            messages = messages,
+                            paddingValues = paddingValues
+                        )
+                    }
+                }
+            }
         }
 
     }
@@ -117,35 +155,13 @@ fun ChatScreen(
 
 @Composable
 private fun Content(
+    messages: List<Message>,
     paddingValues: PaddingValues,
 ) {
 
     val currentUserId = "1"
     val penpalId = "2"
 
-    val messages: List<Message> = listOf(
-        Message(
-            messageId = "msg_001",
-            senderId = penpalId,
-            text = "Привет! Рад познакомиться, буду твоим новым penpal!",
-            timestamp = 1718870400000L, // Пример TimeStamp в миллисекундах
-            status = "read"
-        ),
-        Message(
-            messageId = "msg_002",
-            senderId = currentUserId, // Ваше сообщение (id = "1")
-            text = "Привет! Взаимно. Я как раз сейчас верстаю экран нашего чата на Jetpack Compose.",
-            timestamp = 1718870460000L,
-            status = "read"
-        ),
-        Message(
-            messageId = "msg_003",
-            senderId = penpalId,
-            text = "Ого, круто! Покажешь потом, как получилось? Особенно интересно, как облачка сообщений выглядят.",
-            timestamp = 1718870520000L,
-            status = "read"
-        ),
-    )
 
     LazyColumn(
         modifier = Modifier
