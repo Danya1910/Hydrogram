@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -46,6 +47,7 @@ import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
+import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.SfProText
 
@@ -56,7 +58,12 @@ fun ContactsScreen(
     navController: NavController,
 ) {
     Scaffold(
-
+        bottomBar = {
+            BottomBar(
+                navController = navController,
+                currentRoute = "Contacts"
+            )
+        }
     ) { paddingValues ->
         Content(
             searchViewModel = searchViewModel,

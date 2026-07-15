@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
+import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.SendMessageUseCase
 import com.example.hydrogram.presentation.states.ChatUiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,6 +16,7 @@ import javax.inject.Inject
 class ChatViewModel @Inject constructor(
     private val sendMessageUseCase: SendMessageUseCase,
     private val getChatHistoryUseCase: GetChatHistoryUseCase,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     chatId: String,
 ) : ViewModel() {
 
@@ -29,6 +31,10 @@ class ChatViewModel @Inject constructor(
 
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess = _isSuccess.asStateFlow()
+
+
+    private val _currentId = MutableStateFlow("")
+    val currentId = _currentId.asStateFlow()
 
     init{
         observeChatHistory(
@@ -62,6 +68,16 @@ class ChatViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+        }
+    }
+
+    fun getCurrentUserId() {
+        viewModelScope.launch {
+            val result = getCurrentUserIdUseCase()
+            if(!result.isNullOrEmpty()) {
+                _currentId.value = result
+            }
+            else return@launch
         }
     }
 

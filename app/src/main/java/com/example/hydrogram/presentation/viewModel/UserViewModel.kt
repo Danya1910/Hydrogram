@@ -4,16 +4,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetUserByIdUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
 import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
 import com.example.hydrogram.presentation.states.UserState
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@HiltViewModel
 class UserViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
@@ -60,6 +63,7 @@ class UserViewModel @Inject constructor(
         }
 
     }
+
 
     fun saveProfile(
         uid: String,

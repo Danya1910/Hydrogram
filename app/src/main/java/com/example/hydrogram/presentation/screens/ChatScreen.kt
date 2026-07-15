@@ -22,6 +22,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,12 +38,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.domain.repository.ChatRepository
+import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
-import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
@@ -50,9 +54,18 @@ import java.util.Date
 
 
 @Composable
-fun ChatScreen() {
+fun ChatScreen(
+    navController: NavController,
+    chatViewModel: ChatViewModel,
+) {
 
     var textState by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        chatViewModel.getCurrentUserId()
+    }
+
+    val mineId = chatViewModel.currentId.collectAsState().value
 
     Box(
         modifier = Modifier
@@ -80,8 +93,12 @@ fun ChatScreen() {
                         textState = newValue
                     },
                     onSendClick = {
-                        println("Отправлено: $textState")
-                        textState = ""
+                        chatViewModel.sendMessage(
+                            senderId = mineId,
+                            chatId = TODO(),
+                            text = textState,
+                            type = "text",
+                        )
                     },
                     onAttachClick = {
                         println("Нажата скрепка")

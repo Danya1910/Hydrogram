@@ -29,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.presentation.navigation.NavigationData
 import com.example.hydrogram.ui.theme.Blue
@@ -40,6 +41,7 @@ import com.google.android.material.shape.EdgeTreatment
 
 @Composable
 fun BottomBar(
+    navController: NavController,
     currentRoute: String,
 ) {
     val buttons = listOf(
@@ -149,9 +151,6 @@ fun BottomBarPreview() {
             fontFamily = SfProText,
             fontSize = 80.sp,
             fontWeight = FontWeight.Bold,
-        )
-        BottomBar(
-            currentRoute = "Chats"
         )
 
     }
