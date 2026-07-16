@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,32 +38,38 @@ import com.example.hydrogram.ui.theme.SfProText
 fun ChatListTopBar(
 
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
+
+    Box(
         modifier = Modifier
-            .statusBarsPadding()
             .fillMaxWidth()
-            .height(56.dp)
             .background(
                 color = LightGrayBackground,
             )
     ) {
-        EditButton(
-            title = "Edit",
-            onClick = {},
-        )
-        Spacer(modifier = Modifier.width(40.dp))
-        Box(
-            contentAlignment = Alignment.Center,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .weight(1f)
+                .statusBarsPadding()
+                .fillMaxWidth()
+                .height(56.dp)
         ) {
-            ChatListHat()
+            EditButton(
+                title = "Edit",
+                onClick = {},
+            )
+            Spacer(modifier = Modifier.width(40.dp))
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                ChatListHat()
+            }
+            RowEdit(
+                onEditClick = {},
+                onHistoryClick = {},
+            )
         }
-        RowEdit(
-            onEditClick = {},
-            onHistoryClick = {},
-        )
     }
 }
 
