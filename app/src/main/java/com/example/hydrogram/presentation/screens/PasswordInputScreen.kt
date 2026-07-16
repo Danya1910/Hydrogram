@@ -87,7 +87,7 @@ private fun Content(
 
     LaunchedEffect(isRegisted) {
         if(isRegisted) {
-            navController.navigate(Screen.ContactsScreen.route) {
+            navController.navigate(Screen.ChatList.route) {
                 popUpTo("auth_graph") {
                     inclusive = true
                 }
