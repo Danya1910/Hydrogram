@@ -122,6 +122,10 @@ fun ChatScreen(
                             user = User(
                                 name = "Loading"
                             ),
+                            onUserClick = {},
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
                         )
                     }
 
@@ -130,6 +134,10 @@ fun ChatScreen(
                             user = User(
                                 name = "Error"
                             ),
+                            onUserClick = {},
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
                         )
                     }
 
@@ -139,6 +147,10 @@ fun ChatScreen(
 
                         TopChatBar(
                             user = user ?: User(),
+                            onBackClick = {
+                                navController.popBackStack()
+                            },
+                            onUserClick = {},
                         )
                     }
                 }
