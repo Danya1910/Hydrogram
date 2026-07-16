@@ -52,6 +52,9 @@ fun ChatListTopBar(
                 .statusBarsPadding()
                 .fillMaxWidth()
                 .height(56.dp)
+                .padding(
+                    horizontal = 16.dp
+                )
         ) {
             EditButton(
                 title = "Edit",
