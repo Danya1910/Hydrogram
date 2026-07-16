@@ -67,6 +67,10 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun resetSendStatus() {
+        _isSuccess.value = false
+    }
+
     fun getCurrentUserId() {
         viewModelScope.launch {
             val result = getCurrentUserIdUseCase()
