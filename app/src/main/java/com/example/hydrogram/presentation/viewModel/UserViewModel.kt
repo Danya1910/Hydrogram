@@ -38,7 +38,7 @@ class UserViewModel @Inject constructor(
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess = _isSuccess.asStateFlow()
 
-    private fun observeUser(
+    fun observeUser(
         uid: String,
     ) {
         if (uid.isBlank()) {

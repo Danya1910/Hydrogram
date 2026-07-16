@@ -26,7 +26,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,14 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import coil3.util.Logger
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.User
-import com.example.hydrogram.domain.repository.ChatRepository
 import com.example.hydrogram.presentation.states.ChatUiState
+import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.generateChatId
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
+import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.LightGreen
@@ -64,6 +63,7 @@ import java.util.Date
 fun ChatScreen(
     navController: NavController,
     chatViewModel: ChatViewModel,
+    userViewModel: UserViewModel,
     penpalId: String?,
 ) {
 
@@ -77,6 +77,14 @@ fun ChatScreen(
             generateChatId(userId1 = mineId, userId2 = penpalId)
         } else ""
     }
+
+    LaunchedEffect(penpalId) {
+        userViewModel.observeUser(
+            uid = penpalId ?: ""
+        )
+    }
+
+    val penpalData = userViewModel.userState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         chatViewModel.getCurrentUserId()
@@ -94,6 +102,7 @@ fun ChatScreen(
         }
     }
 
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -107,11 +116,25 @@ fun ChatScreen(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                TopChatBar(
-                    user = User(
-                        name = "Dinosaur",
-                    )
-                )
+                when (val state = penpalData) {
+                    is UserState.Loading -> {
+
+                    }
+
+                    is UserState.Error -> {
+
+                    }
+
+                    is UserState.Success -> {
+                        val user = state.user
+                        Log.d("ChatScreen", "messages: $user")
+
+                        TopChatBar(
+                            user = user ?: User(),
+                        )
+                    }
+                }
+
             },
             bottomBar = {
                 ChatInputField(
@@ -120,12 +143,17 @@ fun ChatScreen(
                         textState = newValue
                     },
                     onSendClick = {
-                        chatViewModel.sendMessage(
-                            senderId = mineId,
-                            chatId = chatId,
-                            text = textState,
-                            type = "text",
-                        )
+                        if(textState.isNotBlank()) {
+                            val messageText = textState
+                            textState = ""
+                            chatViewModel.sendMessage(
+                                senderId = mineId,
+                                chatId = chatId,
+                                text = messageText,
+                                type = "text",
+                            )
+                        }
+
                     },
                     onAttachClick = {
                         println("Нажата скрепка")
@@ -165,7 +193,6 @@ fun ChatScreen(
                         val messages = state.messages
                         Log.d("ChatScreen", "messages: $messages")
 
-                        // Список сообщений на экране
                         Content(
                             messages = messages,
                             paddingValues = paddingValues,

@@ -16,6 +16,7 @@ import com.example.hydrogram.presentation.screens.ContactsScreen
 import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
+import com.example.hydrogram.presentation.viewModel.UserViewModel
 
 @RequiresApi(Build.VERSION_CODES.S)
 fun NavGraphBuilder.MainNavGraph(
@@ -40,10 +41,12 @@ fun NavGraphBuilder.MainNavGraph(
         )
     ) { backStackEntry ->
         val chatViewModel: ChatViewModel = hiltViewModel()
+        val userViewModel: UserViewModel = hiltViewModel()
         val penpalId = backStackEntry.arguments?.getString("id") ?: ""
 
         ChatScreen(
             chatViewModel = chatViewModel,
+            userViewModel = userViewModel,
             navController = navController,
             penpalId = penpalId,
         )
