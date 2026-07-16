@@ -11,10 +11,12 @@ import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.hydrogram.presentation.screens.ChatListScreen
 import com.example.hydrogram.presentation.screens.ChatScreen
 import com.example.hydrogram.presentation.screens.ContactsScreen
 import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
+import com.example.hydrogram.presentation.viewModel.InboxViewModel
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 
@@ -51,4 +53,18 @@ fun NavGraphBuilder.MainNavGraph(
             penpalId = penpalId,
         )
     }
+
+    composable(route = Screen.ChatList.route) { backStackEntry ->
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("main_graph")
+        }
+        val inboxViewModelViewModel: InboxViewModel = hiltViewModel()
+
+        ChatListScreen(
+            inboxViewModel = inboxViewModelViewModel,
+            navController = navController,
+        )
+    }
+
+
 }
