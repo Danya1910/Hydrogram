@@ -84,7 +84,7 @@ fun ChatScreen(
         )
     }
 
-    val penpalData = userViewModel.userState.collectAsStateWithLifecycle()
+    val penpalData by userViewModel.userState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         chatViewModel.getCurrentUserId()
@@ -118,16 +118,24 @@ fun ChatScreen(
             topBar = {
                 when (val state = penpalData) {
                     is UserState.Loading -> {
-
+                        TopChatBar(
+                            user = User(
+                                name = "Loading"
+                            ),
+                        )
                     }
 
                     is UserState.Error -> {
-
+                        TopChatBar(
+                            user = User(
+                                name = "Error"
+                            ),
+                        )
                     }
 
                     is UserState.Success -> {
                         val user = state.user
-                        Log.d("ChatScreen", "messages: $user")
+                        Log.d("ChatScreen", "данные собеседника: $user")
 
                         TopChatBar(
                             user = user ?: User(),
