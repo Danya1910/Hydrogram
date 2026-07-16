@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -72,10 +74,11 @@ private fun Content(
         )
     }
 
+
     when (val state = uiState) {
         is InboxUiState.Success -> {
             val chats = state.chats
-
+            Log.d("ChatListScreen", "chats: $chats")
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -92,9 +95,11 @@ private fun Content(
 
         else -> {
             // Пока данные конкретного человека грузятся, показываем красивый скелетон-плейсхолдер
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
                 Text(text = "Загрузка...", color = Color.LightGray)
             }
         }
