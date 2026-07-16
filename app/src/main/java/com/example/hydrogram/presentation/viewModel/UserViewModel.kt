@@ -21,6 +21,7 @@ class UserViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
     private val setUserOnlineStatsUseCase: SetUserOnlineStatsUseCase,
+    private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
@@ -37,6 +38,19 @@ class UserViewModel @Inject constructor(
 
     private val _isSuccess = MutableStateFlow(false)
     val isSuccess = _isSuccess.asStateFlow()
+
+    private val _currentId = MutableStateFlow("")
+    val currentId = _currentId.asStateFlow()
+
+    fun getCurrentUserId() {
+        viewModelScope.launch {
+            val result = getCurrentUserIdUseCase()
+            if(!result.isNullOrEmpty()) {
+                _currentId.value = result
+            }
+            else return@launch
+        }
+    }
 
     fun observeUser(
         uid: String,
@@ -68,11 +82,11 @@ class UserViewModel @Inject constructor(
         isOnline: Boolean,
         createdAt: Long,
     ) {
-        if(uid.isBlank()) {
+        if (uid.isBlank()) {
             _errorMessage.value = "Пользователь не найден"
             return
         }
-        if(_isSaving.value) return
+        if (_isSaving.value) return
         viewModelScope.launch {
             _isSaving.value = true
             _isLoading.value = true

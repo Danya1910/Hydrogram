@@ -1,9 +1,11 @@
 package com.example.hydrogram.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,62 +18,70 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.internal.composableLambdaInstance
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MenuRowItem
+import com.example.hydrogram.presentation.viewModel.UserViewModel
+import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
+import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-@Preview(showBackground = true)
-fun SettingsScreen() {
-    SettingsScreenPreview()
+fun SettingsScreen(
+    userViewModel: UserViewModel,
+    navController: NavController,
+) {
+    Scaffold(
+        bottomBar = {
+            BottomBar(
+                currentRoute = "Settings"
+            )
+        },
+    ) { paddingValues ->
+        Content(
+            userViewModel = userViewModel,
+            navController = navController,
+            paddingValues = paddingValues,
+        )
+    }
 }
 
 @Composable
-private fun SettingsScreenPreview() {
+private fun Content(
+    userViewModel: UserViewModel,
+    navController: NavController,
+    paddingValues: PaddingValues,
+) {
 
-    val user = User(
-        name = "Dinosaur"
-    )
+    val mineId by userViewModel.currentId.collectAsStateWithLifecycle()
+    val mineData by userViewModel.userState.collectAsStateWithLifecycle()
 
-    val profileList = listOf(
-        MenuRowItem(
-            title = "Set Emoji Status",
-            icon = R.drawable.ic_bottom_search,
-            onClick = {},
-        ),
-        MenuRowItem(
-            title = "Set Emoji Status",
-            icon = R.drawable.ic_settings,
-            onClick = {},
-        ),
-        MenuRowItem(
-            title = "Set Emoji Status",
-            icon = R.drawable.ic_contacts,
-            onClick = {},
-        ),
-    )
-
+    LaunchedEffect(mineId) {
+        userViewModel.observeUser(uid = mineId)
+    }
 
     Column(
         modifier = Modifier
@@ -80,6 +90,45 @@ private fun SettingsScreenPreview() {
                 color = Color.White,
             )
     ) {
+        when (val state = mineData) {
+            is UserState.Loading -> {
+                TopChatBar(
+                    user = User(
+                        name = "Loading"
+                    ),
+                    onUserClick = {},
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                )
+            }
+
+            is UserState.Error -> {
+                TopChatBar(
+                    user = User(
+                        name = "Error"
+                    ),
+                    onUserClick = {},
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                )
+            }
+
+            is UserState.Success -> {
+                val user = state.user
+                Log.d("ChatScreen", "данные собеседника: $user")
+
+                TopChatBar(
+                    user = user ?: User(),
+                    onBackClick = {
+                        navController.popBackStack()
+                    },
+                    onUserClick = {},
+                )
+            }
+        }
+
         UserInfoHat(user = user)
         Box(
             modifier = Modifier
