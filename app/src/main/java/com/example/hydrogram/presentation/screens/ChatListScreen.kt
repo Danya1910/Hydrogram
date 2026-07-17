@@ -41,7 +41,7 @@ fun ChatListScreen(
         },
         bottomBar = {
             BottomBar(
-                currentRoute = "Chats",
+                navController = navController,
             )
         },
     ) { paddingValues ->

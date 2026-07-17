@@ -2,6 +2,7 @@ package com.example.hydrogram.presentation.widgets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,13 +16,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.blur
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -31,8 +35,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.hydrogram.R
 import com.example.hydrogram.presentation.navigation.NavigationData
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.BottomNavItem
 import com.example.hydrogram.ui.theme.SelectedItem
@@ -42,7 +48,7 @@ import com.google.android.material.shape.EdgeTreatment
 
 @Composable
 fun BottomBar(
-    currentRoute: String,
+    navController: NavController,
 ) {
     val buttons = listOf(
         NavigationData(
@@ -59,7 +65,7 @@ fun BottomBar(
             title = "Настройки",
             icon = R.drawable.ic_settings,
             route = "Settings"
-        )
+        ),
     )
 
     val glassBrush = Brush.linearGradient(
@@ -75,6 +81,9 @@ fun BottomBar(
             Color.White.copy(alpha = 0.10f),
         )
     )
+
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
 
 
     Row(
@@ -108,11 +117,17 @@ fun BottomBar(
                     contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .height(56.dp)
-                        .weight(1f)
-                        .background(
-                            color = if(isSelected) SelectedItem else Color.Transparent,
+                        .clip(
                             shape = CircleShape,
                         )
+                        .weight(1f)
+                        .background(
+                            color = if (isSelected) SelectedItem else Color.Transparent,
+                            shape = CircleShape,
+                        )
+                        .clickable{
+                            navController.navigate(item.route)
+                        }
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
@@ -120,7 +135,7 @@ fun BottomBar(
                         Icon(
                             painter = painterResource(item.icon),
                             contentDescription = null,
-                            tint = if(isSelected) Blue else BottomNavItem,
+                            tint = if (isSelected) Blue else BottomNavItem,
                         )
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
@@ -128,7 +143,7 @@ fun BottomBar(
                             fontFamily = SfProText,
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Bold,
-                            color = if(isSelected) Blue else BottomNavItem,
+                            color = if (isSelected) Blue else BottomNavItem,
                         )
                     }
                 }

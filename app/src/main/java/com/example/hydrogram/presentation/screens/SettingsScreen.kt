@@ -57,7 +57,7 @@ fun SettingsScreen(
     Scaffold(
         bottomBar = {
             BottomBar(
-                currentRoute = "Settings"
+                navController = navController,
             )
         },
     ) { paddingValues ->

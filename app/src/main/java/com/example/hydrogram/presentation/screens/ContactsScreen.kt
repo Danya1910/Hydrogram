@@ -61,7 +61,7 @@ fun ContactsScreen(
     Scaffold(
         bottomBar = {
             BottomBar(
-                currentRoute = "Contacts"
+                navController = navController,
             )
         }
     ) { paddingValues ->

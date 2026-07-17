@@ -15,6 +15,7 @@ import com.example.hydrogram.presentation.screens.ChatListScreen
 import com.example.hydrogram.presentation.screens.ChatScreen
 import com.example.hydrogram.presentation.screens.ContactsScreen
 import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
+import com.example.hydrogram.presentation.screens.SettingsScreen
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.InboxViewModel
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
@@ -55,16 +56,21 @@ fun NavGraphBuilder.MainNavGraph(
     }
 
     composable(route = Screen.ChatList.route) { backStackEntry ->
-        val parentEntry = remember(backStackEntry) {
-            navController.getBackStackEntry("main_graph")
-        }
-        val inboxViewModelViewModel: InboxViewModel = hiltViewModel()
+        val inboxViewModel: InboxViewModel = hiltViewModel()
 
         ChatListScreen(
-            inboxViewModel = inboxViewModelViewModel,
+            inboxViewModel = inboxViewModel,
             navController = navController,
         )
     }
 
+    composable(route = Screen.Settings.route) { backStackEntry ->
+        val userViewModel: UserViewModel = hiltViewModel()
+
+        SettingsScreen(
+            userViewModel = userViewModel,
+            navController = navController,
+        )
+    }
 
 }
