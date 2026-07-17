@@ -40,6 +40,7 @@ import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MenuRowItem
+import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -111,6 +112,7 @@ private fun Content(
             .background(
                 color = Color.White,
             )
+            .padding(paddingValues = paddingValues)
     ) {
         when (val state = mineData) {
             is UserState.Loading -> {
@@ -161,6 +163,11 @@ private fun Content(
 private fun UserInfoHat(
     user: User?
 ) {
+
+    val phoneNumber = formatPhoneNumber(
+        rawInput = user?.phone ?: ""
+    )
+
     Box(
         modifier = Modifier
             .background(
@@ -170,6 +177,7 @@ private fun UserInfoHat(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
+                .padding(top = 8.dp)
                 .padding(
                     horizontal = 16.dp,
                 )
@@ -202,7 +210,7 @@ private fun UserInfoHat(
             )
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = "+888 888 888 • @dino",
+                text = "$phoneNumber • @username",
                 fontFamily = SfProText,
                 fontSize = 20.sp,
                 color = Color.White,
