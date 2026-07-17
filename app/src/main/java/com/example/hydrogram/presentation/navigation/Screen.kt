@@ -25,7 +25,7 @@ sealed interface Screen {
     }
 
     data object ChatList : Screen {
-        override val route = "ChatList"
+        override val route = "Chats"
     }
 
     data object Settings : Screen {
