@@ -83,6 +83,24 @@ private fun Content(
         userViewModel.observeUser(uid = mineId)
     }
 
+    val profileList = listOf(
+        MenuRowItem(
+            title = "Set Emoji Status",
+            icon = R.drawable.ic_bottom_search,
+            onClick = {},
+        ),
+        MenuRowItem(
+            title = "Set Emoji Status",
+            icon = R.drawable.ic_settings,
+            onClick = {},
+        ),
+        MenuRowItem(
+            title = "Set Emoji Status",
+            icon = R.drawable.ic_contacts,
+            onClick = {},
+        ),
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -92,44 +110,28 @@ private fun Content(
     ) {
         when (val state = mineData) {
             is UserState.Loading -> {
-                TopChatBar(
+                UserInfoHat(
                     user = User(
-                        name = "Loading"
-                    ),
-                    onUserClick = {},
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
+                        name = "Loading..."
+                    )
                 )
             }
 
             is UserState.Error -> {
-                TopChatBar(
+                UserInfoHat(
                     user = User(
-                        name = "Error"
-                    ),
-                    onUserClick = {},
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
+                        name = "Error..."
+                    )
                 )
             }
 
             is UserState.Success -> {
                 val user = state.user
-                Log.d("ChatScreen", "данные собеседника: $user")
-
-                TopChatBar(
-                    user = user ?: User(),
-                    onBackClick = {
-                        navController.popBackStack()
-                    },
-                    onUserClick = {},
-                )
+                Log.d("ChatScreen", "мои данные: $user")
+                UserInfoHat(user = user)
             }
         }
 
-        UserInfoHat(user = user)
         Box(
             modifier = Modifier
                 .fillMaxSize()
