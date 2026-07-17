@@ -79,6 +79,10 @@ private fun Content(
     val mineId by userViewModel.currentId.collectAsStateWithLifecycle()
     val mineData by userViewModel.userState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        userViewModel.getCurrentUserId()
+    }
+
     LaunchedEffect(mineId) {
         userViewModel.observeUser(uid = mineId)
     }
