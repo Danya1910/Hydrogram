@@ -371,13 +371,15 @@ private fun ActionRowItem(
             .background(
                 color = Color.Blue,
             )
-
     ) {
         Column(
-            verticalArrangement = Arrangement.Center,
+            verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
+                .padding(
+                    vertical = 10.dp
+                )
         ) {
             Icon(
                 painter = painterResource(icon),
