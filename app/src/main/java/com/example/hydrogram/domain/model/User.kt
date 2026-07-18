@@ -11,4 +11,7 @@ data class User(
     val isOnline: Boolean = false,
     val createdAt: Long = 0L,
     val phone: String = "",
+    val aboutUser: String = "",
+    val birthdayDate: String = "",
+    val userName: String = "",
 )
