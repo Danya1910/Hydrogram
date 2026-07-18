@@ -164,9 +164,9 @@ private fun UserInfoHat(
                 fontWeight = FontWeight.Medium,
                 letterSpacing = (-0.25).sp,
             )
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             ActionRow()
-            Spacer(modifier = Modifier.height(5.dp))
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
@@ -331,23 +331,23 @@ private fun ActionRow() {
             onClick = {},
         )
         ActionRowItem(
-            icon = R.drawable.ic_phone,
-            title = "call",
+            icon = R.drawable.ic_camera,
+            title = "video",
             onClick = {},
         )
         ActionRowItem(
-            icon = R.drawable.ic_phone,
-            title = "call",
+            icon = R.drawable.ic_bell,
+            title = "mute",
             onClick = {},
         )
         ActionRowItem(
-            icon = R.drawable.ic_phone,
-            title = "call",
+            icon = R.drawable.ic_search_action_row,
+            title = "search",
             onClick = {},
         )
         ActionRowItem(
-            icon = R.drawable.ic_phone,
-            title = "call",
+            icon = R.drawable.ic_ellipsis,
+            title = "more",
             onClick = {},
         )
     }
