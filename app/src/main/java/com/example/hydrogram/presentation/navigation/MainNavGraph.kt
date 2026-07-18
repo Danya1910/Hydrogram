@@ -16,6 +16,7 @@ import com.example.hydrogram.presentation.screens.ChatScreen
 import com.example.hydrogram.presentation.screens.ContactsScreen
 import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
 import com.example.hydrogram.presentation.screens.SettingsScreen
+import com.example.hydrogram.presentation.screens.UserProfileScreen
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.InboxViewModel
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
@@ -70,6 +71,22 @@ fun NavGraphBuilder.MainNavGraph(
         SettingsScreen(
             userViewModel = userViewModel,
             navController = navController,
+        )
+    }
+
+    composable(
+        route = Screen.UserProfile.route,
+        arguments = listOf(
+            navArgument("id") {type = NavType.StringType}
+        )
+    ) { backStackEntry ->
+        val userViewModel: UserViewModel = hiltViewModel(backStackEntry)
+        val userId = backStackEntry.arguments?.getString("id") ?: ""
+
+        UserProfileScreen(
+            userViewModel = userViewModel,
+            navController = navController,
+            userId = userId,
         )
     }
 

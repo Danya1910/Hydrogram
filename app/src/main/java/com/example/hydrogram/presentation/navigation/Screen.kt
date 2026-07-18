@@ -41,5 +41,13 @@ sealed interface Screen {
 
     }
 
+    data object  UserProfile : Screen {
+        override val route = "User_Profile/{id}"
+
+        fun createRoute(id: String) : String {
+            return "User_Profile/$id"
+        }
+    }
+
 
 }

@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.horizontalScroll
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,23 +24,27 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.UserInfoRowItem
 import com.example.hydrogram.presentation.util.formatPhoneNumber
+import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
@@ -49,31 +53,100 @@ import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-fun UserProfileScreen() {
+fun UserProfileScreen(
+    userViewModel: UserViewModel,
+    navController: NavController,
+    userId: String,
+) {
     Scaffold { paddingValues ->
         Content(
-            paddingValues = paddingValues
+            userViewModel = userViewModel,
+            navController = navController,
+            userId = userId,
+            paddingValues = paddingValues,
         )
     }
 }
 
 @Composable
 private fun Content(
+    userViewModel: UserViewModel,
+    navController: NavController,
+    userId: String,
     paddingValues: PaddingValues,
 ) {
+
+    val userData = userViewModel.userState.collectAsStateWithLifecycle()
+
+    LaunchedEffect(userId) {
+        userViewModel.observeUser(
+            uid = userId
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        UserInfoHat(
-            user = User(
-                name = "Didi"
-            )
-        )
-//        MenuRow(
-//            items =
-//        )
+        when (val state = userData) {
+            is UserState.Loading -> {
+                UserInfoHat(
+                    user = User(
+                        name = "Loading..."
+                    )
+                )
+            }
 
+            is UserState.Error -> {
+                UserInfoHat(
+                    user = User(
+                        name = "Error..."
+                    )
+                )
+            }
+
+            is UserState.Success -> {
+                val user = state.user
+                val items = listOf(
+                    UserInfoRowItem(
+                        title = "мобильный",
+                        text = formatPhoneNumber(
+                            rawInput = user?.phone ?: ""
+                        ),
+                        textColor = Blue,
+                    ),
+                    UserInfoRowItem(
+                        title = "имя пользователя",
+                        text = "@cat",
+                        textColor = Blue,
+                    ),
+                    UserInfoRowItem(
+                        title = "день рождения",
+                        text = "6 июля",
+                        textColor = LightBlack,
+                    ),
+                    UserInfoRowItem(
+                        title = "о себе",
+                        text = "EYP",
+                        textColor = LightBlack,
+                    ),
+                )
+                Log.d("UserProfileScreen", "данные пользователя: $user")
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = LightGrayBackground
+                        )
+                ) {
+                    MenuRow(
+                        items = items
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    ChatDataRow()
+                }
+            }
+        }
     }
 }
 

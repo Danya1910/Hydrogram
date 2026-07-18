@@ -45,6 +45,7 @@ import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.ChatUiState
 import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.generateChatId
@@ -150,7 +151,9 @@ fun ChatScreen(
                             onBackClick = {
                                 navController.popBackStack()
                             },
-                            onUserClick = {},
+                            onUserClick = {
+                                navController.navigate(Screen.UserProfile.createRoute(id = penpalId ?: ""))
+                            },
                         )
                     }
                 }
