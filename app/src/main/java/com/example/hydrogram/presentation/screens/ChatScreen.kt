@@ -4,6 +4,7 @@ import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -35,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,7 +51,9 @@ import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.ChatUiState
 import com.example.hydrogram.presentation.states.UserState
+import com.example.hydrogram.presentation.util.formatHeaderDate
 import com.example.hydrogram.presentation.util.generateChatId
+import com.example.hydrogram.presentation.util.getStartOfDay
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
@@ -237,24 +242,64 @@ private fun Content(
     mineId: String,
 ) {
 
+    val groupedMessages = remember(messages) {
+        messages.groupBy { message -> getStartOfDay(message.timestamp) }
+    }
 
     LazyColumn(
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = paddingValues)
             .padding(all = 16.dp)
     ) {
-        items(
-            items = messages,
-            key = { message -> message.messageId }
-        ) { message ->
-            if (message.senderId == mineId) {
-                MineTextMessage(message = message)
-            } else {
-                PenpalTextMessage(message = message)
+        groupedMessages.forEach { (dayTimestamp, dayMessages) ->
+
+            // 1. Рисуем заголовок даты для конкретного дня
+            item(key = "date_$dayTimestamp") {
+                DateSeparator(text = formatHeaderDate(dayTimestamp))
             }
-            Spacer(modifier = Modifier.height(4.dp))
+
+            // 2. Рисуем сообщения этого дня
+            items(
+                items = dayMessages,
+                key = { message -> message.messageId }
+            ) { message ->
+                if (message.senderId == mineId) {
+                    MineTextMessage(message = message)
+                } else {
+                    PenpalTextMessage(message = message)
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
         }
+    }
+}
+
+@Composable
+private fun DateSeparator(
+    text: String,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(24.dp)
+            .background(
+                color = Color.Black.copy(alpha = 0.3f),
+                shape = CircleShape,
+            )
+            .padding(
+                horizontal = 7.dp,
+            )
+    ) {
+        Text(
+            text = text,
+            fontFamily = SfProText,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            letterSpacing = (-0.08).sp,
+        )
     }
 }
 
