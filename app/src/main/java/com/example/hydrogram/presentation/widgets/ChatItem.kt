@@ -61,7 +61,9 @@ fun ChatItem(
 ) {
 
     val penpalId = remember(chat.chatId, mineId) {
-        chat.chatId.split("_").firstOrNull { it != mineId } ?: ""
+        val parts = chat.chatId.split("_")
+        // Ищем чужой ID, а если его нет — берем свой (чат с собой)
+        parts.firstOrNull { it != mineId } ?: parts.firstOrNull() ?: ""
     }
 
     val userState by userViewModel.userState.collectAsStateWithLifecycle()
