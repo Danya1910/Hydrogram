@@ -2,6 +2,7 @@ package com.example.hydrogram.presentation.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +15,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -24,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -84,7 +88,7 @@ private fun ContentPreview(
         UserInfoHat(
             user = user
         )
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -94,10 +98,13 @@ private fun ContentPreview(
             MenuRow(
                 items = items
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            ChatDataRow()
         }
 
     }
 }
+
 @Composable
 private fun UserInfoHat(
     user: User?
@@ -306,4 +313,83 @@ private fun UserProfileScreenPreview() {
         user = user,
         items = items,
     )
+}
+
+@Composable
+private fun ChatDataRow() {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(41.dp)
+            .padding(horizontal = 16.dp)
+            .clip(
+                shape = CircleShape
+            )
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape
+            )
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 2.dp),
+    ) {
+        ChatDataItem(
+            text = "Posts",
+            isSelected = true,
+        )
+        ChatDataItem(
+            text = "Gifts",
+            isSelected = false,
+        )
+        ChatDataItem(
+            text = "Media",
+            isSelected = false,
+        )
+        ChatDataItem(
+            text = "Files",
+            isSelected = false,
+        )
+        ChatDataItem(
+            text = "Music",
+            isSelected = false,
+        )
+    }
+}
+
+@Composable
+private fun ChatDataItem(
+    text: String,
+    isSelected: Boolean,
+) {
+
+    val boxColor = if(isSelected) LightGrayBackground else Color.Transparent
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(35.dp)
+            .clip(
+                shape = CircleShape,
+            )
+            .background(
+                color = boxColor,
+            )
+            .padding(horizontal = 19.dp)
+    ) {
+        Text(
+            text = text,
+            fontFamily = SfProText,
+            fontWeight = FontWeight.Medium,
+            fontSize = 14.sp,
+            color = LightBlack,
+            letterSpacing = (-0.08).sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+
+            )
+    }
 }
