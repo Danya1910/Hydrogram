@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -76,7 +77,7 @@ private fun Content(
     paddingValues: PaddingValues,
 ) {
 
-    val userData = userViewModel.userState.collectAsStateWithLifecycle()
+    val userData by userViewModel.userState.collectAsStateWithLifecycle()
 
     LaunchedEffect(userId) {
         userViewModel.observeUser(
@@ -132,6 +133,9 @@ private fun Content(
                     ),
                 )
                 Log.d("UserProfileScreen", "данные пользователя: $user")
+                UserInfoHat(
+                    user = user,
+                )
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -140,7 +144,7 @@ private fun Content(
                         )
                 ) {
                     MenuRow(
-                        items = items
+                        items = items,
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     ChatDataRow()
