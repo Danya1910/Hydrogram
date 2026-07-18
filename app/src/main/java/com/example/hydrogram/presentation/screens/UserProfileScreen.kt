@@ -188,10 +188,6 @@ private fun UserInfoHat(
     user: User?
 ) {
 
-    val phoneNumber = formatPhoneNumber(
-        rawInput = user?.phone ?: ""
-    )
-
     Box(
         modifier = Modifier
             .background(
@@ -211,7 +207,7 @@ private fun UserInfoHat(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                GlassButton(icon = R.drawable.ic_qr)
+                GlassButton(icon = R.drawable.ic_arrow_left)
                 Spacer(modifier = Modifier.weight(1f))
                 GlassButton(text = "Edit")
             }
