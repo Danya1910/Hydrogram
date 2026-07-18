@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.rememberScrollState
@@ -164,6 +165,8 @@ private fun UserInfoHat(
                 letterSpacing = (-0.25).sp,
             )
             Spacer(modifier = Modifier.height(5.dp))
+            ActionRow()
+            Spacer(modifier = Modifier.height(5.dp))
         }
     }
 }
@@ -313,6 +316,85 @@ private fun UserProfileScreenPreview() {
         user = user,
         items = items,
     )
+}
+
+@Composable
+private fun ActionRow() {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        ActionRowItem(
+            icon = R.drawable.ic_phone,
+            title = "call",
+            onClick = {},
+        )
+        ActionRowItem(
+            icon = R.drawable.ic_phone,
+            title = "call",
+            onClick = {},
+        )
+        ActionRowItem(
+            icon = R.drawable.ic_phone,
+            title = "call",
+            onClick = {},
+        )
+        ActionRowItem(
+            icon = R.drawable.ic_phone,
+            title = "call",
+            onClick = {},
+        )
+        ActionRowItem(
+            icon = R.drawable.ic_phone,
+            title = "call",
+            onClick = {},
+        )
+    }
+}
+
+
+@Composable
+private fun ActionRowItem(
+    icon: Int,
+    title: String,
+    onClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(60.dp)
+            .width(67.6.dp)
+            .clip(
+                shape = RoundedCornerShape(24.dp)
+            )
+            .background(
+                color = Color.Blue,
+            )
+
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = Color.White
+            )
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(
+                text = title,
+                fontWeight = FontWeight.Normal,
+                fontSize = 12.sp,
+                fontFamily = SfProText,
+                color = Color.White,
+            )
+        }
+
+    }
 }
 
 @Composable
