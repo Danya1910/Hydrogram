@@ -1,7 +1,11 @@
 package com.example.hydrogram.presentation.screens
 
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -34,8 +38,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
@@ -58,6 +65,8 @@ import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
+import com.example.hydrogram.ui.theme.DateSeparatorGreen
+import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
@@ -65,6 +74,7 @@ import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
 
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun ChatScreen(
     navController: NavController,
@@ -235,6 +245,7 @@ fun ChatScreen(
 
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun Content(
     messages: List<Message>,
@@ -277,6 +288,7 @@ private fun Content(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun DateSeparator(
     text: String,
@@ -284,21 +296,52 @@ private fun DateSeparator(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .height(24.dp)
-            .background(
-                color = Color.Black.copy(alpha = 0.3f),
-                shape = CircleShape,
-            )
-            .padding(
-                horizontal = 7.dp,
-            )
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
     ) {
-        Text(
-            text = text,
-            fontFamily = SfProText,
-            fontWeight = FontWeight.SemiBold,
-            fontSize = 13.sp,
-            letterSpacing = (-0.08).sp,
+        Box(
+            modifier = Modifier.height(24.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .blur(radius = 1.dp)
+                    .background(
+                        color = DateSeparatorGreen.copy(alpha = 0.65f),
+                        shape = CircleShape
+                    )
+            )
+            Text(
+                text = text,
+                fontFamily = SfProText,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = Color.White,
+                modifier = Modifier.padding(horizontal = 10.dp),
+                letterSpacing = (-0.08).sp,
+            )
+        }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+@Preview(showBackground = true)
+private fun DatePreview() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        Image(
+            painter = painterResource(R.drawable.light_bg),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+        )
+        DateSeparator(
+            text = "17 июл"
         )
     }
 }

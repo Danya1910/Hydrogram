@@ -23,3 +23,5 @@ val PenpalMessageTimeColor = Color(0xFF7F7F7F)
 
 val OfflineStatusColor = Color(0xFF999999)
 val LightBlack = Color(0xFF1A1A1A)
+
+val DateSeparatorGreen = Color(0xFF6F9F64)
