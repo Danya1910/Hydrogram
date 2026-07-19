@@ -88,6 +88,7 @@ private fun Content(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(paddingValues = paddingValues)
     ) {
         when (val state = userData) {
             is UserState.Loading -> {

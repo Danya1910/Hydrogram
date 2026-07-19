@@ -167,7 +167,11 @@ fun ChatScreen(
                                 navController.popBackStack()
                             },
                             onUserClick = {
-                                navController.navigate(Screen.UserProfile.createRoute(id = penpalId ?: ""))
+                                navController.navigate(
+                                    Screen.UserProfile.createRoute(
+                                        id = penpalId ?: ""
+                                    )
+                                )
                             },
                         )
                     }
@@ -181,7 +185,7 @@ fun ChatScreen(
                         textState = newValue
                     },
                     onSendClick = {
-                        if(textState.isNotBlank()) {
+                        if (textState.isNotBlank()) {
                             val messageText = textState
                             textState = ""
                             chatViewModel.sendMessage(
@@ -262,8 +266,10 @@ private fun Content(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues = paddingValues)
-            .padding(all = 16.dp)
+            .padding(
+                horizontal = 16.dp,
+                vertical = 8.dp,
+            ),
     ) {
         groupedMessages.forEach { (dayTimestamp, dayMessages) ->
 
