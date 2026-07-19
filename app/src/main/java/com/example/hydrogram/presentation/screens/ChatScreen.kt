@@ -325,27 +325,6 @@ private fun DateSeparator(
     }
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
-@Composable
-@Preview(showBackground = true)
-private fun DatePreview() {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Image(
-            painter = painterResource(R.drawable.light_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
-        DateSeparator(
-            text = "17 июл"
-        )
-    }
-}
-
 @Composable
 private fun MineTextMessage(
     message: Message,
