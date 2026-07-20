@@ -235,8 +235,8 @@ private fun ConnectionData(
         )
         ConnectionItem(
             icon = R.drawable.ic_green_phone,
-            text = "Номер",
-            hint = phoneNumber,
+            text = "Имя пользователя",
+            hint = user?.userName ?: "",
             onClick = {},
         )
         SeparatorLine(
@@ -246,8 +246,8 @@ private fun ConnectionData(
         )
         ConnectionItem(
             icon = R.drawable.ic_green_phone,
-            text = "Номер",
-            hint = phoneNumber,
+            text = "Персональные цвета",
+            hint = "",
             onClick = {},
         )
     }
