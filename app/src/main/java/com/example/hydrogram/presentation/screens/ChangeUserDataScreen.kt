@@ -1,7 +1,9 @@
 package com.example.hydrogram.presentation.screens
 
+import android.widget.Space
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,6 +34,7 @@ import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,12 +42,15 @@ import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.util.MenuRowItem
+import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
+import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
+import com.google.android.gms.common.util.Strings
 
 @Composable
 fun ChangeUserDataScreen() {
@@ -90,7 +97,7 @@ private fun InputDataField(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .heightIn(min = 42.dp)
+            .heightIn(min = 52.dp)
             .fillMaxWidth()
             .clip(
                 shape = CircleShape
@@ -106,7 +113,7 @@ private fun InputDataField(
             textStyle = TextStyle(
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Medium,
-                fontSize = 18.sp,
+                fontSize = 17.sp,
                 color = Color.Black,
                 letterSpacing = (-0.43).sp,
             ),
@@ -115,7 +122,7 @@ private fun InputDataField(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 10.dp, end = 12.dp)
+                        .padding(start = 5.dp, end = 12.dp)
                 ) {
                     Box(
                         modifier = Modifier
@@ -125,8 +132,9 @@ private fun InputDataField(
                             Text(
                                 text = hintText,
                                 fontFamily = SfProText,
-                                fontSize = 18.sp,
-                                color = Color.Gray.copy(alpha = 0.8f)
+                                fontSize = 17.sp,
+                                color = Color.Gray.copy(alpha = 0.8f),
+                                letterSpacing = (-0.43).sp,
                             )
                         }
                         innerTextField()
@@ -146,7 +154,7 @@ private fun BirthdayInput(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .heightIn(min = 42.dp)
+            .heightIn(min = 52.dp)
             .fillMaxWidth()
             .clip(
                 shape = CircleShape
@@ -166,7 +174,7 @@ private fun BirthdayInput(
             text = "День рождения",
             fontFamily = SfProText,
             fontWeight = FontWeight.Medium,
-            fontSize = 18.sp,
+            fontSize = 17.sp,
             color = LightBlack,
         )
         Spacer(modifier = Modifier.weight(1f))
@@ -174,18 +182,173 @@ private fun BirthdayInput(
             text = "1 янв",
             fontFamily = SfProText,
             fontWeight = FontWeight.Medium,
-            fontSize = 18.sp,
+            fontSize = 17.sp,
             color = Color.Gray.copy(alpha = 0.8f),
         )
     }
 }
 
 @Composable
+private fun FieldHint(
+    text: String,
+) {
+    Text(
+        text = text,
+        fontFamily = SfProText,
+        fontSize = 15.sp,
+        fontWeight = FontWeight.Normal,
+        color = Color.Gray.copy(alpha = 0.8f),
+        letterSpacing = (-0.23).sp,
+        modifier = Modifier.padding(horizontal = 10.dp),
+    )
+}
+
+@Composable
+private fun ConnectionData(
+    user: User?,
+) {
+
+    val phoneNumber = formatPhoneNumber(
+        rawInput = user?.phone ?: "",
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(
+                shape = RoundedCornerShape(18.dp),
+            )
+            .background(
+                color = Color.White,
+            )
+    ) {
+        ConnectionItem(
+            icon = R.drawable.ic_green_phone,
+            text = "Номер",
+            hint = phoneNumber,
+            onClick = {},
+        )
+        SeparatorLine(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 62.dp, end = 10.dp)
+        )
+        ConnectionItem(
+            icon = R.drawable.ic_green_phone,
+            text = "Номер",
+            hint = phoneNumber,
+            onClick = {},
+        )
+        SeparatorLine(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 62.dp, end = 10.dp)
+        )
+        ConnectionItem(
+            icon = R.drawable.ic_green_phone,
+            text = "Номер",
+            hint = phoneNumber,
+            onClick = {},
+        )
+    }
+
+}
+
+@Composable
+private fun ConnectionItem(
+    icon: Int,
+    text: String,
+    hint: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(52.dp)
+            .fillMaxWidth()
+            .background(
+                color = Color.White
+            )
+            .padding(horizontal = 10.dp),
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = Color.Unspecified,
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Text(
+            text = text,
+            fontFamily = SfProText,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            color = LightBlack,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.End,
+        ) {
+            Text(
+                text = hint,
+                fontFamily = SfProText,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Gray.copy(alpha = 0.8f),
+                letterSpacing = (-0.43).sp,
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_right),
+                contentDescription = null,
+                tint = Color.Unspecified,
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountButton(
+    text: String,
+    textColor: Color,
+    onClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(52.dp)
+            .fillMaxWidth()
+            .clip(
+                shape = CircleShape,
+            )
+            .background(
+                color = Color.White,
+            )
+            .clickable{
+                onClick()
+            }
+    ) {
+        Text(
+            text = text,
+            fontFamily = SfProText,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.Medium,
+            color = textColor,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+
+@Composable
 @Preview(showBackground = true)
 private fun ChangeUserDataScreenPreview() {
 
-    val name by remember { mutableStateOf("D") }
-    val aboutMe by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf("D") }
+    var aboutMe by remember { mutableStateOf("") }
 
     val user = User(
         uid = "user_12345",
@@ -216,14 +379,48 @@ private fun ChangeUserDataScreenPreview() {
         Spacer(modifier = Modifier.height(16.dp))
         InputDataField(
             value = name,
-            onValueChange = {},
+            onValueChange = {
+                name = it
+            },
             hintText = "",
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        FieldHint(
+            text = "Укажите имя и, если хотите, добавьте фотографию для Вашего профиля."
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        InputDataField(
+            value = aboutMe,
+            onValueChange = {
+                aboutMe = it
+            },
+            hintText = "О себе",
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        FieldHint(
+            text = "Напишите несколько строк о себе."
         )
         Spacer(modifier = Modifier.height(16.dp))
         BirthdayInput(
             value = name,
             onValueChange = {},
             hintText = "",
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        ConnectionData(
+            user = user,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        AccountButton(
+            text = "Сменить аккаунт",
+            textColor = Blue,
+            onClick = {},
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        AccountButton(
+            text = "Выйти",
+            textColor = Red,
+            onClick = {},
         )
     }
 }

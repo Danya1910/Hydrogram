@@ -12,6 +12,7 @@ val Pink40 = Color(0xFF7D5260)
 
 val Gray = Color(0xFF3C3C43)
 val Blue = Color(0xFF008BFF)
+val Red = Color(0xFFFF383C)
 val Separator = Color(0xFFE6E6E6)
 val SelectedItem = Color(0XFFEDEDED)
 val BottomNavItem = Color(0xFF1A1A1A)
