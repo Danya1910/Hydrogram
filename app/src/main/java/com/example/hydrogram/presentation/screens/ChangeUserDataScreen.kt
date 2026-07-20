@@ -19,6 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.util.MenuRowItem
 import com.example.hydrogram.presentation.util.formatPhoneNumber
+import com.example.hydrogram.presentation.widgets.ChangeUserDataTopAppBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
@@ -54,6 +56,7 @@ import com.google.android.gms.common.util.Strings
 
 @Composable
 fun ChangeUserDataScreen() {
+
 }
 
 
@@ -363,65 +366,72 @@ private fun ChangeUserDataScreenPreview() {
         userName = "@cat"
     )
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                color = LightGrayBackground,
+    Scaffold(
+        topBar = {
+            ChangeUserDataTopAppBar()
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = LightGrayBackground,
+                )
+                .padding(paddingValues = paddingValues)
+                .padding(
+                    horizontal = 16.dp
+                )
+        ) {
+            ChangeAvatar(
+                user = user,
             )
-            .padding(
-                horizontal = 16.dp
+            Spacer(modifier = Modifier.height(16.dp))
+            InputDataField(
+                value = name,
+                onValueChange = {
+                    name = it
+                },
+                hintText = "",
             )
-    ) {
-        ChangeAvatar(
-            user = user,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        InputDataField(
-            value = name,
-            onValueChange = {
-                name = it
-            },
-            hintText = "",
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        FieldHint(
-            text = "Укажите имя и, если хотите, добавьте фотографию для Вашего профиля."
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        InputDataField(
-            value = aboutMe,
-            onValueChange = {
-                aboutMe = it
-            },
-            hintText = "О себе",
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        FieldHint(
-            text = "Напишите несколько строк о себе."
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        BirthdayInput(
-            value = name,
-            onValueChange = {},
-            hintText = "",
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        ConnectionData(
-            user = user,
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        AccountButton(
-            text = "Сменить аккаунт",
-            textColor = Blue,
-            onClick = {},
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        AccountButton(
-            text = "Выйти",
-            textColor = Red,
-            onClick = {},
-        )
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldHint(
+                text = "Укажите имя и, если хотите, добавьте фотографию для Вашего профиля."
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            InputDataField(
+                value = aboutMe,
+                onValueChange = {
+                    aboutMe = it
+                },
+                hintText = "О себе",
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            FieldHint(
+                text = "Напишите несколько строк о себе."
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            BirthdayInput(
+                value = name,
+                onValueChange = {},
+                hintText = "",
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            ConnectionData(
+                user = user,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            AccountButton(
+                text = "Сменить аккаунт",
+                textColor = Blue,
+                onClick = {},
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            AccountButton(
+                text = "Выйти",
+                textColor = Red,
+                onClick = {},
+            )
+        }
     }
 }
 
