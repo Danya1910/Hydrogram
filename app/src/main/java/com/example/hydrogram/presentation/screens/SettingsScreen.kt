@@ -37,6 +37,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
@@ -182,20 +183,12 @@ private fun UserInfoHat(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
+                .fillMaxSize()
                 .padding(top = 8.dp)
                 .padding(
                     horizontal = 16.dp,
                 )
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                GlassButton(icon = R.drawable.ic_qr)
-                Spacer(modifier = Modifier.weight(1f))
-                GlassButton(text = "Edit")
-            }
             Icon(
                 painter = painterResource(R.drawable.ic_avatar),
                 contentDescription = null,
@@ -366,7 +359,9 @@ private fun TopBar(
         Spacer(modifier = Modifier.weight(1f))
         GlassButton(
             text = "Edit",
-            onClick = {},
+            onClick = {
+                navController.navigate(Screen.ChangeUserData.route)
+            },
         )
     }
 }

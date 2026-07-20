@@ -24,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +64,17 @@ fun ChangeUserDataScreen(
     navController: NavController,
 ) {
     val uiState by userViewModel.userState.collectAsStateWithLifecycle()
+    val mineId by userViewModel.currentId.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        userViewModel.getCurrentUserId()
+    }
+
+    LaunchedEffect(mineId) {
+        userViewModel.observeUser(
+            uid = mineId,
+        )
+    }
 
     var name by remember { mutableStateOf("D") }
     var aboutMe by remember { mutableStateOf("") }
@@ -103,7 +115,9 @@ fun ChangeUserDataScreen(
                     navController = navController,
                     paddingValues = paddingValues,
                     name = name,
+                    onNameChange = { name = it },
                     aboutMe = aboutMe,
+                    onAboutMeChange = { aboutMe = it }
                 )
             }
         }
@@ -116,7 +130,9 @@ private fun Content(
     navController: NavController,
     paddingValues: PaddingValues,
     name: String,
+    onNameChange: (String) -> Unit,
     aboutMe: String,
+    onAboutMeChange: (String) -> Unit,
 ) {
 
 
@@ -137,9 +153,8 @@ private fun Content(
         Spacer(modifier = Modifier.height(16.dp))
         InputDataField(
             value = name,
-            onValueChange = {
-                name = it
-            },
+            onValueChange =
+                onNameChange,
             hintText = "",
         )
         Spacer(modifier = Modifier.height(8.dp))
@@ -149,9 +164,7 @@ private fun Content(
         Spacer(modifier = Modifier.height(16.dp))
         InputDataField(
             value = aboutMe,
-            onValueChange = {
-                aboutMe = it
-            },
+            onValueChange = onAboutMeChange,
             hintText = "О себе",
         )
         Spacer(modifier = Modifier.height(8.dp))
