@@ -11,6 +11,7 @@ import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import com.example.hydrogram.presentation.screens.ChangeUserDataScreen
 import com.example.hydrogram.presentation.screens.ChatListScreen
 import com.example.hydrogram.presentation.screens.ChatScreen
 import com.example.hydrogram.presentation.screens.ContactsScreen
@@ -87,6 +88,15 @@ fun NavGraphBuilder.MainNavGraph(
             userViewModel = userViewModel,
             navController = navController,
             userId = userId,
+        )
+    }
+
+    composable(route = Screen.ChangeUserData.route) { backStackEntry ->
+        val userViewModel: UserViewModel = hiltViewModel()
+
+        ChangeUserDataScreen(
+            userViewModel = userViewModel,
+            navController = navController,
         )
     }
 

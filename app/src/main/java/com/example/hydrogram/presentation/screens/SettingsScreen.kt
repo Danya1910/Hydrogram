@@ -27,10 +27,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,7 +45,6 @@ import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
-import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
@@ -57,6 +56,11 @@ fun SettingsScreen(
     navController: NavController,
 ) {
     Scaffold(
+        topBar = {
+            TopBar(
+                navController = navController,
+            )
+        },
         bottomBar = {
             BottomBar(
                 navController = navController,
@@ -226,6 +230,7 @@ private fun UserInfoHat(
 private fun GlassButton(
     icon: Int? = null,
     text: String? = null,
+    onClick: () -> Unit,
 ) {
 
     Box(
@@ -326,6 +331,42 @@ private fun MenuRowItem(
             painter = painterResource(R.drawable.ic_arrow_right),
             contentDescription = null,
             tint = Color.Unspecified,
+        )
+    }
+}
+
+@Composable
+private fun TopBar(
+    navController: NavController,
+) {
+
+    val glassBrush = Brush.verticalGradient(
+        colors = listOf(
+            Color.White.copy(alpha = 0.8f),
+            Color.White.copy(alpha = 0.6f),
+            Color.White.copy(alpha = 0.4f),
+            Color.Transparent,
+        )
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(54.dp)
+            .fillMaxWidth()
+            .background(
+                brush = glassBrush,
+            )
+            .padding(horizontal = 16.dp)
+    ) {
+        GlassButton(
+            icon = R.drawable.ic_qr,
+            onClick = {},
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        GlassButton(
+            text = "Edit",
+            onClick = {},
         )
     }
 }

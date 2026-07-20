@@ -49,5 +49,9 @@ sealed interface Screen {
         }
     }
 
+    data object ChangeUserData : Screen {
+        override val route = "Change_User_Data"
+    }
+
 
 }

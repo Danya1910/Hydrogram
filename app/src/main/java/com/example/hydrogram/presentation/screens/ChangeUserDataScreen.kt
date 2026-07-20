@@ -1,11 +1,12 @@
 package com.example.hydrogram.presentation.screens
 
-import android.widget.Space
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -31,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -39,24 +40,147 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
-import com.example.hydrogram.presentation.util.MenuRowItem
+import com.example.hydrogram.presentation.states.ChatUiState
+import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.formatPhoneNumber
+import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChangeUserDataTopAppBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
-import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
-import com.google.android.gms.common.util.Strings
 
 @Composable
-fun ChangeUserDataScreen() {
+fun ChangeUserDataScreen(
+    userViewModel: UserViewModel,
+    navController: NavController,
+) {
+    val uiState by userViewModel.userState.collectAsStateWithLifecycle()
 
+    var name by remember { mutableStateOf("D") }
+    var aboutMe by remember { mutableStateOf("") }
+
+    Scaffold(
+        topBar = {
+            ChangeUserDataTopAppBar(
+            )
+        },
+    ) { paddingValues ->
+        when (val state = uiState) {
+            is UserState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is UserState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(text = state.message, color = Color.Red)
+                }
+            }
+
+            is UserState.Success -> {
+                val user = state.user
+                Log.d("ChangeData", "user data: $user")
+
+                Content(
+                    user = user,
+                    navController = navController,
+                    paddingValues = paddingValues,
+                    name = name,
+                    aboutMe = aboutMe,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Content(
+    user: User?,
+    navController: NavController,
+    paddingValues: PaddingValues,
+    name: String,
+    aboutMe: String,
+) {
+
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = LightGrayBackground,
+            )
+            .padding(paddingValues = paddingValues)
+            .padding(
+                horizontal = 16.dp
+            )
+    ) {
+        ChangeAvatar(
+            user = user,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        InputDataField(
+            value = name,
+            onValueChange = {
+                name = it
+            },
+            hintText = "",
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        FieldHint(
+            text = "Укажите имя и, если хотите, добавьте фотографию для Вашего профиля."
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        InputDataField(
+            value = aboutMe,
+            onValueChange = {
+                aboutMe = it
+            },
+            hintText = "О себе",
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        FieldHint(
+            text = "Напишите несколько строк о себе."
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        BirthdayInput(
+            value = name,
+            onValueChange = {},
+            hintText = "",
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        ConnectionData(
+            user = user,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        AccountButton(
+            text = "Сменить аккаунт",
+            textColor = Blue,
+            onClick = {},
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        AccountButton(
+            text = "Выйти",
+            textColor = Red,
+            onClick = {},
+        )
+    }
 }
 
 
@@ -329,7 +453,7 @@ private fun AccountButton(
             .background(
                 color = Color.White,
             )
-            .clickable{
+            .clickable {
                 onClick()
             }
     ) {
