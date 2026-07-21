@@ -46,7 +46,6 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
-import com.example.hydrogram.presentation.states.ChatUiState
 import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.viewModel.UserViewModel
@@ -82,6 +81,12 @@ fun ChangeUserDataScreen(
     Scaffold(
         topBar = {
             ChangeUserDataTopAppBar(
+                onCancelClick = {
+                    navController.popBackStack()
+                },
+                onDoneClick = {
+
+                },
             )
         },
     ) { paddingValues ->
@@ -505,7 +510,10 @@ private fun ChangeUserDataScreenPreview() {
 
     Scaffold(
         topBar = {
-            ChangeUserDataTopAppBar()
+            ChangeUserDataTopAppBar(
+                onDoneClick = {},
+                onCancelClick = {},
+            )
         }
     ) { paddingValues ->
         Column(

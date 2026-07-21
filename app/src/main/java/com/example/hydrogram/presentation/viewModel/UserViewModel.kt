@@ -45,10 +45,9 @@ class UserViewModel @Inject constructor(
     fun getCurrentUserId() {
         viewModelScope.launch {
             val result = getCurrentUserIdUseCase()
-            if(!result.isNullOrEmpty()) {
+            if (!result.isNullOrEmpty()) {
                 _currentId.value = result
-            }
-            else return@launch
+            } else return@launch
         }
     }
 

@@ -2,6 +2,7 @@ package com.example.hydrogram.presentation.widgets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -30,7 +32,8 @@ import com.example.hydrogram.ui.theme.SfProText
 
 @Composable
 fun ChangeUserDataTopAppBar(
-
+    onCancelClick: () -> Unit,
+    onDoneClick: () -> Unit,
 ) {
 
     val glassBrush = Brush.verticalGradient(
@@ -55,10 +58,16 @@ fun ChangeUserDataTopAppBar(
     ) {
         GlassButton(
             text = "Отмена",
+            onClick = {
+                onCancelClick()
+            },
         )
         Spacer(modifier = Modifier.weight(1f))
         GlassButton(
             text = "Готово",
+            onClick = {
+                onDoneClick()
+            },
         )
     }
 }
@@ -67,6 +76,7 @@ fun ChangeUserDataTopAppBar(
 private fun GlassButton(
     icon: Int? = null,
     text: String? = null,
+    onClick: () -> Unit,
 ) {
 
     Box(
@@ -80,6 +90,9 @@ private fun GlassButton(
                 clip = true, // Чтобы тень не обрезалась границами компонента
                 ambientColor = Color.Black.copy(alpha = 0.9f), // Мягкий рассеянный свет
             )
+            .clip(
+                shape = CircleShape
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
@@ -89,6 +102,9 @@ private fun GlassButton(
                 shape = CircleShape,
                 brush = GlassBorder,
             )
+            .clickable{
+                onClick()
+            }
             .padding(horizontal = 10.dp)
     ) {
         if (text != null) {
