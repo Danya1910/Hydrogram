@@ -121,7 +121,7 @@ private fun Content(
             .background(
                 color = LightGrayBackground,
             )
-            .padding(paddingValues = paddingValues)
+            .padding(top = 30.dp)
     ) {
         when (val state = mineData) {
             is UserState.Loading -> {

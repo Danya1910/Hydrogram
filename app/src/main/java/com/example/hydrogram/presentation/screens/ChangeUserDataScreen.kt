@@ -142,7 +142,7 @@ private fun Content(
             .background(
                 color = LightGrayBackground,
             )
-            .padding(paddingValues = paddingValues)
+            .padding(top = 30.dp)
             .padding(
                 horizontal = 16.dp
             )
@@ -514,7 +514,7 @@ private fun ChangeUserDataScreenPreview() {
                 .background(
                     color = LightGrayBackground,
                 )
-                .padding(paddingValues = paddingValues)
+                .padding(top = 30.dp)
                 .padding(
                     horizontal = 16.dp
                 )
