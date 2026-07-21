@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.screens
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
@@ -57,6 +59,7 @@ fun SettingsScreen(
     navController: NavController,
 ) {
     Scaffold(
+        containerColor = Blue,
         topBar = {
             TopBar(
                 navController = navController,
@@ -116,7 +119,7 @@ private fun Content(
         modifier = Modifier
             .fillMaxSize()
             .background(
-                color = Color.White,
+                color = LightGrayBackground,
             )
             .padding(paddingValues = paddingValues)
     ) {
@@ -176,6 +179,7 @@ private fun UserInfoHat(
 
     Box(
         modifier = Modifier
+            .fillMaxWidth()
             .background(
                 color = Blue
             )
@@ -183,7 +187,7 @@ private fun UserInfoHat(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(top = 8.dp)
                 .padding(
                     horizontal = 16.dp,
@@ -237,6 +241,9 @@ private fun GlassButton(
                 clip = true,
                 ambientColor = Color.Black.copy(alpha = 0.9f),
             )
+            .clip(
+                shape = CircleShape
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
@@ -246,6 +253,9 @@ private fun GlassButton(
                 shape = CircleShape,
                 brush = GlassBorder,
             )
+            .clickable{
+                onClick()
+            }
             .padding(horizontal = 10.dp)
     ) {
         if (text != null) {
@@ -345,6 +355,7 @@ private fun TopBar(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .statusBarsPadding()
             .height(54.dp)
             .fillMaxWidth()
             .background(
