@@ -80,6 +80,9 @@ class UserViewModel @Inject constructor(
         email: String,
         isOnline: Boolean,
         createdAt: Long,
+        aboutUser: String,
+        birthdayDate: String,
+        userName: String,
     ) {
         if (uid.isBlank()) {
             _errorMessage.value = "Пользователь не найден"
@@ -95,7 +98,10 @@ class UserViewModel @Inject constructor(
                 avatarUrl = avatarUrl,
                 email = email,
                 isOnline = isOnline,
-                createdAt = System.currentTimeMillis()
+                createdAt = System.currentTimeMillis(),
+                birthdayDate = birthdayDate,
+                aboutUser = aboutUser,
+                userName = userName,
             )
             _isSaving.value = false
             _isLoading.value = false

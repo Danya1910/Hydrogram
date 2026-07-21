@@ -3,6 +3,7 @@ package com.example.hydrogram.data.repository
 import android.util.Log
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
+import com.example.hydrogram.presentation.states.UserState
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.core.UserData
 import kotlinx.coroutines.channels.awaitClose
@@ -20,6 +21,18 @@ class UserRepositoryImpl @Inject constructor(
             firestore.collection("users")
                 .document(user.uid)
                 .set(user)
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun saveUserName(uid: String, userName: String): Result<Unit> {
+        return try {
+            firestore.collection("users")
+                .document(uid)
+                .update("userName", userName)
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {

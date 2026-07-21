@@ -15,6 +15,9 @@ class SaveUserProfileUseCase @Inject constructor(
         email: String,
         isOnline: Boolean,
         createdAt: Long,
+        aboutUser: String,
+        birthdayDate: String,
+        userName: String,
     ) : Result<Unit> {
         val user = User(
             uid = uid,
@@ -23,6 +26,9 @@ class SaveUserProfileUseCase @Inject constructor(
             email = email,
             isOnline = isOnline,
             createdAt = createdAt,
+            aboutUser = aboutUser,
+            birthdayDate = birthdayDate,
+            userName = userName,
         )
         return userRepository.saveUserProfile(user = user)
     }

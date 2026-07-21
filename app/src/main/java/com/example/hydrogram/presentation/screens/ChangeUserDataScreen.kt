@@ -77,6 +77,7 @@ fun ChangeUserDataScreen(
 
     var name by remember { mutableStateOf("D") }
     var aboutMe by remember { mutableStateOf("") }
+    var birthdayDate by remember { mutableStateOf("") }
 
     Scaffold(
         topBar = {
@@ -85,7 +86,17 @@ fun ChangeUserDataScreen(
                     navController.popBackStack()
                 },
                 onDoneClick = {
-
+                    userViewModel.saveProfile(
+                        uid = mineId,
+                        name = TODO(),
+                        avatarUrl = TODO(),
+                        email = TODO(),
+                        isOnline = TODO(),
+                        createdAt = TODO(),
+                        aboutUser = aboutMe,
+                        birthdayDate = birthdayDate,
+                        userName = u,
+                    )
                 },
             )
         },

@@ -7,6 +7,8 @@ interface UserRepository {
 
     suspend fun saveUserProfile(user: User) : Result<Unit>
 
+    suspend fun saveUserName(uid: String, userName: String) : Result<Unit>
+
     fun getUserById(uid: String) : Flow<User?>
 
     suspend fun findUserByPhone(phone: String) : User?
