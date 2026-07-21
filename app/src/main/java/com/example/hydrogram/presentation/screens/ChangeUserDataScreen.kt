@@ -75,9 +75,19 @@ fun ChangeUserDataScreen(
         )
     }
 
-    var name by remember { mutableStateOf("D") }
+    var name by remember { mutableStateOf("") }
     var aboutMe by remember { mutableStateOf("") }
     var birthdayDate by remember { mutableStateOf("") }
+
+    LaunchedEffect(uiState) {
+        if (uiState is UserState.Success) {
+            val user = (uiState as UserState.Success).user
+            // Проверяем на isEmpty(), чтобы не перезаписывать текст, если пользователь уже начал ввод
+            if (name.isEmpty() && user?.name != null) name = user.name
+            if (aboutMe.isEmpty() && user?.aboutUser != null) aboutMe = user.aboutUser
+            if (birthdayDate.isEmpty() && user?.birthdayDate != null) birthdayDate = user.birthdayDate
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -86,16 +96,18 @@ fun ChangeUserDataScreen(
                     navController.popBackStack()
                 },
                 onDoneClick = {
+                    val currentUser = (uiState as? UserState.Success)?.user
+
                     userViewModel.saveProfile(
                         uid = mineId,
-                        name = TODO(),
-                        avatarUrl = TODO(),
-                        email = TODO(),
-                        isOnline = TODO(),
-                        createdAt = TODO(),
+                        name = name,
+                        avatarUrl = currentUser?.avatarUrl ?: "",
+                        email = currentUser?.email ?: "",
+                        isOnline = currentUser?.isOnline ?: true,
+                        createdAt = 0L,
                         aboutUser = aboutMe,
                         birthdayDate = birthdayDate,
-                        userName = u,
+                        userName = currentUser?.userName ?: "",
                     )
                 },
             )
@@ -519,75 +531,6 @@ private fun ChangeUserDataScreenPreview() {
         userName = "@cat"
     )
 
-    Scaffold(
-        topBar = {
-            ChangeUserDataTopAppBar(
-                onDoneClick = {},
-                onCancelClick = {},
-            )
-        }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = LightGrayBackground,
-                )
-                .padding(top = 30.dp)
-                .padding(
-                    horizontal = 16.dp
-                )
-        ) {
-            ChangeAvatar(
-                user = user,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            InputDataField(
-                value = name,
-                onValueChange = {
-                    name = it
-                },
-                hintText = "",
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldHint(
-                text = "Укажите имя и, если хотите, добавьте фотографию для Вашего профиля."
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            InputDataField(
-                value = aboutMe,
-                onValueChange = {
-                    aboutMe = it
-                },
-                hintText = "О себе",
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            FieldHint(
-                text = "Напишите несколько строк о себе."
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            BirthdayInput(
-                value = name,
-                onValueChange = {},
-                hintText = "",
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            ConnectionData(
-                user = user,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            AccountButton(
-                text = "Сменить аккаунт",
-                textColor = Blue,
-                onClick = {},
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            AccountButton(
-                text = "Выйти",
-                textColor = Red,
-                onClick = {},
-            )
-        }
-    }
+
 }
 
