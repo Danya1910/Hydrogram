@@ -59,7 +59,7 @@ fun SettingsScreen(
     navController: NavController,
 ) {
     Scaffold(
-        containerColor = Blue,
+        containerColor = LightGrayBackground,
         topBar = {
             TopBar(
                 navController = navController,
@@ -121,7 +121,6 @@ private fun Content(
             .background(
                 color = LightGrayBackground,
             )
-            .padding(top = 30.dp)
     ) {
         when (val state = mineData) {
             is UserState.Loading -> {
@@ -177,49 +176,42 @@ private fun UserInfoHat(
         rawInput = user?.phone ?: ""
     )
 
-    Box(
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
-            .background(
-                color = Blue
+            .padding(top = 74.dp)
+            .padding(
+                horizontal = 16.dp,
             )
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Icon(
+            painter = painterResource(R.drawable.ic_avatar),
+            contentDescription = null,
+            tint = Color.Unspecified,
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp)
-                .padding(
-                    horizontal = 16.dp,
-                )
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_avatar),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(shape = CircleShape)
-            )
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = user?.name ?: "Unknown",
-                fontFamily = SfProText,
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.38.sp
-            )
-            Spacer(modifier = Modifier.height(5.dp))
-            Text(
-                text = "$phoneNumber • @username",
-                fontFamily = SfProText,
-                fontSize = 20.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Medium,
-            )
-            Spacer(modifier = Modifier.height(5.dp))
-        }
+                .size(104.dp)
+                .clip(shape = CircleShape)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = user?.name ?: "Unknown",
+            fontFamily = SfProText,
+            fontSize = 28.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.38.sp
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        Text(
+            text = "$phoneNumber • @username",
+            fontFamily = SfProText,
+            fontSize = 20.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Medium,
+        )
+        Spacer(modifier = Modifier.height(5.dp))
     }
 }
 
@@ -253,7 +245,7 @@ private fun GlassButton(
                 shape = CircleShape,
                 brush = GlassBorder,
             )
-            .clickable{
+            .clickable {
                 onClick()
             }
             .padding(horizontal = 10.dp)
@@ -345,9 +337,9 @@ private fun TopBar(
 
     val glassBrush = Brush.verticalGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.8f),
-            Color.White.copy(alpha = 0.6f),
-            Color.White.copy(alpha = 0.4f),
+            LightGrayBackground.copy(alpha = 0.8f),
+            LightGrayBackground.copy(alpha = 0.6f),
+            LightGrayBackground.copy(alpha = 0.4f),
             Color.Transparent,
         )
     )

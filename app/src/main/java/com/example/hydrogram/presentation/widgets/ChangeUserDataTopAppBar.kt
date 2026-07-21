@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
 
 
@@ -38,9 +39,9 @@ fun ChangeUserDataTopAppBar(
 
     val glassBrush = Brush.verticalGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.8f),
-            Color.White.copy(alpha = 0.6f),
-            Color.White.copy(alpha = 0.4f),
+            LightGrayBackground.copy(alpha = 0.8f),
+            LightGrayBackground.copy(alpha = 0.6f),
+            LightGrayBackground.copy(alpha = 0.4f),
             Color.Transparent,
         )
     )

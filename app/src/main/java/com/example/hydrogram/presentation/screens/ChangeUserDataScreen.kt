@@ -90,6 +90,7 @@ fun ChangeUserDataScreen(
     }
 
     Scaffold(
+        containerColor = LightGrayBackground,
         topBar = {
             ChangeUserDataTopAppBar(
                 onCancelClick = {
@@ -170,7 +171,6 @@ private fun Content(
             .background(
                 color = LightGrayBackground,
             )
-            .padding(top = 30.dp)
             .padding(
                 horizontal = 16.dp
             )
@@ -233,6 +233,7 @@ private fun ChangeAvatar(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(top = 74.dp)
     ) {
         AsyncImage(
             model = user?.avatarUrl,
