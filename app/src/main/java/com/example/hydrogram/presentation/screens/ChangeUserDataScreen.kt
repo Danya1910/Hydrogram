@@ -109,6 +109,7 @@ fun ChangeUserDataScreen(
                         aboutUser = aboutMe,
                         birthdayDate = birthdayDate,
                         userName = currentUser?.userName ?: "",
+                        phone = "9279434335"
                     )
                 },
             )

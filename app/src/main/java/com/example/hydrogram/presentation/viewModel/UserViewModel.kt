@@ -85,6 +85,7 @@ class UserViewModel @Inject constructor(
         aboutUser: String,
         birthdayDate: String,
         userName: String,
+        phone: String,
     ) {
         if (uid.isBlank()) {
             _errorMessage.value = "Пользователь не найден"
@@ -104,6 +105,7 @@ class UserViewModel @Inject constructor(
                 birthdayDate = birthdayDate,
                 aboutUser = aboutUser,
                 userName = userName,
+                phone = phone,
             )
             _isSaving.value = false
             _isLoading.value = false
