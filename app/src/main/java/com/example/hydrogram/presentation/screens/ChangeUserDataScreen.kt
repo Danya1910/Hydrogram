@@ -46,6 +46,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.viewModel.UserViewModel
@@ -65,6 +66,8 @@ fun ChangeUserDataScreen(
     val uiState by userViewModel.userState.collectAsStateWithLifecycle()
     val mineId by userViewModel.currentId.collectAsStateWithLifecycle()
 
+    val saveResult by userViewModel.saveResult.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         userViewModel.getCurrentUserId()
     }
@@ -82,10 +85,22 @@ fun ChangeUserDataScreen(
     LaunchedEffect(uiState) {
         if (uiState is UserState.Success) {
             val user = (uiState as UserState.Success).user
-            // Проверяем на isEmpty(), чтобы не перезаписывать текст, если пользователь уже начал ввод
             if (name.isEmpty() && user?.name != null) name = user.name
             if (aboutMe.isEmpty() && user?.aboutUser != null) aboutMe = user.aboutUser
             if (birthdayDate.isEmpty() && user?.birthdayDate != null) birthdayDate = user.birthdayDate
+        }
+    }
+
+    LaunchedEffect(saveResult) {
+        saveResult?.let { result ->
+            if(result.isSuccess) {
+                userViewModel.resetSaveResult()
+                navController.navigate(Screen.Settings.route)
+            } else {
+                TODO()
+                //Надо сделать тост
+                userViewModel.resetSaveResult()
+            }
         }
     }
 

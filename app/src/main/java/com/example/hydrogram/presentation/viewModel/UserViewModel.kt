@@ -44,6 +44,9 @@ class UserViewModel @Inject constructor(
     private val _currentId = MutableStateFlow("")
     val currentId = _currentId.asStateFlow()
 
+    private val _saveResult = MutableStateFlow<Result<Unit>?>(null)
+    val saveResult = _saveResult.asStateFlow()
+
     fun getCurrentUserId() {
         viewModelScope.launch {
             val result = getCurrentUserIdUseCase()
@@ -110,6 +113,8 @@ class UserViewModel @Inject constructor(
             _isSaving.value = false
             _isLoading.value = false
 
+            _saveResult.value = result
+
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = "Ошибка обновления данных пользователя" }
@@ -154,6 +159,10 @@ class UserViewModel @Inject constructor(
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = "Ошибка смены состояния в сети" }
         }
+    }
+
+    fun resetSaveResult() {
+        _saveResult.value = null
     }
 
 }
