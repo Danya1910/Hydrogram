@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetUserByIdUseCase
+import com.example.hydrogram.domain.usecase.SaveUserNameUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
 import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
 import com.example.hydrogram.presentation.states.UserState
@@ -22,6 +23,7 @@ class UserViewModel @Inject constructor(
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
     private val setUserOnlineStatsUseCase: SetUserOnlineStatsUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
+    private val saveUserNameUseCase: SaveUserNameUseCase,
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
@@ -109,6 +111,31 @@ class UserViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = "Ошибка обновления данных пользователя" }
+        }
+    }
+
+    fun saveUserName(
+        uid: String,
+        userName: String,
+    ) {
+        if (uid.isBlank()) {
+            _errorMessage.value = "Пользователь не найден"
+            return
+        }
+        if(_isSaving.value) return
+        viewModelScope.launch {
+            _isSaving.value = true
+            _isLoading.value = true
+            val result = saveUserNameUseCase(
+                uid = uid,
+                userName = userName,
+            )
+            _isSaving.value = false
+            _isLoading.value = false
+
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = "Ошибка обновления userName" }
         }
     }
 
