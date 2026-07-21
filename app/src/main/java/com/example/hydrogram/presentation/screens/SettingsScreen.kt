@@ -49,6 +49,7 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
+import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
 
@@ -176,7 +177,6 @@ private fun UserInfoHat(
         rawInput = user?.phone ?: ""
     )
 
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -199,7 +199,7 @@ private fun UserInfoHat(
             text = user?.name ?: "Unknown",
             fontFamily = SfProText,
             fontSize = 28.sp,
-            color = Color.White,
+            color = LightBlack,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.38.sp
         )
@@ -208,7 +208,7 @@ private fun UserInfoHat(
             text = "$phoneNumber • @username",
             fontFamily = SfProText,
             fontSize = 20.sp,
-            color = Color.White,
+            color = LightBlack,
             fontWeight = FontWeight.Medium,
         )
         Spacer(modifier = Modifier.height(5.dp))
@@ -361,7 +361,7 @@ private fun TopBar(
         )
         Spacer(modifier = Modifier.weight(1f))
         GlassButton(
-            text = "Edit",
+            text = "Изм.",
             onClick = {
                 navController.navigate(Screen.ChangeUserData.route)
             },
