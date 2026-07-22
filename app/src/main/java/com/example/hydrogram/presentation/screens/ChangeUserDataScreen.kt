@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -60,6 +61,7 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChangeUserDataTopAppBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
+import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Red
@@ -95,13 +97,14 @@ fun ChangeUserDataScreen(
             val user = (uiState as UserState.Success).user
             if (name.isEmpty() && user?.name != null) name = user.name
             if (aboutMe.isEmpty() && user?.aboutUser != null) aboutMe = user.aboutUser
-            if (birthdayDate.isEmpty() && user?.birthdayDate != null) birthdayDate = user.birthdayDate
+            if (birthdayDate.isEmpty() && user?.birthdayDate != null) birthdayDate =
+                user.birthdayDate
         }
     }
 
     LaunchedEffect(saveResult) {
         saveResult?.let { result ->
-            if(result.isSuccess) {
+            if (result.isSuccess) {
                 userViewModel.resetSaveResult()
                 navController.navigate(Screen.Settings.route)
             } else {
@@ -562,6 +565,8 @@ private fun ChangeUserDataScreenPreview() {
 @Preview(showBackground = true)
 private fun ChangeUserNameWidget() {
 
+    var userName by remember { mutableStateOf("@khowha") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -603,6 +608,20 @@ private fun ChangeUserNameWidget() {
                     onClick = {},
                 )
             }
+            Spacer(modifier = Modifier.height(26.dp))
+            Text(
+                text = "ИМЯ ПОЛЬЗОВАТЕЛЯ",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 10.dp)
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            UserNameInputField(
+                value = userName,
+                onValueChange = {},
+            )
         }
     }
 }
@@ -613,8 +632,6 @@ private fun GlassButton(
     color: Color,
     onClick: () -> Unit,
 ) {
-
-
 
     Box(
         contentAlignment = Alignment.Center,
@@ -631,23 +648,73 @@ private fun GlassButton(
                 shape = CircleShape
             )
             .background(
-                brush = if(color == Blue) BlueGlassBackground else GlassBackground,
+                brush = if (color == Blue) BlueGlassBackground else GlassBackground,
                 shape = CircleShape
             )
             .border(
                 width = 1.dp,
-                brush = if(color == Blue) BlueGlassBorder else GlassBorder,
+                brush = if (color == Blue) BlueGlassBorder else GlassBorder,
                 shape = CircleShape,
             )
-            .clickable{
+            .clickable {
                 onClick()
             }
             .padding(horizontal = 10.dp)
     ) {
-            Icon(
-                painter = painterResource(id = icon),
-                contentDescription = null,
-                tint = if(color == Blue) Color.White else Color.Black,
+        Icon(
+            painter = painterResource(id = icon),
+            contentDescription = null,
+            tint = if (color == Blue) Color.White else Color.Black,
+        )
+    }
+}
+
+@Composable
+private fun UserNameInputField(
+    value: String,
+    onValueChange: (String) -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .background(
+                color = Color.White,
+                shape = RoundedCornerShape(26.dp)
             )
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp)
+        ) {
+            Text(
+                text = "Имя пользователя",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 17.sp,
+                color = Color.Black,
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Box(
+                contentAlignment = Alignment.CenterStart,
+                modifier = Modifier.weight(1f)
+            ) {
+                BasicTextField(
+                    value = value,
+                    onValueChange = {
+                        onValueChange
+                    },
+                    textStyle = TextStyle(
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Black
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
     }
 }
