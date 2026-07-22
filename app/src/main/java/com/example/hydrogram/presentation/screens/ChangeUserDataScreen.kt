@@ -559,6 +559,7 @@ private fun ChangeUserDataScreenPreview() {
 
 
 @Composable
+@Preview(showBackground = true)
 private fun ChangeUserNameWidget() {
 
     Box(
@@ -576,11 +577,31 @@ private fun ChangeUserNameWidget() {
             modifier = Modifier.fillMaxSize()
         ) {
             Row(
+                horizontalArrangement = Arrangement.Absolute.Center,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-
+                GlassButton(
+                    icon = R.drawable.ic_cross,
+                    color = Color.Black,
+                    onClick = {},
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "Имя пользователя",
+                    fontFamily = SfProText,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 15.sp,
+                    color = Color.Black,
+                    letterSpacing = (-0.23).sp,
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                GlassButton(
+                    icon = R.drawable.ic_tick,
+                    color = Blue,
+                    onClick = {},
+                )
             }
         }
     }
@@ -615,8 +636,8 @@ private fun GlassButton(
             )
             .border(
                 width = 1.dp,
-                shape = CircleShape,
                 brush = if(color == Blue) BlueGlassBorder else GlassBorder,
+                shape = CircleShape,
             )
             .clickable{
                 onClick()

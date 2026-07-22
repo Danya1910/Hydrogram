@@ -23,16 +23,19 @@ val GlassBorder = Brush.linearGradient(
 
 val BlueGlassBackground = Brush.linearGradient(
     colors = listOf(
-        Blue.copy(alpha = 0.55f),
-        Blue.copy(alpha = 0.25f),
-        Blue.copy(alpha = 0.45f),
+        Blue.copy(alpha = 0.95f),
+        Blue.copy(alpha = 0.75f),
+        Blue.copy(alpha = 0.88f),
     ),
 )
 
 val BlueGlassBorder = Brush.linearGradient(
     colors = listOf(
-        Blue.copy(alpha = 0.55f),
-        Blue.copy(alpha = 0.20f),
-        Blue.copy(alpha = 0.40f),
+        Color.White.copy(alpha = 1f),
+        Color.White.copy(alpha = 0.8f),
+        Blue.copy(alpha = 0.60f),
+        Blue.copy(alpha = 0.35f),
+        Color.White.copy(alpha = 0.5f),
+        Color.White.copy(alpha = 1f),
     )
 )
