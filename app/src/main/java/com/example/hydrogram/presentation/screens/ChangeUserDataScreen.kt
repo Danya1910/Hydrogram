@@ -2,6 +2,7 @@ package com.example.hydrogram.presentation.screens
 
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +17,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -32,6 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -48,6 +51,10 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.UserState
+import com.example.hydrogram.presentation.util.BlueGlassBackground
+import com.example.hydrogram.presentation.util.BlueGlassBorder
+import com.example.hydrogram.presentation.util.GlassBackground
+import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChangeUserDataTopAppBar
@@ -57,6 +64,7 @@ import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
+import okhttp3.internal.connection.RouteDatabase
 
 @Composable
 fun ChangeUserDataScreen(
@@ -547,7 +555,78 @@ private fun ChangeUserDataScreenPreview() {
         birthdayDate = "6 июля",
         userName = "@cat"
     )
-
-
 }
 
+
+@Composable
+private fun ChangeUserNameWidget() {
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                color = LightGrayBackground,
+                shape = RoundedCornerShape(26.dp)
+            )
+            .padding(
+                all = 16.dp
+            )
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlassButton(
+    icon: Int,
+    color: Color,
+    onClick: () -> Unit,
+) {
+
+
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(44.dp)
+            .width(44.dp)
+            .shadow(
+                elevation = 12.dp,
+                shape = CircleShape,
+                clip = true, // Чтобы тень не обрезалась границами компонента
+                ambientColor = Color.Black.copy(alpha = 0.9f), // Мягкий рассеянный свет
+            )
+            .clip(
+                shape = CircleShape
+            )
+            .background(
+                brush = if(color == Blue) BlueGlassBackground else GlassBackground,
+                shape = CircleShape
+            )
+            .border(
+                width = 1.dp,
+                shape = CircleShape,
+                brush = if(color == Blue) BlueGlassBorder else GlassBorder,
+            )
+            .clickable{
+                onClick()
+            }
+            .padding(horizontal = 10.dp)
+    ) {
+            Icon(
+                painter = painterResource(id = icon),
+                contentDescription = null,
+                tint = if(color == Blue) Color.White else Color.Black,
+            )
+    }
+}
