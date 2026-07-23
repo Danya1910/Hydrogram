@@ -1,9 +1,11 @@
 package com.example.hydrogram.data.repository
 
 import android.util.Log
+import androidx.compose.ui.platform.LocalGraphicsContext
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
 import com.example.hydrogram.presentation.states.UserState
+import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.core.UserData
 import kotlinx.coroutines.channels.awaitClose
@@ -30,9 +32,14 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun saveUserName(uid: String, userName: String): Result<Unit> {
         return try {
+            val userNameLowercase = userName.trim().lowercase()
+            Log.d("UserRepositoryImpl", "lowercase: $userNameLowercase")
             firestore.collection("users")
                 .document(uid)
-                .update("userName", userName)
+                .update(
+                    "userName", userName,
+                        "userNameLowercase", userNameLowercase,
+                    )
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -54,11 +61,19 @@ class UserRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun findUserByPhone(phone: String): User? {
+    override suspend fun findUserByPhoneOrUserName(query: String): User? {
         return try {
-            Log.d("FIRESTORE", "Поиск пользователя: $phone")
+            val normalizedQuery = query.trim().removePrefix("@").lowercase()
+
+            Log.d("FIRESTORE", "Поиск пользователя (регистронезависимый): $normalizedQuery")
+
             val snapshot = firestore.collection("users")
-                .whereEqualTo("phone", phone)
+                .where(
+                    Filter.or(
+                        Filter.equalTo("userNameLowercase", normalizedQuery),
+                        Filter.equalTo("phone", normalizedQuery),
+                    )
+                )
                 .get()
                 .await()
 
