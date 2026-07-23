@@ -1,9 +1,14 @@
 package com.example.hydrogram.presentation.screens
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +22,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -39,9 +43,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,7 +73,6 @@ import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
-import okhttp3.internal.connection.RouteDatabase
 
 @Composable
 fun ChangeUserDataScreen(
@@ -77,6 +83,8 @@ fun ChangeUserDataScreen(
     val mineId by userViewModel.currentId.collectAsStateWithLifecycle()
 
     val saveResult by userViewModel.saveResult.collectAsStateWithLifecycle()
+
+    var isUserNameWidgetVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         userViewModel.getCurrentUserId()
@@ -118,63 +126,105 @@ fun ChangeUserDataScreen(
     Scaffold(
         containerColor = LightGrayBackground,
         topBar = {
-            ChangeUserDataTopAppBar(
-                onCancelClick = {
-                    navController.popBackStack()
-                },
-                onDoneClick = {
-                    val currentUser = (uiState as? UserState.Success)?.user
+            if (!isUserNameWidgetVisible) {
+                ChangeUserDataTopAppBar(
+                    onCancelClick = {
+                        navController.popBackStack()
+                    },
+                    onDoneClick = {
+                        val currentUser = (uiState as? UserState.Success)?.user
 
-                    userViewModel.saveProfile(
-                        uid = mineId,
-                        name = name,
-                        avatarUrl = currentUser?.avatarUrl ?: "",
-                        email = currentUser?.email ?: "",
-                        isOnline = currentUser?.isOnline ?: true,
-                        createdAt = 0L,
-                        aboutUser = aboutMe,
-                        birthdayDate = birthdayDate,
-                        userName = currentUser?.userName ?: "",
-                        phone = currentUser?.phone ?: "",
-                    )
-                },
-            )
+                        userViewModel.saveProfile(
+                            uid = mineId,
+                            name = name,
+                            avatarUrl = currentUser?.avatarUrl ?: "",
+                            email = currentUser?.email ?: "",
+                            isOnline = currentUser?.isOnline ?: true,
+                            createdAt = 0L,
+                            aboutUser = aboutMe,
+                            birthdayDate = birthdayDate,
+                            userName = currentUser?.userName ?: "",
+                            phone = currentUser?.phone ?: "",
+                        )
+                    },
+                )
+            }
         },
     ) { paddingValues ->
-        when (val state = uiState) {
-            is UserState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            when (val state = uiState) {
+                is UserState.Loading -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                is UserState.Error -> {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(text = state.message, color = Color.Red)
+                    }
+                }
+
+                is UserState.Success -> {
+                    val user = state.user
+                    Log.d("ChangeData", "user data: $user")
+
+                    Content(
+                        user = user,
+                        navController = navController,
+                        paddingValues = paddingValues,
+                        name = name,
+                        onNameChange = { name = it },
+                        aboutMe = aboutMe,
+                        onAboutMeChange = { aboutMe = it },
+                        onUserNameClick = { isUserNameWidgetVisible = true }
+                    )
                 }
             }
-
-            is UserState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(text = state.message, color = Color.Red)
-                }
-            }
-
-            is UserState.Success -> {
-                val user = state.user
-                Log.d("ChangeData", "user data: $user")
-
-                Content(
-                    user = user,
-                    navController = navController,
-                    paddingValues = paddingValues,
-                    name = name,
-                    onNameChange = { name = it },
-                    aboutMe = aboutMe,
-                    onAboutMeChange = { aboutMe = it }
+            AnimatedVisibility(
+                visible = isUserNameWidgetVisible,
+                enter = slideInVertically(
+                    initialOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(durationMillis = 300)
+                ),
+                exit = slideOutVertically(
+                    targetOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(durationMillis = 400)
                 )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            color = Color.Black.copy(alpha = 0.4f)
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .height(60.dp)
+                            .fillMaxWidth()
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { isUserNameWidgetVisible = false }
+                    )
+
+                    ChangeUserNameWidget(
+                        onCloseClick = { isUserNameWidgetVisible = false },
+                        onDoneClick = {},
+                    )
+                }
             }
         }
     }
@@ -189,8 +239,8 @@ private fun Content(
     onNameChange: (String) -> Unit,
     aboutMe: String,
     onAboutMeChange: (String) -> Unit,
+    onUserNameClick: () -> Unit,
 ) {
-
 
     Column(
         modifier = Modifier
@@ -235,6 +285,7 @@ private fun Content(
         Spacer(modifier = Modifier.height(16.dp))
         ConnectionData(
             user = user,
+            onUserNameClick = onUserNameClick,
         )
         Spacer(modifier = Modifier.height(16.dp))
         AccountButton(
@@ -249,6 +300,7 @@ private fun Content(
             onClick = {},
         )
     }
+
 }
 
 
@@ -402,6 +454,7 @@ private fun FieldHint(
 @Composable
 private fun ConnectionData(
     user: User?,
+    onUserNameClick: () -> Unit,
 ) {
 
     val phoneNumber = formatPhoneNumber(
@@ -433,7 +486,7 @@ private fun ConnectionData(
             icon = R.drawable.ic_green_phone,
             text = "Имя пользователя",
             hint = user?.userName ?: "",
-            onClick = {},
+            onClick = onUserNameClick,
         )
         SeparatorLine(
             modifier = Modifier
@@ -465,6 +518,9 @@ private fun ConnectionItem(
             .background(
                 color = Color.White
             )
+            .clickable {
+                onClick()
+            }
             .padding(horizontal = 10.dp),
     ) {
         Icon(
@@ -562,8 +618,10 @@ private fun ChangeUserDataScreenPreview() {
 
 
 @Composable
-@Preview(showBackground = true)
-private fun ChangeUserNameWidget() {
+private fun ChangeUserNameWidget(
+    onCloseClick: () -> Unit,
+    onDoneClick: () -> Unit,
+) {
 
     var userName by remember { mutableStateOf("@khowha") }
 
@@ -590,7 +648,7 @@ private fun ChangeUserNameWidget() {
                 GlassButton(
                     icon = R.drawable.ic_cross,
                     color = Color.Black,
-                    onClick = {},
+                    onClick = onCloseClick,
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 Text(
@@ -621,6 +679,66 @@ private fun ChangeUserNameWidget() {
             UserNameInputField(
                 value = userName,
                 onValueChange = {},
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text = buildAnnotatedString {
+                    append("Вы можете выбрать публичное имя пользователя в ")
+
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Gray
+                        )
+                    ) { // Можно изменить цвет на более темный для акцента
+                        append("Hydrogram")
+                    }
+
+                    append(
+                        ". В этом случае другие люди смогут найти Вас по такому имени и связаться," +
+                                " не зная Вашего номера."
+                    )
+                },
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 13.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 10.dp),
+                lineHeight = 18.sp,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = buildAnnotatedString {
+                    append("Можно использовать  ")
+
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Gray
+                        )
+                    ) {
+                        append("a-z, 0-9")
+                    }
+
+                    append(" и _. Минимальная длина — ")
+
+                    withStyle(
+                        style = SpanStyle(
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.Gray
+                        )
+                    ) {
+                        append("5")
+                    }
+
+                    append(" символов.")
+                },
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 13.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(horizontal = 10.dp),
+                lineHeight = 18.sp,
             )
         }
     }
