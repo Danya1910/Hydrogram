@@ -98,6 +98,7 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             _isSaving.value = true
             _isLoading.value = true
+            _isSuccess.value = false
             val result = saveUserProfileUseCase(
                 uid = uid,
                 name = name,
@@ -133,6 +134,7 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             _isSaving.value = true
             _isLoading.value = true
+            _isSuccess.value = false
             val result = saveUserNameUseCase(
                 uid = uid,
                 userName = userName,
