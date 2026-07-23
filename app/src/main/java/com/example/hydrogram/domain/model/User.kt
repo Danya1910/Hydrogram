@@ -14,4 +14,5 @@ data class User(
     val aboutUser: String = "",
     val birthdayDate: String = "",
     val userName: String = "",
+    val userNameLowercase: String = "",
 )
