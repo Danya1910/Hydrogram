@@ -110,27 +110,35 @@ private fun Content(
 
             is UserState.Success -> {
                 val user = state.user
-                val items = listOf(
+
+                val aboutUser = user?.aboutUser
+                val birtday = user?.birthdayDate
+                val userName = user?.userName
+
+                val items = listOfNotNull(
                     UserInfoRowItem(
                         title = "мобильный",
-                        text = formatPhoneNumber(
-                            rawInput = user?.phone ?: ""
-                        ),
+                        text = formatPhoneNumber(rawInput = user?.phone ?: ""),
                         textColor = Blue,
                     ),
                     UserInfoRowItem(
                         title = "имя пользователя",
-                        text = "@cat",
+                        text = "@$userName",
                         textColor = Blue,
                     ),
-                    UserInfoRowItem(
-                        title = "день рождения",
-                        text = "6 июля",
-                        textColor = LightBlack,
-                    ),
+                    // Проверяем, что строка не null и не пустая
+                    if (!birtday.isNullOrEmpty()) {
+                        UserInfoRowItem(
+                            title = "день рождения",
+                            text = birtday, // Передаем саму дату вместо захардкоженного текста
+                            textColor = LightBlack,
+                        )
+                    } else {
+                        null
+                    },
                     UserInfoRowItem(
                         title = "о себе",
-                        text = "EYP",
+                        text = aboutUser ?: "",
                         textColor = LightBlack,
                     ),
                 )
