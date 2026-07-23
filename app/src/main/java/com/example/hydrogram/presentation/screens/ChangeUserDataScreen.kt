@@ -87,6 +87,8 @@ fun ChangeUserDataScreen(
 
     var isUserNameWidgetVisible by remember { mutableStateOf(false) }
 
+    val isSaveUserNameSuccess by userViewModel.isSuccess.collectAsStateWithLifecycle()
+
     LaunchedEffect(Unit) {
         userViewModel.getCurrentUserId()
     }
@@ -100,6 +102,7 @@ fun ChangeUserDataScreen(
     var name by remember { mutableStateOf("") }
     var aboutMe by remember { mutableStateOf("") }
     var birthdayDate by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState) {
         if (uiState is UserState.Success) {
@@ -108,6 +111,8 @@ fun ChangeUserDataScreen(
             if (aboutMe.isEmpty() && user?.aboutUser != null) aboutMe = user.aboutUser
             if (birthdayDate.isEmpty() && user?.birthdayDate != null) birthdayDate =
                 user.birthdayDate
+            if (userName.isEmpty() && user?.userName != null) userName = user.userName
+
         }
     }
 
@@ -121,6 +126,12 @@ fun ChangeUserDataScreen(
                 //Надо сделать тост
                 userViewModel.resetSaveResult()
             }
+        }
+    }
+
+    LaunchedEffect(isSaveUserNameSuccess) {
+        if(isSaveUserNameSuccess) {
+            isUserNameWidgetVisible = false
         }
     }
 
@@ -238,7 +249,16 @@ fun ChangeUserDataScreen(
 
                     ChangeUserNameWidget(
                         onCloseClick = { isUserNameWidgetVisible = false },
-                        onDoneClick = {},
+                        onDoneClick = {
+                            userViewModel.saveUserName(
+                                uid = mineId,
+                                userName = userName,
+                            )
+                        },
+                        userName = userName,
+                        onValueChange = {
+                            userName = it
+                        }
                     )
                 }
             }
@@ -637,9 +657,9 @@ private fun ChangeUserDataScreenPreview() {
 private fun ChangeUserNameWidget(
     onCloseClick: () -> Unit,
     onDoneClick: () -> Unit,
+    userName: String,
+    onValueChange: (String) -> Unit,
 ) {
-
-    var userName by remember { mutableStateOf("@khowha") }
 
     Box(
         modifier = Modifier
@@ -648,6 +668,12 @@ private fun ChangeUserNameWidget(
                 color = LightGrayBackground,
                 shape = RoundedCornerShape(26.dp)
             )
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null // убираем визуальный эффект пульсации
+            ) {
+                /* Оставляем пустым, чтобы просто поглотить клик */
+            }
             .padding(
                 all = 16.dp
             )
@@ -679,7 +705,7 @@ private fun ChangeUserNameWidget(
                 GlassButton(
                     icon = R.drawable.ic_tick,
                     color = Blue,
-                    onClick = {},
+                    onClick = onDoneClick,
                 )
             }
             Spacer(modifier = Modifier.height(26.dp))
@@ -694,9 +720,7 @@ private fun ChangeUserNameWidget(
             Spacer(modifier = Modifier.height(10.dp))
             UserNameInputField(
                 value = userName,
-                onValueChange = {
-                    userName = it
-                },
+                onValueChange = onValueChange,
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
