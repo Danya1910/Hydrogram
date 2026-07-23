@@ -694,7 +694,9 @@ private fun ChangeUserNameWidget(
             Spacer(modifier = Modifier.height(10.dp))
             UserNameInputField(
                 value = userName,
-                onValueChange = {},
+                onValueChange = {
+                    userName = it
+                },
             )
             Spacer(modifier = Modifier.height(10.dp))
             Text(
@@ -837,9 +839,7 @@ private fun UserNameInputField(
             ) {
                 BasicTextField(
                     value = value,
-                    onValueChange = {
-                        onValueChange
-                    },
+                    onValueChange = onValueChange,
                     textStyle = TextStyle(
                         fontFamily = SfProText,
                         fontSize = 17.sp,
