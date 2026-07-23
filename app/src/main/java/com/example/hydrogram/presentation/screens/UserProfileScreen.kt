@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.screens
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -95,16 +96,18 @@ private fun Content(
             is UserState.Loading -> {
                 UserInfoHat(
                     user = User(
-                        name = "Loading..."
-                    )
+                        name = "Loading...",
+                    ),
+                    navController = navController,
                 )
             }
 
             is UserState.Error -> {
                 UserInfoHat(
                     user = User(
-                        name = "Error..."
-                    )
+                        name = "Error...",
+                    ),
+                    navController = navController,
                 )
             }
 
@@ -152,6 +155,7 @@ private fun Content(
                 Log.d("UserProfileScreen", "данные пользователя: $user")
                 UserInfoHat(
                     user = user,
+                    navController = navController,
                 )
                 Column(
                     modifier = Modifier
@@ -180,9 +184,6 @@ private fun ContentPreview(
         modifier = Modifier
             .fillMaxSize()
     ) {
-        UserInfoHat(
-            user = user
-        )
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -202,7 +203,8 @@ private fun ContentPreview(
 
 @Composable
 private fun UserInfoHat(
-    user: User?
+    user: User?,
+    navController: NavController,
 ) {
 
     Box(
@@ -224,9 +226,17 @@ private fun UserInfoHat(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                GlassButton(icon = R.drawable.ic_arrow_left)
+                GlassButton(
+                    icon = R.drawable.ic_arrow_left,
+                    onClick = {
+                        navController.popBackStack()
+                    }
+                )
                 Spacer(modifier = Modifier.weight(1f))
-                GlassButton(text = "Edit")
+                GlassButton(
+                    text = "Edit",
+                    onClick = {}
+                )
             }
             Icon(
                 painter = painterResource(R.drawable.ic_avatar),
@@ -265,6 +275,7 @@ private fun UserInfoHat(
 private fun GlassButton(
     icon: Int? = null,
     text: String? = null,
+    onClick: () -> Unit,
 ) {
 
     Box(
@@ -278,6 +289,9 @@ private fun GlassButton(
                 clip = true,
                 ambientColor = Color.Black.copy(alpha = 0.9f),
             )
+            .clip(
+                shape = CircleShape
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
@@ -287,6 +301,9 @@ private fun GlassButton(
                 shape = CircleShape,
                 brush = GlassBorder,
             )
+            .clickable {
+                onClick()
+            }
             .padding(horizontal = 10.dp)
     ) {
         if (text != null) {
