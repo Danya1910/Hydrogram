@@ -121,26 +121,33 @@ private fun Content(
                         text = formatPhoneNumber(rawInput = user?.phone ?: ""),
                         textColor = Blue,
                     ),
-                    UserInfoRowItem(
-                        title = "имя пользователя",
-                        text = "@$userName",
-                        textColor = Blue,
-                    ),
-                    // Проверяем, что строка не null и не пустая
+                    if (!userName.isNullOrEmpty()) {
+                        UserInfoRowItem(
+                            title = "имя пользователя",
+                            text = "@$userName",
+                            textColor = Blue,
+                        )
+                    } else {
+                        null
+                    },
                     if (!birtday.isNullOrEmpty()) {
                         UserInfoRowItem(
                             title = "день рождения",
-                            text = birtday, // Передаем саму дату вместо захардкоженного текста
+                            text = birtday,
                             textColor = LightBlack,
                         )
                     } else {
                         null
                     },
-                    UserInfoRowItem(
-                        title = "о себе",
-                        text = aboutUser ?: "",
-                        textColor = LightBlack,
-                    ),
+                    if (!aboutUser.isNullOrEmpty()) {
+                        UserInfoRowItem(
+                            title = "о себе",
+                            text = aboutUser,
+                            textColor = LightBlack,
+                        )
+                    } else {
+                        null
+                    },
                 )
                 Log.d("UserProfileScreen", "данные пользователя: $user")
                 UserInfoHat(
@@ -539,7 +546,7 @@ private fun ChatDataItem(
     isSelected: Boolean,
 ) {
 
-    val boxColor = if(isSelected) LightGrayBackground else Color.Transparent
+    val boxColor = if (isSelected) LightGrayBackground else Color.Transparent
 
     Box(
         contentAlignment = Alignment.Center,
