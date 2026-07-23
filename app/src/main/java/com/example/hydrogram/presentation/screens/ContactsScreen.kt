@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -79,12 +78,12 @@ private fun Content(
     navController: NavController,
     paddingValues: PaddingValues,
 ) {
-    var phoneNumber by remember { mutableStateOf("") }
+    var query by remember { mutableStateOf("") }
 
-    LaunchedEffect(phoneNumber) {
-        if (phoneNumber.length == 10) {
-            searchViewModel.searchByPhone(
-                phone = phoneNumber,
+    LaunchedEffect(query) {
+        if (query.length >= 5) {
+            searchViewModel.searchByPhoneOrUserName(
+                query = query,
             )
         }
     }
@@ -98,9 +97,9 @@ private fun Content(
             .fillMaxSize()
     ) {
         SearchField(
-            value = phoneNumber,
+            value = query,
             onValueChange = {
-                phoneNumber = it
+                query = it
             }
         )
         when (val state = foundUserState) {
