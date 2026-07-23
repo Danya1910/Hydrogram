@@ -177,6 +177,8 @@ private fun UserInfoHat(
         rawInput = user?.phone ?: ""
     )
 
+    val userName = user?.userName
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -205,7 +207,7 @@ private fun UserInfoHat(
         )
         Spacer(modifier = Modifier.height(5.dp))
         Text(
-            text = "$phoneNumber • @username",
+            text = "$phoneNumber • @$userName",
             fontFamily = SfProText,
             fontSize = 20.sp,
             color = LightBlack,
