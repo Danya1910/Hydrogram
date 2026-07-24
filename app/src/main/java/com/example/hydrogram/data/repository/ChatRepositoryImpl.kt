@@ -80,7 +80,7 @@ class ChatRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun changeMessageState(
+    override suspend fun changeMessageStatus(
         chatId: String,
         messageId: String,
         status: String

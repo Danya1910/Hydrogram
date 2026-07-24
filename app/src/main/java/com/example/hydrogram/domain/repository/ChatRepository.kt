@@ -14,7 +14,7 @@ interface ChatRepository {
 
     fun getChatHistory(chatId: String) : Flow<List<Message>>
 
-    suspend fun changeMessageState(
+    suspend fun changeMessageStatus(
         chatId: String,
         messageId: String,
         status: String,

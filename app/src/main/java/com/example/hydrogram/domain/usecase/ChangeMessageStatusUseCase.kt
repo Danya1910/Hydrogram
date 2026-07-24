@@ -12,7 +12,7 @@ class ChangeMessageStatusUseCase @Inject constructor(
         messageId: String,
         status: String,
     ) : Result<Unit> {
-        return chatRepository.changeMessageState(
+        return chatRepository.changeMessageStatus(
             chatId = chatId,
             messageId = messageId,
             status = status,
