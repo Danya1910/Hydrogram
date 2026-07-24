@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
@@ -41,6 +42,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -411,16 +413,20 @@ private fun MineTextMessage(
                         color = MineMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        painter = painterResource(
-                            if(message.status == "read")
-                                R.drawable.ic_read_status
-                            else
-                                R.drawable.ic_sent_status
-                        ),
-                        contentDescription = null,
-                        tint = MineMessageTimeColor,
-                    )
+                    if(message.status == "read") {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_read_status),
+                            contentDescription = null,
+                            tint = MineMessageTimeColor,
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sent_status),
+                            contentDescription = null,
+                            tint = MineMessageTimeColor,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
             } else {
                 Text(
@@ -455,16 +461,20 @@ private fun MineTextMessage(
                         color = MineMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        painter = painterResource(
-                            if(message.status == "read")
-                                R.drawable.ic_read_status
-                            else
-                                R.drawable.ic_sent_status
-                        ),
-                        contentDescription = null,
-                        tint = MineMessageTimeColor,
-                    )
+                    if(message.status == "read") {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_read_status),
+                            contentDescription = null,
+                            tint = MineMessageTimeColor,
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sent_status),
+                            contentDescription = null,
+                            tint = MineMessageTimeColor,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
             }
         }
@@ -535,16 +545,20 @@ private fun PenpalTextMessage(
                         color = PenpalMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        painter = painterResource(
-                            if(message.status == "read")
-                                R.drawable.ic_read_status
-                            else
-                                R.drawable.ic_sent_status
-                        ),
-                        contentDescription = null,
-                        tint = PenpalMessageTimeColor,
-                    )
+                    if(message.status == "read") {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_read_status),
+                            contentDescription = null,
+                            tint = PenpalMessageTimeColor,
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sent_status),
+                            contentDescription = null,
+                            tint = PenpalMessageTimeColor,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
             } else {
                 Text(
@@ -579,16 +593,20 @@ private fun PenpalTextMessage(
                         color = PenpalMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    Icon(
-                        painter = painterResource(
-                            if(message.status == "read")
-                                R.drawable.ic_read_status
-                            else
-                                R.drawable.ic_sent_status
-                        ),
-                        contentDescription = null,
-                        tint = PenpalMessageTimeColor,
-                    )
+                    if(message.status == "read") {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_read_status),
+                            contentDescription = null,
+                            tint = PenpalMessageTimeColor,
+                        )
+                    } else {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_sent_status),
+                            contentDescription = null,
+                            tint = PenpalMessageTimeColor,
+                            modifier = Modifier.size(15.dp)
+                        )
+                    }
                 }
             }
         }
