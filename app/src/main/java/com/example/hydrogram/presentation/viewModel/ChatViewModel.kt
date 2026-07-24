@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.viewModel
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrogram.domain.usecase.ChangeMessageStatusUseCase
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.SendMessageUseCase
@@ -20,6 +21,7 @@ class ChatViewModel @Inject constructor(
     private val sendMessageUseCase: SendMessageUseCase,
     private val getChatHistoryUseCase: GetChatHistoryUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
+    private val changeMessageStatusUseCase: ChangeMessageStatusUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
@@ -64,6 +66,31 @@ class ChatViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+        }
+    }
+
+    fun changeMessageStatus(
+        chatId: String,
+        messageId: String,
+        status: String,
+    ) {
+        if(chatId.isBlank() || messageId.isBlank()) {
+            _errorMessage.value = "Такого сообщения нет"
+            return
+        }
+        viewModelScope.launch {
+            _isSending.value = true
+            val result = changeMessageStatusUseCase(
+                chatId = chatId,
+                messageId = messageId,
+                status = status,
+            )
+            _isSending.value = false
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: ("Ошибка изменения" +
+                        " статуса сообщения")
+                }
         }
     }
 
