@@ -40,17 +40,19 @@ class ChatViewModel @Inject constructor(
     private val _currentId = MutableStateFlow("")
     val currentId = _currentId.asStateFlow()
 
+    private val updatingMessageIds = mutableSetOf<String>()
+
     fun sendMessage(
         senderId: String,
         chatId: String,
         text: String,
         type: String,
     ) {
-        if(text.isBlank()) {
+        if (text.isBlank()) {
             _errorMessage.value = "Пустое сообщение"
             return
         }
-        if(_isSending.value) {
+        if (_isSending.value) {
             return
         }
 
@@ -74,10 +76,14 @@ class ChatViewModel @Inject constructor(
         messageId: String,
         status: String,
     ) {
-        if(chatId.isBlank() || messageId.isBlank()) {
+        if (updatingMessageIds.contains(messageId)) {
+            return
+        }
+        if (chatId.isBlank() || messageId.isBlank()) {
             _errorMessage.value = "Такого сообщения нет"
             return
         }
+        updatingMessageIds.add(messageId)
         viewModelScope.launch {
             _isSending.value = true
             val result = changeMessageStatusUseCase(
@@ -88,8 +94,10 @@ class ChatViewModel @Inject constructor(
             _isSending.value = false
             result
                 .onSuccess { _isSuccess.value = true }
-                .onFailure { _errorMessage.value = it.localizedMessage ?: ("Ошибка изменения" +
-                        " статуса сообщения")
+                .onFailure {
+                    _errorMessage.value = it.localizedMessage ?: ("Ошибка изменения" +
+                            " статуса сообщения")
+                    updatingMessageIds.remove(messageId)
                 }
         }
     }
@@ -101,18 +109,16 @@ class ChatViewModel @Inject constructor(
     fun getCurrentUserId() {
         viewModelScope.launch {
             val result = getCurrentUserIdUseCase()
-            if(!result.isNullOrEmpty()) {
+            if (!result.isNullOrEmpty()) {
                 _currentId.value = result
-            }
-            else return@launch
+            } else return@launch
         }
     }
 
     fun observeChatHistory(
         chatId: String,
     ) {
-        if(chatId.isBlank())
-        {
+        if (chatId.isBlank()) {
             _uiState.value = ChatUiState.Error("Чат не найден")
             return
         }
@@ -125,8 +131,8 @@ class ChatViewModel @Inject constructor(
                 )
             }
                 .collect { messages ->
-                _uiState.value = ChatUiState.Success(messages)
-            }
+                    _uiState.value = ChatUiState.Success(messages)
+                }
         }
     }
 

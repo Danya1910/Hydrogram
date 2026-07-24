@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -237,8 +238,10 @@ fun ChatScreen(
 
                         Content(
                             messages = messages,
+                            chatViewModel = chatViewModel,
                             paddingValues = paddingValues,
                             mineId = mineId,
+                            chatId = chatId,
                         )
                     }
                 }
@@ -253,15 +256,36 @@ fun ChatScreen(
 @Composable
 private fun Content(
     messages: List<Message>,
+    chatViewModel: ChatViewModel,
     paddingValues: PaddingValues,
     mineId: String,
+    chatId: String,
 ) {
 
     val groupedMessages = remember(messages) {
         messages.groupBy { message -> getStartOfDay(message.timestamp) }
     }
 
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(listState.layoutInfo.visibleItemsInfo) {
+        val visibleItems = listState.layoutInfo.visibleItemsInfo
+        if (visibleItems.isNotEmpty()) {
+            visibleItems.forEach { visibleItem ->
+                val message = messages.getOrNull(visibleItem.index)
+                if (message != null && message.senderId != mineId && message.status != "read") {
+                    chatViewModel.changeMessageStatus(
+                        chatId = chatId,
+                        messageId = message.messageId,
+                        status = "read",
+                    )
+                }
+            }
+        }
+    }
+
     LazyColumn(
+        state = listState,
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -273,12 +297,10 @@ private fun Content(
     ) {
         groupedMessages.forEach { (dayTimestamp, dayMessages) ->
 
-            // 1. Рисуем заголовок даты для конкретного дня
             item(key = "date_$dayTimestamp") {
                 DateSeparator(text = formatHeaderDate(dayTimestamp))
             }
 
-            // 2. Рисуем сообщения этого дня
             items(
                 items = dayMessages,
                 key = { message -> message.messageId }
