@@ -1,7 +1,5 @@
 package com.example.hydrogram.presentation.screens
 
-import android.graphics.RenderEffect
-import android.graphics.Shader
 import android.os.Build
 import android.text.format.DateFormat
 import android.util.Log
@@ -42,10 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asComposeRenderEffect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -67,7 +62,6 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.DateSeparatorGreen
-import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
@@ -418,7 +412,12 @@ private fun MineTextMessage(
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Icon(
-                        painter = painterResource(R.drawable.ic_status_read),
+                        painter = painterResource(
+                            if(message.status == "read")
+                                R.drawable.ic_read_status
+                            else
+                                R.drawable.ic_sent_status
+                        ),
                         contentDescription = null,
                         tint = MineMessageTimeColor,
                     )
@@ -457,7 +456,12 @@ private fun MineTextMessage(
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Icon(
-                        painter = painterResource(R.drawable.ic_status_read),
+                        painter = painterResource(
+                            if(message.status == "read")
+                                R.drawable.ic_read_status
+                            else
+                                R.drawable.ic_sent_status
+                        ),
                         contentDescription = null,
                         tint = MineMessageTimeColor,
                     )
@@ -532,7 +536,12 @@ private fun PenpalTextMessage(
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Icon(
-                        painter = painterResource(R.drawable.ic_status_read),
+                        painter = painterResource(
+                            if(message.status == "read")
+                                R.drawable.ic_read_status
+                            else
+                                R.drawable.ic_sent_status
+                        ),
                         contentDescription = null,
                         tint = PenpalMessageTimeColor,
                     )
@@ -571,7 +580,12 @@ private fun PenpalTextMessage(
                     )
                     Spacer(modifier = Modifier.width(5.dp))
                     Icon(
-                        painter = painterResource(R.drawable.ic_status_read),
+                        painter = painterResource(
+                            if(message.status == "read")
+                                R.drawable.ic_read_status
+                            else
+                                R.drawable.ic_sent_status
+                        ),
                         contentDescription = null,
                         tint = PenpalMessageTimeColor,
                     )
