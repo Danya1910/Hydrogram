@@ -80,4 +80,23 @@ class ChatRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    override suspend fun changeMessageState(
+        chatId: String,
+        messageId: String,
+        status: String
+    ): Result<Unit> {
+        return try {
+            firestore.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .document(messageId)
+                .update("status", status)
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

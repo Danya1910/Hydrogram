@@ -14,4 +14,11 @@ interface ChatRepository {
 
     fun getChatHistory(chatId: String) : Flow<List<Message>>
 
+    suspend fun changeMessageState(
+        chatId: String,
+        messageId: String,
+        status: String,
+    ) : Result<Unit>
+
+
 }
