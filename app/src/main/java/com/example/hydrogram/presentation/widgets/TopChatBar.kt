@@ -223,10 +223,10 @@ private fun TopChatBarPreview(
         name = "Dog"
     )
 
-    TopChatBar(
-        user = user,
-        onUserClick = {},
-        onBackClick = {},
-        presenceState = UserPresence(),
-    )
+        TopChatBar(
+            user = user,
+            onUserClick = {},
+            onBackClick = {},
+            presenceState = UserPresence(),
+        )
 }
