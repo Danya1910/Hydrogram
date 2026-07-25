@@ -42,10 +42,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.domain.model.UserPresence
 import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.UserInfoRowItem
+import com.example.hydrogram.presentation.util.formatLastSeen
 import com.example.hydrogram.presentation.util.formatPhoneNumber
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -81,6 +83,10 @@ private fun Content(
 
     val userData by userViewModel.userState.collectAsStateWithLifecycle()
 
+    val presenceState by userViewModel
+        .getOpponentPresence(opponentId = userId)
+        .collectAsStateWithLifecycle()
+
     LaunchedEffect(userId) {
         userViewModel.observeUser(
             uid = userId
@@ -99,6 +105,7 @@ private fun Content(
                         name = "Loading...",
                     ),
                     navController = navController,
+                    presenceState = presenceState,
                 )
             }
 
@@ -108,6 +115,7 @@ private fun Content(
                         name = "Error...",
                     ),
                     navController = navController,
+                    presenceState = presenceState,
                 )
             }
 
@@ -156,6 +164,7 @@ private fun Content(
                 UserInfoHat(
                     user = user,
                     navController = navController,
+                    presenceState = presenceState,
                 )
                 Column(
                     modifier = Modifier
@@ -205,7 +214,12 @@ private fun ContentPreview(
 private fun UserInfoHat(
     user: User?,
     navController: NavController,
+    presenceState: UserPresence,
 ) {
+
+    val formattedLastSeenTime = formatLastSeen(
+        lastSeenTimestamp = presenceState.lastSeen
+    )
 
     Box(
         modifier = Modifier
@@ -257,10 +271,10 @@ private fun UserInfoHat(
             )
             Spacer(modifier = Modifier.height(5.dp))
             Text(
-                text = "был(а) недавно",
+                text = formattedLastSeenTime,
                 fontFamily = SfProText,
                 fontSize = 15.sp,
-                color = Color.White,
+                color = Color.Gray,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = (-0.25).sp,
             )
