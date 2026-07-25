@@ -4,7 +4,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.google.ksp) // Используем KSP через точку
+    alias(libs.plugins.google.ksp)
     id("com.google.gms.google-services")
     id("com.google.dagger.hilt.android")
 }
@@ -34,8 +34,8 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
@@ -45,29 +45,27 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_11)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
 dependencies {
-    // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+    // Firebase - ПОНИЗИМ ВЕРСИЮ
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))  // ИЗМЕНЕНО
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
-    implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-database")
 
-    // Dagger Hilt (Генерирует код через стабильный KSP)
-    implementation("com.google.dagger:hilt-android:2.55")
-    implementation(libs.material)
-    ksp("com.google.dagger:hilt-compiler:2.55")
+    // Dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.56")
+    ksp("com.google.dagger:hilt-compiler:2.56")
     implementation(libs.androidx.hilt.navigation.compose)
 
-    // Coil
+    // UI
+    implementation(libs.material)
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
-
-    // Navigation
     implementation("androidx.navigation:navigation-compose:2.8.7")
 
     // AndroidX & Compose
@@ -88,4 +86,15 @@ dependencies {
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+// Добавляем принудительное разрешение версий
+configurations.all {
+    resolutionStrategy {
+        force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21")
+        force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    }
 }

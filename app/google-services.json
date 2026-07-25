@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "543231415231",
+    "firebase_url": "https://hydrogram-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "hydrogram",
     "storage_bucket": "hydrogram.firebasestorage.app"
   },

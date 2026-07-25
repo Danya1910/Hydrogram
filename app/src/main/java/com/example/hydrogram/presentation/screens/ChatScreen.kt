@@ -84,6 +84,9 @@ fun ChatScreen(
 
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
+    val presenceState by userViewModel
+        .getOpponentPresence(opponentId = penpalId ?: "")
+        .collectAsStateWithLifecycle()
 
     val chatId = remember(mineId, penpalId) {
         if (mineId.isNotEmpty() && !penpalId.isNullOrEmpty()) {
@@ -139,6 +142,7 @@ fun ChatScreen(
                             onBackClick = {
                                 navController.popBackStack()
                             },
+                            presenceState = presenceState,
                         )
                     }
 
@@ -151,6 +155,7 @@ fun ChatScreen(
                             onBackClick = {
                                 navController.popBackStack()
                             },
+                            presenceState = presenceState,
                         )
                     }
 
@@ -170,6 +175,7 @@ fun ChatScreen(
                                     )
                                 )
                             },
+                            presenceState = presenceState,
                         )
                     }
                 }

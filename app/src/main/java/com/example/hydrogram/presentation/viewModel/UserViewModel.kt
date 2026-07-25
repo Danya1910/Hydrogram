@@ -4,16 +4,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.domain.model.UserPresence
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetUserByIdUseCase
+import com.example.hydrogram.domain.usecase.ObserveUserPresenceUseCase
 import com.example.hydrogram.domain.usecase.SaveUserNameUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
 import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
 import com.example.hydrogram.presentation.states.UserState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -24,6 +29,7 @@ class UserViewModel @Inject constructor(
     private val setUserOnlineStatsUseCase: SetUserOnlineStatsUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val saveUserNameUseCase: SaveUserNameUseCase,
+    private val observeUserPresenceUseCase: ObserveUserPresenceUseCase,
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
@@ -146,6 +152,16 @@ class UserViewModel @Inject constructor(
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = "Ошибка обновления userName" }
         }
+    }
+
+    fun getOpponentPresence(opponentId: String) : StateFlow<UserPresence> {
+        return observeUserPresenceUseCase(
+            userId = opponentId
+        ).stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UserPresence(isOnline = true, lastSeen = 0L),
+        )
     }
 
     fun setUserOnlineStats(

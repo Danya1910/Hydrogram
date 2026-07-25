@@ -3,10 +3,12 @@ package com.example.hydrogram.data.di
 import com.example.hydrogram.data.repository.AuthRepositoryImpl
 import com.example.hydrogram.data.repository.ChatRepositoryImpl
 import com.example.hydrogram.data.repository.InboxRepositoryImpl
+import com.example.hydrogram.data.repository.PresenceRepositoryImpl
 import com.example.hydrogram.data.repository.UserRepositoryImpl
 import com.example.hydrogram.domain.repository.AuthRepository
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.example.hydrogram.domain.repository.InboxRepository
+import com.example.hydrogram.domain.repository.PresenceRepository
 import com.example.hydrogram.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -42,5 +44,11 @@ abstract class RepositoryModule {
     abstract fun bindAuthRepository(
         authImpl: AuthRepositoryImpl,
     ) : AuthRepository
+
+    @Binds
+    @Singleton
+    abstract fun bingPresenceRepository(
+        presenceImpl: PresenceRepositoryImpl
+    ) : PresenceRepository
 
 }

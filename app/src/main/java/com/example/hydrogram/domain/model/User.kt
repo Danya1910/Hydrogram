@@ -16,3 +16,8 @@ data class User(
     val userName: String = "",
     val userNameLowercase: String = "",
 )
+
+data class UserPresence(
+    val isOnline: Boolean = false,
+    val lastSeen: Long = 0L,
+)

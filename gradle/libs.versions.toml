@@ -1,8 +1,8 @@
 [versions]
 agp = "8.13.2"
-kotlin = "2.2.21"
-ksp = "2.2.21-2.0.4"  # ДОБАВИТЬ ЭТУ СТРОКУ
-hilt = "2.55"
+kotlin = "2.0.21"  # Оставляем 2.0.21
+ksp = "2.0.21-1.0.28"
+hilt = "2.56"  # ПОВЫШАЕМ до 2.56
 coil = "3.0.4"
 coreKtx = "1.15.0"
 junit = "4.13.2"
@@ -12,6 +12,7 @@ lifecycleRuntimeKtx = "2.8.7"
 activityCompose = "1.13.0"
 composeBom = "2024.09.00"
 material = "1.14.0"
+firebaseDatabaseKtx = "22.0.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -32,10 +33,11 @@ coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref 
 coil-network = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version = "1.2.0" }
+firebase-database-ktx = { group = "com.google.firebase", name = "firebase-database-ktx", version.ref = "firebaseDatabaseKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }  # ДОБАВИТЬ ЭТУ СТРОКУ
+google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
