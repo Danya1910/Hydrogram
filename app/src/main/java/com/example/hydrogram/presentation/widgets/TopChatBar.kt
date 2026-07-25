@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.widgets
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,9 +37,11 @@ import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.model.UserPresence
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.util.formatLastSeen
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.OfflineStatusColor
 import com.example.hydrogram.ui.theme.SfProText
+import java.util.Date
 
 
 @Composable
@@ -158,6 +161,10 @@ private fun UserName(
     presenceState: UserPresence,
 ) {
 
+    val formattedLastSeenTime = formatLastSeen(
+        lastSeenTimestamp = presenceState.lastSeen
+    )
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -197,11 +204,11 @@ private fun UserName(
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = if (presenceState.isOnline) "В сети" else "Был(а) недавно",
+                text = if (presenceState.isOnline) "В сети" else formattedLastSeenTime,
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Medium,
                 fontSize = 12.sp,
-                color = if (user.isOnline) Blue else OfflineStatusColor,
+                color = if (presenceState.isOnline) Blue else OfflineStatusColor,
             )
         }
     }
