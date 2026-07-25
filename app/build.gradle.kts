@@ -55,6 +55,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-database-ktx")
 
     // Dagger Hilt (Генерирует код через стабильный KSP)
     implementation("com.google.dagger:hilt-android:2.55")
