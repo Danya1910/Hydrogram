@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetInboxChatsUseCase
+import com.example.hydrogram.domain.usecase.StartTrackingPresenceUseCase
 import com.example.hydrogram.presentation.states.InboxUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,8 +18,8 @@ import javax.inject.Inject
 class InboxViewModel @Inject constructor(
     private val getInboxChatsUseCase: GetInboxChatsUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
-) : ViewModel()
-{
+    private val startTrackingPresenceUseCase: StartTrackingPresenceUseCase,
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow<InboxUiState>(InboxUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -30,10 +31,10 @@ class InboxViewModel @Inject constructor(
     fun getCurrentUserId() {
         viewModelScope.launch {
             val result = getCurrentUserIdUseCase()
-            if(!result.isNullOrEmpty()) {
+            if (!result.isNullOrEmpty()) {
                 _currentId.value = result
-            }
-            else return@launch
+                startTrackingPresenceUseCase(uid = result)
+            } else return@launch
         }
     }
 
