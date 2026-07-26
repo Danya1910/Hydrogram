@@ -1,10 +1,12 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.model.UserPresence
+import com.example.hydrogram.domain.usecase.ChangeAvatarUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetUserByIdUseCase
 import com.example.hydrogram.domain.usecase.ObserveUserPresenceUseCase
@@ -30,6 +32,7 @@ class UserViewModel @Inject constructor(
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val saveUserNameUseCase: SaveUserNameUseCase,
     private val observeUserPresenceUseCase: ObserveUserPresenceUseCase,
+    private val changeAvatarUseCase: ChangeAvatarUseCase,
 ) : ViewModel() {
 
     private val _userState = MutableStateFlow<UserState>(UserState.Loading)
@@ -162,6 +165,35 @@ class UserViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = UserPresence(isOnline = true, lastSeen = 0L),
         )
+    }
+
+    fun changeAvatar(
+        uid: String,
+        imageUri: Uri,
+    ) {
+        if(uid.isBlank()) {
+            _errorMessage.value = "Пользователь не найден"
+            return
+        }
+        if(_isSaving.value) return
+        viewModelScope.launch {
+
+            _isSaving.value = true
+            _isLoading.value = true
+            _isSuccess.value = false
+
+            val result = changeAvatarUseCase(
+                uid = uid,
+                imageUri = imageUri
+            )
+
+            _isSaving.value = false
+            _isLoading.value = false
+
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = "Ошибка обновления аватара" }
+        }
     }
 
     fun setUserOnlineStats(
