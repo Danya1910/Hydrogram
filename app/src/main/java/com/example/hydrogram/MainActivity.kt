@@ -25,19 +25,10 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var startTrackingPresenceUseCase: StartTrackingPresenceUseCase
-
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val currentUid = FirebaseAuth.getInstance().currentUser?.uid
-        if(currentUid != null) {
-            Log.d("MainActivity", "tracking started, currentUid: $currentUid")
-            startTrackingPresenceUseCase(uid = currentUid)
-        }
 
         enableEdgeToEdge()
         try {
