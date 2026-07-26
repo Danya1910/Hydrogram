@@ -10,6 +10,7 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import android.net.Uri
+import android.util.Base64
 
 class ChangeAvatarUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -29,16 +30,19 @@ class ChangeAvatarUseCase @Inject constructor(
                 return@withContext Result.failure(Exception("Не удалось прочитать изображение"))
             }
 
-            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 400, 400, true)
+            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 120, 120, true)
             val outputStream = ByteArrayOutputStream()
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
 
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
             val byteArray = outputStream.toByteArray()
 
             originalBitmap.recycle()
             scaledBitmap.recycle()
 
-            userRepository.changeAvatar(uid = uid, bytes = byteArray)
+            val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+            val finalAvatarDataString = "data:image/jpeg;base64,$base64String"
+
+            userRepository.changeAvatar(uid = uid, avatarString = finalAvatarDataString)
 
 
         } catch (e: Exception) {

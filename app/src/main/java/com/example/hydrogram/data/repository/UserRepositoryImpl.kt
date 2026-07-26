@@ -1,14 +1,10 @@
 package com.example.hydrogram.data.repository
 
 import android.util.Log
-import androidx.compose.ui.platform.LocalGraphicsContext
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
-import com.example.hydrogram.presentation.states.UserState
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.core.UserData
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -104,18 +100,11 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun changeAvatar(uid: String, bytes: ByteArray): Result<Unit> {
+    override suspend fun changeAvatar(uid: String, avatarString: String): Result<Unit> {
         return try {
-            val storageRef = FirebaseStorage.getInstance().reference
-
-            val avatarRef = storageRef.child("users/$uid/avatar.jpg")
-
-            avatarRef.putBytes(bytes).await()
-
-            val downloadUrl = avatarRef.downloadUrl.await().toString()
             firestore.collection("users")
                 .document(uid)
-                .update("avatarUrl", downloadUrl)
+                .update("avatarUrl", avatarString)
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {

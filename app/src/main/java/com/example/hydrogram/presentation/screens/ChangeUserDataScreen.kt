@@ -1,8 +1,10 @@
 package com.example.hydrogram.presentation.screens
 
 import android.util.Log
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -130,7 +132,7 @@ fun ChangeUserDataScreen(
     }
 
     LaunchedEffect(isSaveUserNameSuccess) {
-        if(isSaveUserNameSuccess) {
+        if (isSaveUserNameSuccess) {
             isUserNameWidgetVisible = false
         }
     }
@@ -200,7 +202,8 @@ fun ChangeUserDataScreen(
                         onNameChange = { name = it },
                         aboutMe = aboutMe,
                         onAboutMeChange = { aboutMe = it },
-                        onUserNameClick = { isUserNameWidgetVisible = true }
+                        onUserNameClick = { isUserNameWidgetVisible = true },
+                        userViewModel = userViewModel,
                     )
                 }
             }
@@ -276,6 +279,7 @@ private fun Content(
     aboutMe: String,
     onAboutMeChange: (String) -> Unit,
     onUserNameClick: () -> Unit,
+    userViewModel: UserViewModel,
 ) {
 
     Column(
@@ -290,6 +294,7 @@ private fun Content(
     ) {
         ChangeAvatar(
             user = user,
+            userViewModel = userViewModel,
         )
         Spacer(modifier = Modifier.height(16.dp))
         InputDataField(
@@ -342,8 +347,18 @@ private fun Content(
 
 @Composable
 private fun ChangeAvatar(
-    user: User?
+    user: User?,
+    userViewModel: UserViewModel,
 ) {
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            userViewModel.changeAvatar(uid = user?.uid ?: "", imageUri = uri)
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -367,6 +382,12 @@ private fun ChangeAvatar(
             fontWeight = FontWeight.Normal,
             fontSize = 15.sp,
             color = Blue,
+            modifier = Modifier
+                .clickable{
+                    photoPickerLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
         )
     }
 }

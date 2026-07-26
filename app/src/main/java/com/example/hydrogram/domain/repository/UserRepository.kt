@@ -15,6 +15,6 @@ interface UserRepository {
 
     suspend fun setUserOnlineStats(uid: String, isOnline: Boolean) : Result<Unit>
 
-    suspend fun changeAvatar(uid: String, bytes: ByteArray) : Result<Unit>
+    suspend fun changeAvatar(uid: String, avatarString: String) : Result<Unit>
 
 }
