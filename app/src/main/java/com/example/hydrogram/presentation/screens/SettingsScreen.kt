@@ -1,6 +1,9 @@
 package com.example.hydrogram.presentation.screens
 
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,18 +28,22 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.navigation.Screen
@@ -179,6 +186,22 @@ private fun UserInfoHat(
 
     val userName = user?.userName
 
+    val avatarBitmap = remember(user?.avatarUrl) {
+        val url = user?.avatarUrl
+        if (!url.isNullOrBlank() && url.startsWith("data:image/jpeg;base64,")) {
+            try {
+                val base64String = url.substringAfter("base64,")
+                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else {
+            null
+        }
+    }
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -188,14 +211,27 @@ private fun UserInfoHat(
                 horizontal = 16.dp,
             )
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_avatar),
-            contentDescription = null,
-            tint = Color.Unspecified,
-            modifier = Modifier
-                .size(104.dp)
-                .clip(shape = CircleShape)
-        )
+        if (avatarBitmap != null) {
+            Image(
+                bitmap = avatarBitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(104.dp)
+                    .clip(shape = CircleShape)
+            )
+        } else {
+            AsyncImage(
+                model = null,
+                contentDescription = null,
+                placeholder = painterResource(R.drawable.ic_avatar),
+                error = painterResource(R.drawable.ic_avatar),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(104.dp)
+                    .clip(shape = CircleShape)
+            )
+        }
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = user?.name ?: "Unknown",

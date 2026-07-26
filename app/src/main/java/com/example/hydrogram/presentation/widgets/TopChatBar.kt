@@ -1,6 +1,9 @@
 package com.example.hydrogram.presentation.widgets
 
+import android.graphics.BitmapFactory
 import android.text.format.DateFormat
+import android.util.Base64
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -20,10 +23,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -121,6 +126,22 @@ private fun UserIcon(
     onIconClick: () -> Unit,
 ) {
 
+    val avatarBitmap = remember(user?.avatarUrl) {
+        val url = user?.avatarUrl
+        if (!url.isNullOrBlank() && url.startsWith("data:image/jpeg;base64,")) {
+            try {
+                val base64String = url.substringAfter("base64,")
+                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else {
+            null
+        }
+    }
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -141,16 +162,27 @@ private fun UserIcon(
                 onIconClick()
             }
     ) {
-        AsyncImage(
-            model = user?.avatarUrl,
-            contentDescription = null,
-            placeholder = painterResource(R.drawable.ic_avatar),
-            error = painterResource(R.drawable.ic_avatar),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(38.dp)
-                .clip(shape = CircleShape)
-        )
+        if (avatarBitmap != null) {
+            Image(
+                bitmap = avatarBitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(shape = CircleShape)
+            )
+        } else {
+            AsyncImage(
+                model = null,
+                contentDescription = null,
+                placeholder = painterResource(R.drawable.ic_avatar),
+                error = painterResource(R.drawable.ic_avatar),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(38.dp)
+                    .clip(shape = CircleShape)
+            )
+        }
     }
 }
 
@@ -218,15 +250,15 @@ private fun UserName(
 @Preview(showBackground = true, backgroundColor = 0xFF7D5260)
 private fun TopChatBarPreview(
 ) {
-
-    val user = User(
-        name = "Dog"
-    )
-
-        TopChatBar(
-            user = user,
-            onUserClick = {},
-            onBackClick = {},
-            presenceState = UserPresence(),
-        )
+//
+//    val user = User(
+//        name = "Dog"
+//    )
+//
+//        TopChatBar(
+//            user = user,
+//            onUserClick = {},
+//            onBackClick = {},
+//            presenceState = UserPresence(),
+//        )
 }

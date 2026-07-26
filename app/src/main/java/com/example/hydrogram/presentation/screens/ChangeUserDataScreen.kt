@@ -367,7 +367,6 @@ private fun ChangeAvatar(
         val url = user?.avatarUrl
         if (!url.isNullOrBlank() && url.startsWith("data:image/jpeg;base64,")) {
             try {
-                // Отрезаем технический префикс "data:image/jpeg;base64,"
                 val base64String = url.substringAfter("base64,")
                 val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
                 BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
@@ -387,7 +386,6 @@ private fun ChangeAvatar(
             .padding(top = 74.dp)
     ) {
         if (avatarBitmap != null) {
-            // Если картинка успешно декодирована, выводим её как готовый Bitmap (это работает без сети и моментально)
             Image(
                 bitmap = avatarBitmap.asImageBitmap(),
                 contentDescription = null,
@@ -397,9 +395,8 @@ private fun ChangeAvatar(
                     .clip(shape = CircleShape)
             )
         } else {
-            // Если картинки нет или она пустая — показываем ваш стандартный AsyncImage с плейсхолдером
             AsyncImage(
-                model = null, // Гарантирует включение заглушки
+                model = null,
                 contentDescription = null,
                 placeholder = painterResource(R.drawable.ic_avatar),
                 error = painterResource(R.drawable.ic_avatar),
