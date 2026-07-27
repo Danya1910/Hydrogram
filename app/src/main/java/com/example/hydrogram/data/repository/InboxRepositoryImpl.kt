@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.repository
 
+import androidx.compose.runtime.MutableState
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.repository.InboxRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -23,15 +24,50 @@ class InboxRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    val chats = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Chat::class.java)
-                    }.filter { chat ->
-                        chat.chatId.contains(userId)
+                    val filteredDocs = snapshot.documents.filter { doc ->
+                        doc.id.contains(userId)
                     }
-                    trySend(chats)
+
+                    if (filteredDocs.isEmpty()) {
+                        trySend(emptyList())
+                        return@addSnapshotListener
+                    }
+
+                    val chatList = mutableListOf<Chat>()
+                    val listenersCount = 0
+
+                    filteredDocs.forEach { doc ->
+                        val baseChat = doc.toObject(Chat::class.java) ?: return@forEach
+
+                        firestore.collection("chats")
+                            .document(doc.id)
+                            .collection("messages")
+                            .whereEqualTo("isRead", false)
+                            .addSnapshotListener { msgSnapshot, _ ->
+
+                                val unread = msgSnapshot?.documents?.count { msgDoc ->
+                                    val senderId = msgDoc.getString("senderId") ?: ""
+                                    senderId != userId
+                                } ?: 0
+
+                                val updatedChat = baseChat.copy(unreadCount = unread)
+
+                                chatList.removeAll { it.chatId == updatedChat.chatId }
+                                chatList.add(updatedChat)
+
+                                val sortedChats =
+                                    chatList.sortedByDescending { it.lastMessageTimestamp }
+
+                                trySend(sortedChats)
+
+                            }
+
+                    }
                 }
             }
-        awaitClose { listener.remove() }
+        awaitClose {
+            listener.remove()
+        }
     }
 
 }
