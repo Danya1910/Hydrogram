@@ -95,7 +95,7 @@ fun ChatScreen(
     }
 
     LaunchedEffect(penpalId) {
-        userViewModel.observeUser(
+        userViewModel.setTargetUserId(
             uid = penpalId ?: ""
         )
     }

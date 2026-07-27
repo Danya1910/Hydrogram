@@ -14,11 +14,15 @@ import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
 import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
 import com.example.hydrogram.presentation.states.UserState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -34,8 +38,23 @@ class UserViewModel @Inject constructor(
     private val changeAvatarUseCase: ChangeAvatarUseCase,
 ) : ViewModel() {
 
-    private val _userState = MutableStateFlow<UserState>(UserState.Loading)
-    val userState = _userState.asStateFlow()
+    private val _targetUserId = MutableStateFlow("")
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val userState: StateFlow<UserState> = _targetUserId
+        .flatMapLatest { uid ->
+            if (uid.isBlank()) {
+                flowOf(UserState.Loading)
+            } else {
+                getUserByIdUseCase(uid = uid)
+                    .map { user -> UserState.Success(user = user) as UserState }
+                    .catch { emit(UserState.Error(it.localizedMessage ?: "Ошибка")) }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = UserState.Loading
+        )
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
@@ -55,6 +74,12 @@ class UserViewModel @Inject constructor(
     private val _saveResult = MutableStateFlow<Result<Unit>?>(null)
     val saveResult = _saveResult.asStateFlow()
 
+    fun setTargetUserId(uid: String) {
+        if (_targetUserId.value != uid) {
+            _targetUserId.value = uid
+        }
+    }
+
     fun getCurrentUserId() {
         viewModelScope.launch {
             val result = getCurrentUserIdUseCase()
@@ -63,28 +88,6 @@ class UserViewModel @Inject constructor(
             } else return@launch
         }
     }
-
-    fun observeUser(
-        uid: String,
-    ) {
-        if (uid.isBlank()) {
-            _userState.value = UserState.Error("Пользователь не найден")
-            return
-        }
-        viewModelScope.launch {
-            getUserByIdUseCase(uid = uid)
-                .catch { exception ->
-                    _userState.value = UserState.Error(
-                        exception.localizedMessage ?: "Ошибка получения данных пользователя"
-                    )
-                }
-                .collect { user ->
-                    _userState.value = UserState.Success(user = user)
-                }
-        }
-
-    }
-
 
     fun saveProfile(
         uid: String,

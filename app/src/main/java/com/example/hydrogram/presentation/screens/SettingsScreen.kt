@@ -102,7 +102,7 @@ private fun Content(
     }
 
     LaunchedEffect(mineId) {
-        userViewModel.observeUser(uid = mineId)
+        userViewModel.setTargetUserId(uid = mineId)
     }
 
     val profileList = listOf(

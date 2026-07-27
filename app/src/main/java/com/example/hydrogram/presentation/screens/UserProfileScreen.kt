@@ -88,9 +88,7 @@ private fun Content(
         .collectAsStateWithLifecycle()
 
     LaunchedEffect(userId) {
-        userViewModel.observeUser(
-            uid = userId
-        )
+        userViewModel.setTargetUserId(uid = userId)
     }
 
     Column(

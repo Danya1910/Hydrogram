@@ -100,7 +100,7 @@ fun ChangeUserDataScreen(
     }
 
     LaunchedEffect(mineId) {
-        userViewModel.observeUser(
+        userViewModel.setTargetUserId(
             uid = mineId,
         )
     }

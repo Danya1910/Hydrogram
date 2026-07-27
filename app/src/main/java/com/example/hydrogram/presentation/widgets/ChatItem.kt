@@ -74,7 +74,7 @@ fun ChatItem(
 
     LaunchedEffect(penpalId) {
         if (penpalId.isNotBlank()) {
-            userViewModel.observeUser(
+            userViewModel.setTargetUserId(
                 uid = penpalId,
             )
         }
