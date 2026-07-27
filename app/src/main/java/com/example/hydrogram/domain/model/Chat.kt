@@ -8,4 +8,5 @@ data class Chat(
     val lastMessageSenderId: String = "",
     val lastMessageTimestamp: Long = 0L,
     val unreadCount: Int = 0,
+    val members: List<String> = emptyList()
 )

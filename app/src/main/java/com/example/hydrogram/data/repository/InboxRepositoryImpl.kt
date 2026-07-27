@@ -1,9 +1,9 @@
 package com.example.hydrogram.data.repository
 
-import androidx.compose.runtime.MutableState
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.repository.InboxRepository
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -15,58 +15,78 @@ class InboxRepositoryImpl @Inject constructor(
 ) : InboxRepository {
 
     override fun getInboxChats(userId: String): Flow<List<Chat>> = callbackFlow {
-        val listener = firestore
-            .collection("chats")
+        val messageListenersMap = mutableMapOf<String, ListenerRegistration>()
+        val currentChatsMap = mutableMapOf<String, Chat>()
+
+        val mainChatsListener = firestore.collection("chats")
             .orderBy("lastMessageTimestamp", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
                     return@addSnapshotListener
                 }
+
                 if (snapshot != null) {
-                    val filteredDocs = snapshot.documents.filter { doc ->
+                    val chatDocuments = snapshot.documents.filter { doc ->
                         doc.id.contains(userId)
                     }
 
-                    if (filteredDocs.isEmpty()) {
+                    if (chatDocuments.isEmpty()) {
                         trySend(emptyList())
                         return@addSnapshotListener
                     }
 
-                    val chatList = mutableListOf<Chat>()
-                    val listenersCount = 0
+                    val currentDocIds = chatDocuments.map { it.id }
+                    val removedIds = currentChatsMap.keys.filter { it !in currentDocIds }
+                    removedIds.forEach { id ->
+                        currentChatsMap.remove(id)
+                        messageListenersMap[id]?.remove()
+                        messageListenersMap.remove(id)
+                    }
 
-                    filteredDocs.forEach { doc ->
+                    chatDocuments.forEach { doc ->
                         val baseChat = doc.toObject(Chat::class.java) ?: return@forEach
+                        val chatId = doc.id
 
-                        firestore.collection("chats")
-                            .document(doc.id)
-                            .collection("messages")
-                            .whereEqualTo("isRead", false)
-                            .addSnapshotListener { msgSnapshot, _ ->
+                        val existingChat = currentChatsMap[chatId]
+                        currentChatsMap[chatId] = baseChat.copy(
+                            unreadCount = existingChat?.unreadCount ?: 0
+                        )
 
-                                val unread = msgSnapshot?.documents?.count { msgDoc ->
-                                    val senderId = msgDoc.getString("senderId") ?: ""
-                                    senderId != userId
-                                } ?: 0
+                        if (!messageListenersMap.containsKey(chatId)) {
+                            val msgListener = firestore.collection("chats")
+                                .document(chatId)
+                                .collection("messages")
+                                .whereEqualTo("status", "sent")
+                                .addSnapshotListener { msgSnapshot, msgError ->
+                                    if (msgError != null) return@addSnapshotListener
 
-                                val updatedChat = baseChat.copy(unreadCount = unread)
+                                    val unread = msgSnapshot?.documents?.count { msgDoc ->
+                                        val senderId = msgDoc.getString("senderId") ?: ""
+                                        senderId != userId
+                                    } ?: 0
 
-                                chatList.removeAll { it.chatId == updatedChat.chatId }
-                                chatList.add(updatedChat)
+                                    val latestBaseChat = currentChatsMap[chatId] ?: baseChat
+                                    currentChatsMap[chatId] = latestBaseChat.copy(unreadCount = unread)
 
-                                val sortedChats =
-                                    chatList.sortedByDescending { it.lastMessageTimestamp }
+                                    val sortedList = currentChatsMap.values.sortedByDescending { it.lastMessageTimestamp }
+                                    trySend(sortedList)
+                                }
 
-                                trySend(sortedChats)
-
-                            }
-
+                            messageListenersMap[chatId] = msgListener
+                        } else {
+                            val sortedList = currentChatsMap.values.sortedByDescending { it.lastMessageTimestamp }
+                            trySend(sortedList)
+                        }
                     }
                 }
             }
+
         awaitClose {
-            listener.remove()
+            mainChatsListener.remove()
+            messageListenersMap.values.forEach { it.remove() }
+            messageListenersMap.clear()
+            currentChatsMap.clear()
         }
     }
 
