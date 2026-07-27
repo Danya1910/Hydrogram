@@ -159,15 +159,20 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun getOpponentPresence(opponentId: String) : StateFlow<UserPresence> {
-        return observeUserPresenceUseCase(
-            userId = opponentId
-        ).stateIn(
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val opponentPresenceState: StateFlow<UserPresence> = _targetUserId
+        .flatMapLatest { uid ->
+            if (uid.isBlank()) {
+                kotlinx.coroutines.flow.flowOf(UserPresence(isOnline = false, lastSeen = 0L))
+            } else {
+                observeUserPresenceUseCase(userId = uid)
+            }
+        }
+        .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = UserPresence(isOnline = true, lastSeen = 0L),
+            initialValue = UserPresence(isOnline = false, lastSeen = 0L)
         )
-    }
 
     fun changeAvatar(
         uid: String,

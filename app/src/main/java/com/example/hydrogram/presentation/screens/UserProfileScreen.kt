@@ -83,9 +83,7 @@ private fun Content(
 
     val userData by userViewModel.userState.collectAsStateWithLifecycle()
 
-    val presenceState by userViewModel
-        .getOpponentPresence(opponentId = userId)
-        .collectAsStateWithLifecycle()
+    val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
 
     LaunchedEffect(userId) {
         userViewModel.setTargetUserId(uid = userId)

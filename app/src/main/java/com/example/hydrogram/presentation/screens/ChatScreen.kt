@@ -84,9 +84,7 @@ fun ChatScreen(
 
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
-    val presenceState by userViewModel
-        .getOpponentPresence(opponentId = penpalId ?: "")
-        .collectAsStateWithLifecycle()
+    val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
 
     val chatId = remember(mineId, penpalId) {
         if (mineId.isNotEmpty() && !penpalId.isNullOrEmpty()) {
