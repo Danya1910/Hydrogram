@@ -20,12 +20,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -45,8 +48,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -64,6 +69,7 @@ import com.example.hydrogram.presentation.viewModel.SearchViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
+import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.SfProText
 
 
@@ -73,6 +79,9 @@ fun ContactsScreen(
     navController: NavController,
 ) {
     Scaffold(
+        topBar = {
+            TopBar()
+        },
         bottomBar = {
             BottomBar(
                 navController = navController,
@@ -421,4 +430,118 @@ private fun SearchField(
             }
         )
     }
+}
+
+@Composable
+private fun TopBar(
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .statusBarsPadding()
+            .height(54.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        SortButton(
+            title = "Сорт.",
+            onClick = {},
+        )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .weight(1f)
+        ) {
+            ContactsScreenHat()
+        }
+        Spacer(modifier = Modifier.width(23.dp))
+        AddButton(
+            icon = R.drawable.ic_plus,
+            onClick = {},
+        )
+    }
+}
+
+@Composable
+private fun SortButton(
+    title: String,
+    onClick: () -> Unit,
+) {
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(44.dp)
+            .width(67.dp)
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape,
+            )
+            .clickable{
+                onClick()
+            }
+            .padding(horizontal = 10.dp),
+
+        ) {
+        Text(
+            text = title,
+            fontFamily = SfProText,
+            fontWeight = FontWeight.Medium,
+            fontSize = 17.sp,
+            color = LightBlack,
+        )
+    }
+
+}
+
+@Composable
+private fun ContactsScreenHat() {
+    Text(
+        text = "Контакты",
+        fontFamily = SfProText,
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        letterSpacing = (-0.26).sp,
+        color = LightBlack,
+    )
+}
+
+@Composable
+private fun AddButton(
+    icon: Int,
+    onClick: () -> Unit,
+) {
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(44.dp)
+            .width(44.dp)
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape,
+            )
+            .clickable{
+                onClick()
+            }
+            .padding(horizontal = 10.dp),
+
+        ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = LightBlack,
+        )
+    }
+
 }
