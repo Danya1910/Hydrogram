@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.PhoneContact
@@ -53,6 +54,7 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch {
             val result = getPhoneContactsUseCase()
             _contacts.value = result
+            Log.d("SearchVM", "contacts: $result")
         }
     }
 
