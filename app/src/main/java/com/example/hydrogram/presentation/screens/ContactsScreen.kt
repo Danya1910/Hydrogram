@@ -66,6 +66,7 @@ import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.util.formatLastSeen
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -117,7 +118,17 @@ private fun Content(
     }
 
     LaunchedEffect(contacts) {
-        Log.d("ContactsScreen", "contacts: $contacts")
+        if (contacts.isNotEmpty()) {
+            Log.d("ContactsScreen", "Всего контактов загружено: ${contacts.size}")
+
+            contacts.forEachIndexed { index, contact ->
+                Log.d("ContactsScreen", "contact[$index] user = : ${contact.user.name}")
+                Log.d("ContactsScreen", "contact[$index].isOnline: ${contact.user.isOnline}")
+                Log.d("ContactsScreen", "contact[$index].lastSeen: ${contact.user.lastSeen}")
+            }
+        } else {
+            Log.d("ContactsScreen", "Список контактов пока пуст (загрузка...)")
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -295,7 +306,7 @@ private fun ContactUserCard(
 ) {
 
     val isOnline = contact?.user?.isOnline?.let {
-        if (contact.user.isOnline) "онлайн" else "был(а) недавно"
+        if (contact.user.isOnline) "онлайн" else formatLastSeen( lastSeenTimestamp = contact.user.lastSeen)
     } ?: "был(а) недавно"
 
     val onlineTextColor = contact?.user?.isOnline?.let {
