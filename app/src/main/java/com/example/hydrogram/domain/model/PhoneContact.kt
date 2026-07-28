@@ -1,6 +1,6 @@
 package com.example.hydrogram.domain.model
 
-data class Contact(
+data class PhoneContact(
     val name: String,
     val phone: String,
 )
