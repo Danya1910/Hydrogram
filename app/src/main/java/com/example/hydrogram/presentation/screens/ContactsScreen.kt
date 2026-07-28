@@ -97,7 +97,7 @@ private fun Content(
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if(isGranted) {
+        if (isGranted) {
             searchViewModel.syncContacts()
         }
     }
@@ -140,6 +140,12 @@ private fun Content(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
+        ContactsList(
+            contacts = contacts,
+            navController = navController,
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
         when (val state = foundUserState) {
             is SearchState.Loading -> {
                 CircularProgressIndicator()
@@ -237,6 +243,7 @@ private fun UserCard(
 @Composable
 private fun ContactsList(
     contacts: List<RegisteredContact>,
+    navController: NavController,
 ) {
     LazyColumn() {
         itemsIndexed(
@@ -245,7 +252,9 @@ private fun ContactsList(
         ) { index, contact ->
             ContactUserCard(
                 contact = contact,
-                onUserClick = {}
+                onUserClick = {
+                    navController.navigate(Screen.Chat.createRoute(id = contact.user.uid))
+                }
             )
             if (index != contacts.size - 1) {
                 SeparatorLine(
