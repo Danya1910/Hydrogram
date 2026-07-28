@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.screens
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.util.Base64
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -113,6 +114,10 @@ private fun Content(
         if (isGranted) {
             searchViewModel.syncContacts()
         }
+    }
+
+    LaunchedEffect(contacts) {
+        Log.d("ContactsScreen", "contacts: $contacts")
     }
 
     LaunchedEffect(Unit) {

@@ -3,16 +3,25 @@ package com.example.hydrogram.presentation.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.model.PhoneContact
 import com.example.hydrogram.domain.model.RegisteredContact
 import com.example.hydrogram.domain.usecase.FindUserByPhoneOrUserNameUseCase
 import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
+import com.example.hydrogram.domain.usecase.ObserveMultiplePresenceUseCase
 import com.example.hydrogram.domain.usecase.SyncContactsUseCase
 import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.normalizePhoneNumber
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -21,13 +30,13 @@ class SearchViewModel @Inject constructor(
     private val findUserByPhoneOrUserNameUseCase: FindUserByPhoneOrUserNameUseCase,
     private val getPhoneContactsUseCase: GetPhoneContactsUseCase,
     private val syncContactsUseCase: SyncContactsUseCase,
+    private val observeMultiplePresenceUseCase: ObserveMultiplePresenceUseCase,
 ) : ViewModel() {
 
     private val _searchState = MutableStateFlow<SearchState>(SearchState.Loading)
     val searchState = _searchState.asStateFlow()
 
     private val _registeredContacts = MutableStateFlow<List<RegisteredContact>>(emptyList())
-    val registeredContact = _registeredContacts.asStateFlow()
 
     fun searchByPhoneOrUserName(
         query: String
@@ -54,8 +63,37 @@ class SearchViewModel @Inject constructor(
         }
     }
 
-    fun syncContacts() {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val registeredContact: StateFlow<List<RegisteredContact>> = _registeredContacts
+        .flatMapLatest { contacts ->
+            if (contacts.isEmpty()) {
+                flowOf(emptyList())
+            } else {
+                val uids = contacts.map { it.user.uid }
 
+                combine(
+                    flowOf(contacts),
+                    observeMultiplePresenceUseCase(uids = uids)
+                ) { baseList, onlineMap ->
+                    baseList.map { contact ->
+                        val livePresence = onlineMap[contact.user.uid]
+                        contact.copy(
+                            user = contact.user.copy(
+                                isOnline = livePresence?.isOnline ?: false,
+                                lastSeen = livePresence?.lastSeen ?: 0L
+                            )
+                        )
+                    }
+                }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    fun syncContacts() {
         if (_registeredContacts.value.isNotEmpty()) return
 
         viewModelScope.launch {
@@ -68,12 +106,10 @@ class SearchViewModel @Inject constructor(
             val firebaseUsers = syncContactsUseCase(phoneNumbers = numberList)
             Log.d("SearchVM", "firebase users: $firebaseUsers")
 
-
             val finalSyncedList = firebaseUsers.mapNotNull { firebaseUser ->
-                val matchingLocalContact =
-                    contacts.find {
-                        normalizePhoneNumber(rawPhone = it.phone) == firebaseUser.phone
-                    }
+                val matchingLocalContact = contacts.find {
+                    normalizePhoneNumber(rawPhone = it.phone) == firebaseUser.phone
+                }
 
                 if (matchingLocalContact != null) {
                     RegisteredContact(
@@ -83,9 +119,8 @@ class SearchViewModel @Inject constructor(
                 } else {
                     null
                 }
-            }
+            }.sortedBy { it.contactName }
 
-                .sortedBy { it.contactName }
             Log.d("SearchVM", "final Synced list: $finalSyncedList")
             _registeredContacts.value = finalSyncedList
         }
