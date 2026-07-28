@@ -73,6 +73,7 @@ import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.SfProText
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -305,9 +306,26 @@ private fun ContactUserCard(
     onUserClick: () -> Unit,
 ) {
 
-    val isOnline = contact?.user?.isOnline?.let {
-        if (contact.user.isOnline) "онлайн" else formatLastSeen( lastSeenTimestamp = contact.user.lastSeen)
-    } ?: "был(а) недавно"
+    var tick by remember { mutableStateOf(0) }
+
+    if (contact?.user?.isOnline == false) {
+        LaunchedEffect(contact.user.uid) {
+            while (true) {
+                delay(30_000L)
+                tick++
+            }
+        }
+    }
+
+    val isOnline = remember(contact?.user?.isOnline, contact?.user?.lastSeen, tick) {
+        contact?.user?.isOnline?.let { isOnline ->
+            if (isOnline) {
+                "онлайн"
+            } else {
+                formatLastSeen(lastSeenTimestamp = contact.user.lastSeen)
+            }
+        } ?: "был(а) недавно"
+    }
 
     val onlineTextColor = contact?.user?.isOnline?.let {
         if (contact.user.isOnline) Blue else Color(0xFF3C3C43).copy(alpha = 0.6f)
