@@ -21,3 +21,8 @@ data class UserPresence(
     val isOnline: Boolean = false,
     val lastSeen: Long = 0L,
 )
+
+data class RegisteredContact(
+    val user: User = User(),
+    val contactName: String = "",
+)

@@ -15,3 +15,13 @@ fun formatPhoneNumber(rawInput: String): String {
 
     return "+7 $part1 $part2 $part3"
 }
+
+fun normalizePhoneNumber(rawPhone: String): String {
+    val onlyDigits = rawPhone.replace(Regex("\\D"), "")
+
+    return if ((onlyDigits.startsWith("7") || onlyDigits.startsWith("8")) && onlyDigits.length == 11) {
+        onlyDigits.substring(1)
+    } else {
+        onlyDigits
+    }
+}

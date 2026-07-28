@@ -3,6 +3,7 @@ package com.example.hydrogram.data.repository
 import android.util.Log
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
+import com.example.hydrogram.presentation.util.normalizePhoneNumber
 import com.google.firebase.firestore.Filter
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
@@ -10,6 +11,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
+import kotlin.collections.emptyList
 
 class UserRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
@@ -35,8 +37,8 @@ class UserRepositoryImpl @Inject constructor(
                 .document(uid)
                 .update(
                     "userName", userName,
-                        "userNameLowercase", userNameLowercase,
-                    )
+                    "userNameLowercase", userNameLowercase,
+                )
                 .await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -48,7 +50,7 @@ class UserRepositoryImpl @Inject constructor(
         val listener = firestore.collection("users")
             .document(uid)
             .addSnapshotListener { snapshot, error ->
-                if(error != null) {
+                if (error != null) {
                     close(error)
                     return@addSnapshotListener
                 }
@@ -76,7 +78,7 @@ class UserRepositoryImpl @Inject constructor(
 
             Log.d("FIRESTORE", "Найдено документов: ${snapshot.size()}")
 
-            if(!snapshot.isEmpty) {
+            if (!snapshot.isEmpty) {
                 snapshot.documents.first().toObject(User::class.java)
             } else {
                 null
@@ -113,4 +115,30 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun syncContacts(phoneNumbers: List<String>): List<User> {
+        if (phoneNumbers.isEmpty()) return emptyList()
+
+        return try {
+            val chunks = phoneNumbers.chunked(30)
+            val foundUsers = mutableListOf<User>()
+
+            for (chunk in chunks) {
+
+                val normalizedChunk = chunk.map { normalizePhoneNumber(rawPhone = it) }
+                val snapshot = firestore.collection("users")
+                    .whereIn("phone", normalizedChunk)
+                    .get()
+                    .await()
+
+                val users = snapshot.documents.mapNotNull { it.toObject(User::class.java) }
+                foundUsers.addAll(users)
+            }
+
+            foundUsers
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
+        }
+
+    }
 }

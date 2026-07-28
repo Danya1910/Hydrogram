@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.CircularProgressIndicator
@@ -34,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -46,6 +49,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
+import com.example.hydrogram.domain.model.RegisteredContact
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
 import com.example.hydrogram.presentation.navigation.Screen
@@ -54,6 +58,7 @@ import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
+import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.SfProText
 
@@ -87,13 +92,13 @@ private fun Content(
     var query by remember { mutableStateOf("") }
     val context = LocalContext.current
 
-    val contacts by searchViewModel.contacts.collectAsStateWithLifecycle()
+    val contacts by searchViewModel.registeredContact.collectAsStateWithLifecycle()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if(isGranted) {
-            searchViewModel.getContacts()
+            searchViewModel.syncContacts()
         }
     }
 
@@ -103,7 +108,7 @@ private fun Content(
         ) == PackageManager.PERMISSION_GRANTED
 
         if (hasPermission) {
-            searchViewModel.getContacts()
+            searchViewModel.syncContacts()
         } else {
             permissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
         }
@@ -120,10 +125,12 @@ private fun Content(
     val foundUserState by searchViewModel.searchState.collectAsStateWithLifecycle()
 
     Column(
-        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
+            .padding(
+                paddingValues = paddingValues
+            )
     ) {
         SearchField(
             value = query,
@@ -131,6 +138,8 @@ private fun Content(
                 query = it
             }
         )
+        Spacer(modifier = Modifier.height(10.dp))
+
         when (val state = foundUserState) {
             is SearchState.Loading -> {
                 CircularProgressIndicator()
@@ -224,6 +233,100 @@ private fun UserCard(
         }
     }
 }
+
+@Composable
+private fun ContactsList(
+    contacts: List<RegisteredContact>,
+) {
+    LazyColumn() {
+        itemsIndexed(
+            items = contacts,
+            key = { _, state -> state.user.uid }
+        ) { index, contact ->
+            ContactUserCard(
+                contact = contact,
+                onUserClick = {}
+            )
+            if (index != contacts.size - 1) {
+                SeparatorLine(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 82.dp,
+                            end = 16.dp
+                        )
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ContactUserCard(
+    contact: RegisteredContact?,
+    onUserClick: () -> Unit,
+) {
+
+    val isOnline = contact?.user?.isOnline?.let {
+        if (contact.user.isOnline) "онлайн" else "был(а) недавно"
+    } ?: "был(а) недавно"
+
+    val onlineTextColor = contact?.user?.isOnline?.let {
+        if (contact.user.isOnline) Blue else Color(0xFF3C3C43).copy(alpha = 0.6f)
+    } ?: Color(0xFF3C3C43).copy(alpha = 0.6f)
+
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(52.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clickable {
+                onUserClick()
+            }
+    ) {
+        AsyncImage(
+            model = contact?.user?.avatarUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(42.dp)
+                .clip(shape = CircleShape),
+        )
+        Spacer(modifier = Modifier.width(11.dp))
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Text(
+                text = contact?.contactName ?: "Без имени",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 17.sp,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                letterSpacing = (-0.43).sp
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = isOnline,
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 15.sp,
+                color = onlineTextColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                letterSpacing = (-0.23).sp
+            )
+        }
+    }
+}
+
 
 @Composable
 private fun SearchField(

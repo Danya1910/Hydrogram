@@ -17,4 +17,6 @@ interface UserRepository {
 
     suspend fun changeAvatar(uid: String, avatarString: String) : Result<Unit>
 
+    suspend fun syncContacts(phoneNumbers: List<String>) : List<User>
+
 }
