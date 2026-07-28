@@ -203,21 +203,6 @@ class UserViewModel @Inject constructor(
         }
     }
 
-    fun setUserOnlineStats(
-        isOnline: Boolean,
-        uid: String,
-    ) {
-        viewModelScope.launch {
-            val result = setUserOnlineStatsUseCase(
-                uid = uid,
-                isOnline = isOnline,
-            )
-            result
-                .onSuccess { _isSuccess.value = true }
-                .onFailure { _errorMessage.value = "Ошибка смены состояния в сети" }
-        }
-    }
-
     fun resetSaveResult() {
         _saveResult.value = null
     }

@@ -1,0 +1,18 @@
+package com.example.hydrogram.domain.usecase
+
+import com.example.hydrogram.domain.model.UserPresence
+import com.example.hydrogram.domain.repository.PresenceRepository
+import kotlinx.coroutines.flow.Flow
+import javax.inject.Inject
+
+class ObserveMultiplePresenceUseCase @Inject constructor(
+    private val presenceRepository: PresenceRepository,
+) {
+
+    operator fun invoke(
+        uids: List<String>
+    ): Flow<Map<String, UserPresence>> {
+        return presenceRepository.observeMultiplePresence(uids = uids)
+    }
+
+}

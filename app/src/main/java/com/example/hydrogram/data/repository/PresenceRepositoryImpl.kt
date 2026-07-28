@@ -1,6 +1,7 @@
 package com.example.hydrogram.data.repository
 
 import android.util.Log
+import androidx.compose.runtime.snapshots.Snapshot
 import com.example.hydrogram.domain.model.UserPresence
 import com.example.hydrogram.domain.repository.PresenceRepository
 import com.google.firebase.database.DataSnapshot
@@ -75,5 +76,43 @@ class PresenceRepositoryImpl @Inject constructor(
 
         }
     }
+
+    override fun observeMultiplePresence(uids: List<String>): Flow<Map<String, UserPresence>> =
+        callbackFlow {
+
+            if (uids.isEmpty()) {
+                trySend(emptyMap())
+                close()
+                return@callbackFlow
+            }
+
+            val statusRef = rtdb.getReference("/status")
+
+            val listener = statusRef.addValueEventListener(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val presenceMap = mutableMapOf<String, UserPresence>()
+
+                    uids.forEach { uid ->
+                        val userSnapshot = snapshot.child(uid)
+                        if (userSnapshot.exists()) {
+                            val isOnline = userSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false
+                            val lastSeen = userSnapshot.child("lastSeen").getValue(Long::class.java) ?: 0L
+
+                            presenceMap[uid] = UserPresence(isOnline = isOnline, lastSeen = lastSeen)
+                        } else {
+                            presenceMap[uid] = UserPresence(isOnline = false, lastSeen = 0L)
+                        }
+                    }
+                    trySend(presenceMap)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    close(error.toException())
+                }
+
+            })
+            awaitClose { statusRef.removeEventListener(listener) }
+
+        }
 
 }

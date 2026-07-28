@@ -9,6 +9,7 @@ data class User(
     val email: String = "",
     @get:PropertyName("isOnline")
     val isOnline: Boolean = false,
+    val lastSeen: Long = 0L,
     val createdAt: Long = 0L,
     val phone: String = "",
     val aboutUser: String = "",
