@@ -1,5 +1,7 @@
 package com.example.hydrogram.presentation.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,7 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.GlassBackground
@@ -79,6 +83,17 @@ private fun Content(
     paddingValues: PaddingValues,
 ) {
     var query by remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    val contacts by searchViewModel.contacts.collectAsStateWithLifecycle()
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if(isGranted) {
+            searchViewModel.getContacts()
+        }
+    }
 
     LaunchedEffect(query) {
         if (query.length >= 5) {

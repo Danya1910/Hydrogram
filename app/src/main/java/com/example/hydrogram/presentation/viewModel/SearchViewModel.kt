@@ -2,7 +2,9 @@ package com.example.hydrogram.presentation.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrogram.domain.model.PhoneContact
 import com.example.hydrogram.domain.usecase.FindUserByPhoneOrUserNameUseCase
+import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
 import com.example.hydrogram.presentation.states.SearchState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,10 +15,14 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val findUserByPhoneOrUserNameUseCase: FindUserByPhoneOrUserNameUseCase,
+    private val getPhoneContactsUseCase: GetPhoneContactsUseCase,
 ) : ViewModel() {
 
     private val _searchState = MutableStateFlow<SearchState>(SearchState.Loading)
     val searchState = _searchState.asStateFlow()
+
+    private val _contacts = MutableStateFlow<List<PhoneContact>>(emptyList())
+    val contacts = _contacts.asStateFlow()
 
     fun searchByPhoneOrUserName(
         query: String
@@ -40,6 +46,13 @@ class SearchViewModel @Inject constructor(
                     e.localizedMessage ?: "Ошибка при поиске"
                 )
             }
+        }
+    }
+
+    fun getContacts() {
+        viewModelScope.launch {
+            val result = getPhoneContactsUseCase()
+            _contacts.value = result
         }
     }
 
