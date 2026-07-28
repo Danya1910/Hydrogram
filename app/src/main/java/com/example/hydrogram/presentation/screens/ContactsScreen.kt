@@ -1,8 +1,11 @@
 package com.example.hydrogram.presentation.screens
 
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -35,6 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
@@ -285,6 +289,22 @@ private fun ContactUserCard(
     } ?: Color(0xFF3C3C43).copy(alpha = 0.6f)
 
 
+    val avatarBitmap = remember(contact?.user?.avatarUrl) {
+        val url = contact?.user?.avatarUrl
+        if (url != null && url.isNotBlank() && url.startsWith("data:image/jpeg;base64,")) {
+            try {
+                val base64String = url.substringAfter("base64,")
+                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else {
+            null
+        }
+    }
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -295,16 +315,27 @@ private fun ContactUserCard(
                 onUserClick()
             }
     ) {
-        AsyncImage(
-            model = contact?.user?.avatarUrl,
-            contentDescription = null,
-            placeholder = painterResource(R.drawable.ic_avatar),
-            error = painterResource(R.drawable.ic_avatar),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(42.dp)
-                .clip(shape = CircleShape),
-        )
+        if (avatarBitmap != null) {
+            Image(
+                bitmap = avatarBitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(shape = CircleShape)
+            )
+        } else {
+            AsyncImage(
+                model = null,
+                contentDescription = null,
+                placeholder = painterResource(R.drawable.ic_avatar),
+                error = painterResource(R.drawable.ic_avatar),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(shape = CircleShape)
+            )
+        }
         Spacer(modifier = Modifier.width(11.dp))
         Column(
             verticalArrangement = Arrangement.Center,
