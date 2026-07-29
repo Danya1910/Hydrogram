@@ -81,6 +81,7 @@ class UserRepositoryImpl @Inject constructor(
             val nameSnapshot = firestore.collection("users")
                 .whereGreaterThanOrEqualTo("userNameLowercase", normalizedQuery)
                 .whereLessThanOrEqualTo("userNameLowercase", normalizedQuery + "\uf8ff")
+                .limit(10)
                 .get()
                 .await()
 
