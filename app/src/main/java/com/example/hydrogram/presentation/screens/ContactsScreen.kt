@@ -65,6 +65,7 @@ import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.SearchState
+import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.formatLastSeen
@@ -117,6 +118,21 @@ private fun Content(
         if (isGranted) {
             searchViewModel.syncContacts()
         }
+    }
+
+    var filteredContacts = remember(query, contacts) {
+        if (query.isBlank()) {
+            contacts
+        } else {
+            contacts.filter { contact ->
+                contact.contactName.contains(query, ignoreCase = true) ||
+                        contact.user.phone.contains(query)
+            }
+        }
+    }
+
+    LaunchedEffect(filteredContacts) {
+        Log.d("ContactsScreen", "filtered contacts: $filteredContacts")
     }
 
     LaunchedEffect(contacts) {
@@ -174,29 +190,40 @@ private fun Content(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        ContactsList(
-            contacts = contacts,
-            navController = navController,
-        )
+        val globalUsers = (foundUserState as? SearchState.Success)?.users ?: emptyList()
 
-        Spacer(modifier = Modifier.height(10.dp))
-        when (val state = foundUserState) {
-            is SearchState.Loading -> {
-                CircularProgressIndicator()
+        if ((filteredContacts.isEmpty() && globalUsers.isEmpty()) || query.isEmpty()) {
+            ContactsList(
+                contacts = contacts,
+                navController = navController,
+            )
+        } else {
+            Spacer(modifier = Modifier.height(10.dp))
+            if (filteredContacts.isNotEmpty() && query.isNotEmpty()) {
+                ContactsMatchingList(
+                    contacts = filteredContacts,
+                    navController = navController,
+                )
             }
+            Spacer(modifier = Modifier.height(10.dp))
+            when (val state = foundUserState) {
+                is SearchState.Loading -> {
+                    CircularProgressIndicator()
+                }
 
-            is SearchState.Error -> {
-                Text(text = state.message, color = Color.Red)
-            }
+                is SearchState.Error -> {
+                    Text(text = state.message, color = Color.Red)
+                }
 
-            is SearchState.Success -> {
-                val users = state.users
+                is SearchState.Success -> {
+                    val users = state.users
 
-                if(users.isNotEmpty()) {
-                    GlobalSearchedList(
-                        users = users,
-                        navController = navController,
-                    )
+                    if (users.isNotEmpty()) {
+                        GlobalSearchedList(
+                            users = users,
+                            navController = navController,
+                        )
+                    }
                 }
             }
         }
@@ -204,78 +231,13 @@ private fun Content(
     }
 }
 
-@Composable
-private fun UserCard(
-    user: User?,
-    onUserClick: () -> Unit,
-) {
-
-    val isOnline = user?.isOnline?.let {
-        if (user.isOnline) "онлайн" else "был(а) недавно"
-    } ?: "был(а) недавно"
-
-    val onlineTextColor = user?.isOnline?.let {
-        if (user.isOnline) Blue else Color(0xFF3C3C43).copy(alpha = 0.6f)
-    } ?: Color(0xFF3C3C43).copy(alpha = 0.6f)
-
-
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .height(52.dp)
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .clickable {
-                onUserClick()
-            }
-    ) {
-        AsyncImage(
-            model = user?.avatarUrl,
-            contentDescription = null,
-            placeholder = painterResource(R.drawable.ic_avatar),
-            error = painterResource(R.drawable.ic_avatar),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(42.dp)
-                .clip(shape = CircleShape),
-        )
-        Spacer(modifier = Modifier.width(11.dp))
-        Column(
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            Text(
-                text = user?.name ?: "Unknown",
-                fontFamily = SfProText,
-                fontWeight = FontWeight.Medium,
-                fontSize = 17.sp,
-                color = Color.Black,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                letterSpacing = (-0.43).sp
-            )
-            Spacer(modifier = Modifier.height(3.dp))
-            Text(
-                text = isOnline,
-                fontFamily = SfProText,
-                fontWeight = FontWeight.Normal,
-                fontSize = 15.sp,
-                color = onlineTextColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                letterSpacing = (-0.23).sp
-            )
-        }
-    }
-}
 
 @Composable
 private fun ContactsList(
     contacts: List<RegisteredContact>,
     navController: NavController,
 ) {
-    LazyColumn() {
+    LazyColumn {
         itemsIndexed(
             items = contacts,
             key = { _, state -> state.user.uid }
