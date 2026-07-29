@@ -10,7 +10,7 @@ class FindUserByPhoneOrUserNameUseCase @Inject constructor(
 
     suspend operator fun invoke(
         query: String
-    ) : User? {
+    ) : List<User> {
         return userRepository.findUserByPhoneOrUserName(
             query = query,
         )
