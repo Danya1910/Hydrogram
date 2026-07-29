@@ -147,6 +147,7 @@ private fun Content(
 
     LaunchedEffect(query) {
         if (query.isNotEmpty()) {
+            delay(400L)
             searchViewModel.searchByPhoneOrUserName(
                 query = query,
             )
@@ -191,10 +192,12 @@ private fun Content(
             is SearchState.Success -> {
                 val users = state.users
 
-                GlobalSearchedList(
-                    users = users,
-                    navController = navController,
-                )
+                if(users.isNotEmpty()) {
+                    GlobalSearchedList(
+                        users = users,
+                        navController = navController,
+                    )
+                }
             }
         }
 

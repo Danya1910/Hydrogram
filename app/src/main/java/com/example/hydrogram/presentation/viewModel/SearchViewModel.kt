@@ -125,6 +125,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun resetSearch() {
+        searchJob?.cancel()
         _searchState.value = SearchState.Success(users = emptyList())
     }
 
