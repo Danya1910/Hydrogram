@@ -12,6 +12,7 @@ import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.normalizePhoneNumber
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,8 @@ class SearchViewModel @Inject constructor(
 
     private val _registeredContacts = MutableStateFlow<List<RegisteredContact>>(emptyList())
 
+    private var searchJob: Job? = null
+
     fun searchByPhoneOrUserName(
         query: String
     ) {
@@ -43,16 +46,13 @@ class SearchViewModel @Inject constructor(
             _searchState.value = SearchState.Error("Нет запроса")
             return
         }
+        searchJob?.cancel()
         _searchState.value = SearchState.Loading
 
-        viewModelScope.launch {
+        searchJob = viewModelScope.launch {
             try {
                 val users = findUserByPhoneOrUserNameUseCase(query = query)
-                if (users != null) {
-                    _searchState.value = SearchState.Success(users = users)
-                } else {
-                    _searchState.value = SearchState.Error("Пользователь не найден")
-                }
+                _searchState.value = SearchState.Success(users = users)
             } catch (e: Exception) {
                 _searchState.value = SearchState.Error(
                     e.localizedMessage ?: "Ошибка при поиске"
@@ -125,12 +125,7 @@ class SearchViewModel @Inject constructor(
     }
 
     fun resetSearch() {
-        _searchState.value = SearchState.Success(
-            users = emptyList()
-        )
-        _searchState.value = SearchState.Error(
-            message = ""
-        )
+        _searchState.value = SearchState.Success(users = emptyList())
     }
 
 }

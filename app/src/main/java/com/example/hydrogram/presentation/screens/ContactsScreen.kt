@@ -146,10 +146,12 @@ private fun Content(
     }
 
     LaunchedEffect(query) {
-        if (query.length >= 5) {
+        if (query.isNotEmpty()) {
             searchViewModel.searchByPhoneOrUserName(
                 query = query,
             )
+        } else {
+            searchViewModel.resetSearch()
         }
     }
 
@@ -187,18 +189,12 @@ private fun Content(
             }
 
             is SearchState.Success -> {
-                val user = state.user
+                val users = state.users
 
-                if (user != null) {
-                    UserCard(
-                        user = user,
-                        onUserClick = {
-                            navController.navigate(Screen.Chat.createRoute(id = user.uid))
-                        }
-                    )
-                } else {
-                    Text("Пользователь не найден")
-                }
+                GlobalSearchedList(
+                    users = users,
+                    navController = navController,
+                )
             }
         }
 
@@ -553,6 +549,8 @@ private fun GlobalSearchedList(
             .fillMaxWidth()
     ) {
         Text(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
             text = "ГЛОБАЛЬНЫЙ ПОИСК",
             fontFamily = SfProText,
             fontSize = 13.sp,
@@ -660,7 +658,7 @@ private fun GlobalUserCard(
             )
             Spacer(modifier = Modifier.height(3.dp))
             Text(
-                text = user?.userName ?: "",
+                text = if (user?.userName?.isNotBlank() == true) "@${user.userName}" else "",
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
                 fontSize = 15.sp,
