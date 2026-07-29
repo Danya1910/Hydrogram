@@ -59,7 +59,7 @@ class UserRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override suspend fun findUserByPhoneOrUserName(query: String): List<User> {
+    override suspend fun findUsersByPhoneOrUserName(query: String): List<User> {
         return try {
             val normalizedQuery = query.trim().removePrefix("@").lowercase()
 

@@ -4,6 +4,6 @@ import com.example.hydrogram.domain.model.User
 
 sealed interface SearchState {
     object Loading : SearchState
-    data class Success(val user: User?) : SearchState
+    data class Success(val users: List<User>) : SearchState
     data class Error(val message: String) : SearchState
 }

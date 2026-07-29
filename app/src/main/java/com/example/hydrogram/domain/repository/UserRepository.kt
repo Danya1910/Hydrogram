@@ -11,7 +11,7 @@ interface UserRepository {
 
     fun getUserById(uid: String) : Flow<User?>
 
-    suspend fun findUserByPhoneOrUserName(query: String) : List<User>
+    suspend fun findUsersByPhoneOrUserName(query: String) : List<User>
 
     suspend fun setUserOnlineStats(uid: String, isOnline: Boolean) : Result<Unit>
 

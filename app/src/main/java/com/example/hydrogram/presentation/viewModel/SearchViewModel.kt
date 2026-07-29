@@ -3,10 +3,8 @@ package com.example.hydrogram.presentation.viewModel
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.hydrogram.domain.model.Chat
-import com.example.hydrogram.domain.model.PhoneContact
 import com.example.hydrogram.domain.model.RegisteredContact
-import com.example.hydrogram.domain.usecase.FindUserByPhoneOrUserNameUseCase
+import com.example.hydrogram.domain.usecase.FindUsersByPhoneOrUserNameUseCase
 import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
 import com.example.hydrogram.domain.usecase.ObserveMultiplePresenceUseCase
 import com.example.hydrogram.domain.usecase.SyncContactsUseCase
@@ -27,7 +25,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val findUserByPhoneOrUserNameUseCase: FindUserByPhoneOrUserNameUseCase,
+    private val findUserByPhoneOrUserNameUseCase: FindUsersByPhoneOrUserNameUseCase,
     private val getPhoneContactsUseCase: GetPhoneContactsUseCase,
     private val syncContactsUseCase: SyncContactsUseCase,
     private val observeMultiplePresenceUseCase: ObserveMultiplePresenceUseCase,
@@ -49,9 +47,9 @@ class SearchViewModel @Inject constructor(
 
         viewModelScope.launch {
             try {
-                val user = findUserByPhoneOrUserNameUseCase(query = query)
-                if (user != null) {
-                    _searchState.value = SearchState.Success(user = user)
+                val users = findUserByPhoneOrUserNameUseCase(query = query)
+                if (users != null) {
+                    _searchState.value = SearchState.Success(users = users)
                 } else {
                     _searchState.value = SearchState.Error("Пользователь не найден")
                 }
@@ -128,7 +126,7 @@ class SearchViewModel @Inject constructor(
 
     fun resetSearch() {
         _searchState.value = SearchState.Success(
-            user = null
+            users = emptyList()
         )
         _searchState.value = SearchState.Error(
             message = ""
