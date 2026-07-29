@@ -4,6 +4,7 @@ import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.util.Log
+import android.widget.Space
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -497,6 +498,183 @@ private fun TopBar(
 }
 
 @Composable
+private fun ContactsMatchingList(
+    contacts: List<RegisteredContact>,
+    navController: NavController,
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = "КОНТАКТЫ",
+            fontFamily = SfProText,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Normal,
+            letterSpacing = (-0.08).sp,
+            color = Color.Gray,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        LazyColumn {
+            itemsIndexed(
+                items = contacts,
+                key = { _, state -> state.user.uid }
+            ) { index, contact ->
+                ContactUserCard(
+                    contact = contact,
+                    onUserClick = {
+                        navController.navigate(Screen.Chat.createRoute(id = contact.user.uid))
+                    }
+                )
+                if (index != contacts.size - 1) {
+                    SeparatorLine(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = 82.dp,
+                                end = 16.dp
+                            )
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GlobalSearchedList(
+    users: List<User>,
+    navController: NavController,
+) {
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        Text(
+            text = "ГЛОБАЛЬНЫЙ ПОИСК",
+            fontFamily = SfProText,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Normal,
+            letterSpacing = (-0.08).sp,
+            color = Color.Gray,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        LazyColumn {
+            itemsIndexed(
+                items = users,
+                key = { _, state -> state.uid }
+            ) { index, user ->
+                GlobalUserCard(
+                    user = user,
+                    onUserClick = {
+                        navController.navigate(Screen.Chat.createRoute(id = user.uid))
+                    }
+                )
+                if (index != users.size - 1) {
+                    SeparatorLine(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                start = 82.dp,
+                                end = 16.dp
+                            )
+                    )
+                }
+            }
+        }
+    }
+
+}
+
+
+@Composable
+private fun GlobalUserCard(
+    user: User?,
+    onUserClick: () -> Unit,
+) {
+
+    val avatarBitmap = remember(user?.avatarUrl) {
+        val url = user?.avatarUrl
+        if (url != null && url.isNotBlank() && url.startsWith("data:image/jpeg;base64,")) {
+            try {
+                val base64String = url.substringAfter("base64,")
+                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
+                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+        } else {
+            null
+        }
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(52.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .clickable {
+                onUserClick()
+            }
+    ) {
+        if (avatarBitmap != null) {
+            Image(
+                bitmap = avatarBitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(shape = CircleShape)
+            )
+        } else {
+            AsyncImage(
+                model = null,
+                contentDescription = null,
+                placeholder = painterResource(R.drawable.ic_avatar),
+                error = painterResource(R.drawable.ic_avatar),
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(42.dp)
+                    .clip(shape = CircleShape)
+            )
+        }
+        Spacer(modifier = Modifier.width(11.dp))
+        Column(
+            verticalArrangement = Arrangement.Center,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            Text(
+                text = user?.name ?: "Без имени",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 17.sp,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                letterSpacing = (-0.43).sp
+            )
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = user?.userName ?: "",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 15.sp,
+                color = Blue,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                letterSpacing = (-0.23).sp
+            )
+        }
+    }
+}
+
+
+@Composable
 private fun SortButton(
     title: String,
     onClick: () -> Unit,
@@ -516,7 +694,7 @@ private fun SortButton(
                 brush = GlassBorder,
                 shape = CircleShape,
             )
-            .clickable{
+            .clickable {
                 onClick()
             }
             .padding(horizontal = 10.dp),
@@ -565,7 +743,7 @@ private fun AddButton(
                 brush = GlassBorder,
                 shape = CircleShape,
             )
-            .clickable{
+            .clickable {
                 onClick()
             }
             .padding(horizontal = 10.dp),
