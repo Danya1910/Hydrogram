@@ -222,7 +222,7 @@ private fun Content(
                 modifier = Modifier
                     .height(52.dp)
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 28.dp)
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_add_friend),
