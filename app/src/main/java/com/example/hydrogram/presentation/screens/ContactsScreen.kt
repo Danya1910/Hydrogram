@@ -78,6 +78,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
@@ -100,6 +101,7 @@ import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
+import com.example.hydrogram.ui.theme.SelectedItem
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
 
@@ -432,15 +434,22 @@ private fun SearchField(
         animationSpec = tween(durationMillis = 300)
     )
 
+    val shadowAnimation by animateDpAsState(
+        targetValue = if (isTextFieldActive) 12.dp else 0.dp,
+        animationSpec = tween(durationMillis = 300)
+    )
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .fillMaxWidth()
+            .height(60.dp)
             .padding(horizontal = 16.dp)
     ) {
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .height(42.dp)
+                .wrapContentHeight()
                 .fillMaxWidth()
                 .padding(end = textFieldAnimation)
         ) {
@@ -454,11 +463,19 @@ private fun SearchField(
                     color = Color.Black
                 ),
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .height(42.dp)
                     .focusRequester(focusRequester)
                     .onFocusChanged { focusState ->
                         isTextFieldActive = focusState.isFocused
                     }
+                    .shadow(
+                        elevation = shadowAnimation,
+                        shape = CircleShape,
+                        clip = false,
+                        ambientColor = Color.Black.copy(alpha = 0.9f),
+                        spotColor = Color.Black.copy(alpha = 0.2f),
+                    )
                     .clip(
                         shape = CircleShape,
                     )
@@ -475,7 +492,7 @@ private fun SearchField(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(horizontal = 16.dp) // Внутренний отступ Слой 1
+                            .padding(horizontal = 16.dp)
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -518,19 +535,20 @@ private fun SearchField(
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
+                    .height(42.dp)
                     .graphicsLayer(alpha = textFieldAlpha)
                     .clip(
                         shape = CircleShape,
                     )
                     .background(
-                        color = Color(0xFFAEAEB2),
+                        color = SelectedItem,
                         shape = CircleShape
                     )
                     .border(
                         width = 1.dp,
                         shape = CircleShape,
-                        color = Color(0xFFAEAEB2),
+                        color = SelectedItem,
                     )
                     .clickable(
                         indication = null,
