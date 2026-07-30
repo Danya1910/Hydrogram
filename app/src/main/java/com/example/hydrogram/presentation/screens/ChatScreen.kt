@@ -622,7 +622,7 @@ private fun PenpalTextMessage(
                         .padding(
                             top = 5.dp,
                             start = 10.dp,
-                            end = 62.dp,
+                            end = 42.dp,
                             bottom = 5.dp
                         )
                 )
@@ -642,21 +642,6 @@ private fun PenpalTextMessage(
                         fontFamily = SfProText,
                         color = PenpalMessageTimeColor,
                     )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    if (message.status == "read") {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_read_status),
-                            contentDescription = null,
-                            tint = PenpalMessageTimeColor,
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sent_status),
-                            contentDescription = null,
-                            tint = PenpalMessageTimeColor,
-                            modifier = Modifier.size(15.dp)
-                        )
-                    }
                 }
             } else {
                 Text(
@@ -690,21 +675,6 @@ private fun PenpalTextMessage(
                         fontFamily = SfProText,
                         color = PenpalMessageTimeColor,
                     )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    if (message.status == "read") {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_read_status),
-                            contentDescription = null,
-                            tint = PenpalMessageTimeColor,
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sent_status),
-                            contentDescription = null,
-                            tint = PenpalMessageTimeColor,
-                            modifier = Modifier.size(15.dp)
-                        )
-                    }
                 }
             }
         }
