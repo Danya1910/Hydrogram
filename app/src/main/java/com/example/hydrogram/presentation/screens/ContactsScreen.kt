@@ -4,18 +4,14 @@ import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.util.Log
-import android.widget.Space
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.AnimationState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Image
@@ -38,7 +34,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
@@ -69,18 +64,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -89,10 +79,8 @@ import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.RegisteredContact
 import com.example.hydrogram.domain.model.User
-import com.example.hydrogram.domain.usecase.GetPhoneContactsUseCase
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.SearchState
-import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.formatLastSeen
@@ -229,6 +217,38 @@ private fun Content(
         val globalUsers = (foundUserState as? SearchState.Success)?.users ?: emptyList()
 
         if ((filteredContacts.isEmpty() && globalUsers.isEmpty()) || query.isEmpty()) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .height(52.dp)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_add_friend),
+                    contentDescription = null,
+                    tint = Blue,
+                )
+                Spacer(modifier = Modifier.width(16.dp))
+                Text(
+                    text = "Пригласить",
+                    fontFamily = SfProText,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 17.sp,
+                    color = Blue,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    letterSpacing = (-0.43).sp
+                )
+            }
+            SeparatorLine(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = 82.dp,
+                        end = 16.dp,
+                    )
+            )
             ContactsList(
                 contacts = contacts,
                 navController = navController,
@@ -628,7 +648,7 @@ private fun SearchField(
                         brush = GlassBorder,
                         shape = CircleShape,
                     )
-                    .clickable{
+                    .clickable {
                         onValueChange("")
                         focusManager.clearFocus()
                     }
