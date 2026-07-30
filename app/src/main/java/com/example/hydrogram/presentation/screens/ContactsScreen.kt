@@ -101,6 +101,7 @@ import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
+import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SelectedItem
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
@@ -480,7 +481,7 @@ private fun SearchField(
                         shape = CircleShape,
                     )
                     .background(
-                        brush = GlassBackground,
+                        color = LightGrayBackground,
                         shape = CircleShape
                     )
                     .border(
