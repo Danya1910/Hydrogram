@@ -67,6 +67,7 @@ import com.example.hydrogram.ui.theme.DateSeparatorGreen
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
+import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
 
@@ -268,21 +269,85 @@ private fun Content(
 
     val listState = rememberLazyListState()
 
+    var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(Unit) {
+        firstUnreadMessageId = messages
+            .filter { it.senderId != mineId && it.status != "read" }
+            .minByOrNull { it.timestamp }?.messageId
+    }
+
+    LaunchedEffect(firstUnreadMessageId) {
+        val unreadId = firstUnreadMessageId
+        if (unreadId != null) {
+            val itemIndex = listState.layoutInfo.visibleItemsInfo
+                .firstOrNull { it.key == unreadId }?.index
+
+            if (itemIndex != null) {
+                listState.scrollToItem(index = itemIndex, scrollOffset = 0)
+            } else {
+                var targetIndex = 0
+                var found = false
+
+                for ((dayTimestamp, dayMessages) in groupedMessages) {
+                    if (found) break
+                    targetIndex++
+
+                    for (msg in dayMessages) {
+                        if (msg.messageId == unreadId) {
+                            found = true
+                            break
+                        }
+                        targetIndex++
+                    }
+                }
+
+                if (found) {
+                    listState.scrollToItem(index = targetIndex, scrollOffset = 0)
+                }
+            }
+        } else {
+            if (messages.isNotEmpty()) {
+                listState.scrollToItem(index = listState.layoutInfo.totalItemsCount)
+            }
+        }
+    }
+
     LaunchedEffect(listState.layoutInfo.visibleItemsInfo) {
         val visibleItems = listState.layoutInfo.visibleItemsInfo
         if (visibleItems.isNotEmpty()) {
             visibleItems.forEach { visibleItem ->
-                val message = messages.getOrNull(visibleItem.index)
-                if (message != null && message.senderId != mineId && message.status != "read") {
-                    chatViewModel.changeMessageStatus(
-                        chatId = chatId,
-                        messageId = message.messageId,
-                        status = "read",
-                    )
+                val keyString = visibleItem.key as? String
+
+                if (keyString != null && !keyString.startsWith("date_")) {
+                    val message = messages.find { it.messageId == keyString }
+                    if (message != null && message.senderId != mineId && message.status != "read") {
+                        chatViewModel.changeMessageStatus(
+                            chatId = chatId,
+                            messageId = message.messageId,
+                            status = "read",
+                        )
+                    }
                 }
             }
         }
     }
+
+    LaunchedEffect(messages.size) {
+
+        if (messages.isNotEmpty()) {
+            val lastItemIndex = listState.layoutInfo.totalItemsCount
+
+            if (lastItemIndex > 0) {
+                listState.scrollToItem(
+                    index = lastItemIndex - 1,
+                    scrollOffset = 0,
+                )
+            }
+
+        }
+    }
+
 
     LazyColumn(
         state = listState,
@@ -291,7 +356,6 @@ private fun Content(
         modifier = Modifier
             .fillMaxSize()
             .padding(
-                horizontal = 16.dp,
                 vertical = 8.dp,
             ),
     ) {
@@ -305,6 +369,13 @@ private fun Content(
                 items = dayMessages,
                 key = { message -> message.messageId }
             ) { message ->
+
+                if (message.messageId == firstUnreadMessageId) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    UnreadMessageSeparator()
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 if (message.senderId == mineId) {
                     MineTextMessage(message = message)
                 } else {
@@ -313,6 +384,27 @@ private fun Content(
                 Spacer(modifier = Modifier.height(4.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun UnreadMessageSeparator() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(24.dp)
+            .fillMaxWidth()
+            .background(
+                color = Separator.copy(alpha = 0.8f)
+            )
+    ) {
+        Text(
+            text = "Непрочитанные сообщения",
+            fontFamily = SfProText,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            color = Color.Gray,
+        )
     }
 }
 
@@ -366,6 +458,7 @@ private fun MineTextMessage(
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
@@ -417,7 +510,7 @@ private fun MineTextMessage(
                         color = MineMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    if(message.status == "read") {
+                    if (message.status == "read") {
                         Icon(
                             painter = painterResource(R.drawable.ic_read_status),
                             contentDescription = null,
@@ -465,7 +558,7 @@ private fun MineTextMessage(
                         color = MineMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    if(message.status == "read") {
+                    if (message.status == "read") {
                         Icon(
                             painter = painterResource(R.drawable.ic_read_status),
                             contentDescription = null,
@@ -498,6 +591,7 @@ private fun PenpalTextMessage(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp)
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
@@ -549,7 +643,7 @@ private fun PenpalTextMessage(
                         color = PenpalMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    if(message.status == "read") {
+                    if (message.status == "read") {
                         Icon(
                             painter = painterResource(R.drawable.ic_read_status),
                             contentDescription = null,
@@ -597,7 +691,7 @@ private fun PenpalTextMessage(
                         color = PenpalMessageTimeColor,
                     )
                     Spacer(modifier = Modifier.width(5.dp))
-                    if(message.status == "read") {
+                    if (message.status == "read") {
                         Icon(
                             painter = painterResource(R.drawable.ic_read_status),
                             contentDescription = null,
