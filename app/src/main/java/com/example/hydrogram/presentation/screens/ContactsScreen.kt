@@ -7,10 +7,17 @@ import android.util.Log
 import android.widget.Space
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.AnimationState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,6 +32,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -40,13 +48,18 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -83,6 +96,7 @@ fun ContactsScreen(
     searchViewModel: SearchViewModel,
     navController: NavController,
 ) {
+
     Scaffold(
         topBar = {
             TopBar()
@@ -108,6 +122,7 @@ private fun Content(
     paddingValues: PaddingValues,
 ) {
     var query by remember { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
     val context = LocalContext.current
 
     val contacts by searchViewModel.registeredContact.collectAsStateWithLifecycle()
@@ -178,6 +193,11 @@ private fun Content(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = {
+                    focusManager.clearFocus()
+                })
+            }
             .padding(
                 paddingValues = paddingValues
             )
@@ -378,53 +398,154 @@ private fun SearchField(
     value: String,
     onValueChange: (String) -> Unit,
 ) {
-    Box(
+
+    var isTextFieldActive by remember { mutableStateOf(false) }
+
+
+    val textFieldAnimation by animateDpAsState(
+        targetValue = if (isTextFieldActive) 38.dp else 0.dp,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    val textFieldAlpha by animateFloatAsState(
+        targetValue = if (isTextFieldActive) 0f else 1f,
+        animationSpec = tween(durationMillis = 150)
+    )
+
+    val textAlignment by animateFloatAsState(
+        targetValue = if (isTextFieldActive) -1f else 0f,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .height(42.dp)
             .fillMaxWidth()
-            .background(
-                brush = GlassBackground,
-                shape = CircleShape,
-            )
-            .border(
-                width = 1.dp,
-                shape = CircleShape,
-                brush = GlassBorder,
-            )
+            .padding(horizontal = 16.dp)
     ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            textStyle = TextStyle(
-                fontFamily = SfProText,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Normal,
-                color = Color.Black
-            ),
-            decorationBox = { innerTextField ->
+        Box {
+            BasicTextField(
+                value = value,
+                onValueChange = onValueChange,
+                textStyle = TextStyle(
+                    fontFamily = SfProText,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Color.Black
+                ),
+                modifier = Modifier
+                    .height(42.dp)
+                    .fillMaxWidth()
+                    .padding(
+                        end = textFieldAnimation,
+                    )
+                    .onFocusChanged { focusState ->
+                        isTextFieldActive = focusState.isFocused
+                    }
+                    .clip(
+                        shape = CircleShape,
+                    )
+                    .background(
+                        brush = GlassBackground,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 1.dp,
+                        shape = CircleShape,
+                        brush = GlassBorder,
+                    ),
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 12.dp)
+                                .align(
+                                    BiasAlignment(
+                                        horizontalBias = textAlignment,
+                                        verticalBias = 0f
+                                    )
+                                )
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_text_field_search),
+                                contentDescription = null,
+                                tint = Color.Gray.copy(alpha = 0.8f),
+                                modifier = Modifier.size(20.dp),
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                            ) {
+                                if (value.isEmpty()) {
+                                    Text(
+                                        text = "Поиск",
+                                        fontFamily = SfProText,
+                                        fontSize = 17.sp,
+                                        fontWeight = FontWeight.Normal,
+                                        color = Color.Gray.copy(alpha = 0.8f)
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        }
+                    }
+                }
+            )
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .height(42.dp)
+                    .fillMaxWidth()
+                    .clip(
+                        shape = CircleShape,
+                    )
+                    .padding(
+                        end = textFieldAnimation,
+                    )
+                    .graphicsLayer(alpha = textFieldAlpha)
+                    .background(
+                        color = Color.White,
+                        shape = CircleShape
+                    )
+                    .border(
+                        width = 1.dp,
+                        shape = CircleShape,
+                        color = Color.White,
+                    )
+            ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                    ) {
-                        if (value.isEmpty()) {
-                            Text(
-                                text = "Поиск",
-                                fontFamily = SfProText,
-                                fontSize = 17.sp,
-                                color = Color.Gray.copy(alpha = 0.8f)
+                        .align(
+                            BiasAlignment(
+                                horizontalBias = textAlignment,
+                                verticalBias = 0f
                             )
-                        }
-                        innerTextField()
-                    }
+                        )
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_text_field_search),
+                        contentDescription = null,
+                        tint = Color.Gray.copy(alpha = 0.8f),
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Поиск",
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Gray.copy(alpha = 0.8f)
+                    )
                 }
             }
-        )
+        }
     }
 }
 
