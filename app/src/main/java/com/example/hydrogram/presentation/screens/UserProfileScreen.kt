@@ -261,7 +261,7 @@ private fun UserInfoHat(
             text = user?.name ?: "Unknown",
             fontFamily = SfProText,
             fontSize = 28.sp,
-            color = Color.White,
+            color = LightBlack,
             fontWeight = FontWeight.Bold,
             letterSpacing = 0.38.sp,
         )
@@ -449,27 +449,27 @@ private fun ActionRow() {
     ) {
         ActionRowItem(
             icon = R.drawable.ic_phone,
-            title = "call",
+            title = "звонок",
             onClick = {},
         )
         ActionRowItem(
             icon = R.drawable.ic_camera,
-            title = "video",
+            title = "видео",
             onClick = {},
         )
         ActionRowItem(
             icon = R.drawable.ic_bell,
-            title = "mute",
+            title = "звук",
             onClick = {},
         )
         ActionRowItem(
             icon = R.drawable.ic_search_action_row,
-            title = "search",
+            title = "поиск",
             onClick = {},
         )
         ActionRowItem(
             icon = R.drawable.ic_ellipsis,
-            title = "more",
+            title = "ещё",
             onClick = {},
         )
     }
@@ -487,12 +487,22 @@ private fun ActionRowItem(
         modifier = Modifier
             .height(60.dp)
             .width(67.6.dp)
+            .shadow(
+                elevation = 12.dp,
+                shape = CircleShape,
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = 0.9f),
+                spotColor = Color.Black.copy(alpha = 0.2f)
+            )
             .clip(
                 shape = RoundedCornerShape(24.dp)
             )
             .background(
-                color = Color.Blue,
+                color = Color.White,
             )
+            .clickable{
+                onClick()
+            }
     ) {
         Column(
             verticalArrangement = Arrangement.Bottom,
@@ -506,7 +516,7 @@ private fun ActionRowItem(
             Icon(
                 painter = painterResource(icon),
                 contentDescription = null,
-                tint = Color.White
+                tint = Blue
             )
             Spacer(modifier = Modifier.height(5.dp))
             Text(
@@ -514,7 +524,7 @@ private fun ActionRowItem(
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
                 fontFamily = SfProText,
-                color = Color.White,
+                color = Blue,
             )
         }
 
