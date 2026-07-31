@@ -6,4 +6,5 @@ data class UserInfoRowItem(
     val title: String,
     val text: String,
     val textColor: Color,
+    val onClick: () -> Unit,
 )
