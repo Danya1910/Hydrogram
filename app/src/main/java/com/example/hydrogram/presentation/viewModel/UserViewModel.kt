@@ -52,7 +52,7 @@ class UserViewModel @Inject constructor(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Lazily,
             initialValue = UserState.Loading
         )
 
@@ -170,7 +170,7 @@ class UserViewModel @Inject constructor(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Lazily,
             initialValue = UserPresence(isOnline = false, lastSeen = 0L)
         )
 
