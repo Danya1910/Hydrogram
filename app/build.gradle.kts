@@ -51,7 +51,7 @@ kotlin {
 
 dependencies {
     // Firebase - ПОНИЗИМ ВЕРСИЮ
-    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))  // ИЗМЕНЕНО
+    implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-storage")
@@ -59,8 +59,12 @@ dependencies {
 
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")
+    implementation(libs.androidx.compose.ui.geometry)
     ksp("com.google.dagger:hilt-compiler:2.56")
     implementation(libs.androidx.hilt.navigation.compose)
+
+    // Haze
+    implementation("dev.chrisbanes.haze:haze-materials:1.1.1")
 
     // UI
     implementation(libs.material)

@@ -28,6 +28,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,11 +41,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -68,9 +80,19 @@ import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
 import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeProgressive
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
+import dev.chrisbanes.haze.materials.HazeMaterials
 import java.util.Date
 
 
+@OptIn(ExperimentalHazeMaterialsApi::class)
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun ChatScreen(
@@ -79,12 +101,13 @@ fun ChatScreen(
     userViewModel: UserViewModel,
     penpalId: String?,
 ) {
-
     var textState by remember { mutableStateOf("") }
 
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
     val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
+
+    val hazeState = remember { HazeState() }
 
     val chatId = remember(mineId, penpalId) {
         if (mineId.isNotEmpty() && !penpalId.isNullOrEmpty()) {
@@ -93,9 +116,7 @@ fun ChatScreen(
     }
 
     LaunchedEffect(penpalId) {
-        userViewModel.setTargetUserId(
-            uid = penpalId ?: ""
-        )
+        userViewModel.setTargetUserId(uid = penpalId ?: "")
     }
 
     val penpalData by userViewModel.userState.collectAsStateWithLifecycle()
@@ -116,150 +137,171 @@ fun ChatScreen(
         }
     }
 
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Image(
-            painter = painterResource(R.drawable.light_bg),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
-            contentScale = ContentScale.Crop,
-        )
+    Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                when (val state = penpalData) {
-                    is UserState.Loading -> {
-                        TopChatBar(
-                            user = User(
-                                name = "Loading"
-                            ),
-                            onUserClick = {},
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
-                            presenceState = presenceState,
+                // 1. ИСПРАВЛЕНО: Помещаем стейты внутрь Box с hazeChild
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hazeChild(
+                            state = hazeState,
+                            shape = RectangleShape,
+                            style = HazeDefaults.style(
+                                backgroundColor = Color.White.copy(alpha = 0.01f),
+                                blurRadius = 6.dp
+                            )
                         )
-                    }
-
-                    is UserState.Error -> {
-                        TopChatBar(
-                            user = User(
-                                name = "Error"
-                            ),
-                            onUserClick = {},
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
-                            presenceState = presenceState,
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.7f),
+                                    Color.White.copy(alpha = 0.3f),
+                                    Color.White.copy(alpha = 0.0f)
+                                )
+                            )
                         )
-                    }
-
-                    is UserState.Success -> {
-                        val user = state.user
-                        Log.d("ChatScreen", "данные собеседника: $user")
-
-                        TopChatBar(
-                            user = user ?: User(),
-                            onBackClick = {
-                                navController.popBackStack()
-                            },
-                            onUserClick = {
-                                if(penpalId != mineId) {
-                                    navController.navigate(
-                                        Screen.UserProfile.createRoute(
-                                            id = penpalId ?: ""
-                                        )
-                                    )
-                                }
-                            },
-                            presenceState = presenceState,
-                        )
-                    }
-                }
-
-            },
-            bottomBar = {
-                ChatInputField(
-                    inputText = textState,
-                    onValueChange = { newValue ->
-                        textState = newValue
-                    },
-                    onSendClick = {
-                        if (textState.isNotBlank()) {
-                            val messageText = textState
-                            textState = ""
-                            chatViewModel.sendMessage(
-                                senderId = mineId,
-                                chatId = chatId,
-                                text = messageText,
-                                type = "text",
+                ) {
+                    when (val state = penpalData) {
+                        is UserState.Loading -> {
+                            TopChatBar(
+                                user = User(name = "Loading"),
+                                onUserClick = {},
+                                onBackClick = { navController.popBackStack() },
+                                presenceState = presenceState,
                             )
                         }
 
-                    },
-                    onAttachClick = {
-                        println("Нажата скрепка")
+                        is UserState.Error -> {
+                            TopChatBar(
+                                user = User(name = "Error"),
+                                onUserClick = {},
+                                onBackClick = { navController.popBackStack() },
+                                presenceState = presenceState,
+                            )
+                        }
+
+                        is UserState.Success -> {
+                            val user = state.user
+                            Log.d("ChatScreen", "данные собеседника: $user")
+
+                            TopChatBar(
+                                user = user ?: User(),
+                                onBackClick = { navController.popBackStack() },
+                                onUserClick = {
+                                    if (penpalId != mineId) {
+                                        navController.navigate(
+                                            Screen.UserProfile.createRoute(id = penpalId ?: "")
+                                        )
+                                    }
+                                },
+                                presenceState = presenceState,
+                            )
+                        }
                     }
-                )
+                }
+            },
+            bottomBar = {
+                // 2. ИСПРАВЛЕНО: Оборачиваем ChatInputField в Box с hazeChild
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .hazeChild(
+                            state = hazeState,
+                            shape = RectangleShape,
+                            style = HazeDefaults.style(
+                                backgroundColor = Color.White.copy(alpha = 0.01f),
+                                blurRadius = 6.dp // Слабое размытие для нижней панели
+                            )
+                        )
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.0f), // Прозрачно на стыке с чатом
+                                    Color.White.copy(alpha = 0.3f),
+                                    Color.White.copy(alpha = 0.7f)  // Плотнее у нижнего края экрана
+                                )
+                            )
+                        )
+                ) {
+                    ChatInputField(
+                        inputText = textState,
+                        onValueChange = { newValue -> textState = newValue },
+                        onSendClick = {
+                            if (textState.isNotBlank()) {
+                                val messageText = textState
+                                textState = ""
+                                chatViewModel.sendMessage(
+                                    senderId = mineId,
+                                    chatId = chatId,
+                                    text = messageText,
+                                    type = "text",
+                                )
+                            }
+                        },
+                        onAttachClick = { println("Нажата скрепка") }
+                    )
+                }
             }
         ) { paddingValues ->
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .haze(hazeState)
             ) {
-                when (val state = uiState) {
-                    is ChatUiState.Loading -> {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                Image(
+                    painter = painterResource(R.drawable.light_bg),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                )
+                Column(modifier = Modifier.fillMaxSize()) {
+                    when (val state = uiState) {
+                        is ChatUiState.Loading -> {
+                            Box(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
-                    }
 
-                    is ChatUiState.Error -> {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxWidth(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(text = state.message, color = Color.Red)
+                        is ChatUiState.Error -> {
+                            Box(
+                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(text = state.message, color = Color.Red)
+                            }
                         }
-                    }
 
-                    is ChatUiState.Success -> {
-                        val messages = state.messages
-                        Log.d("ChatScreen", "messages: $messages")
+                        is ChatUiState.Success -> {
+                            val messages = state.messages
+                            Log.d("ChatScreen", "messages: $messages")
 
-                        Content(
-                            messages = messages,
-                            chatViewModel = chatViewModel,
-                            paddingValues = paddingValues,
-                            mineId = mineId,
-                            chatId = chatId,
-                        )
+                            Content(
+                                messages = messages,
+                                chatViewModel = chatViewModel,
+                                bottomPadding = paddingValues.calculateBottomPadding(),
+                                mineId = mineId,
+                                chatId = chatId,
+                            )
+                        }
                     }
                 }
             }
         }
-
     }
-
 }
+
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun Content(
     messages: List<Message>,
     chatViewModel: ChatViewModel,
-    paddingValues: PaddingValues,
+    bottomPadding: Dp,
     mineId: String,
     chatId: String,
 ) {
@@ -354,11 +396,12 @@ private fun Content(
         state = listState,
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally,
+        contentPadding = PaddingValues(
+            top = 76.dp,
+            bottom = bottomPadding + 8.dp,
+        ),
         modifier = Modifier
-            .fillMaxSize()
-            .padding(
-                vertical = 8.dp,
-            ),
+            .fillMaxSize(),
     ) {
         groupedMessages.forEach { (dayTimestamp, dayMessages) ->
 

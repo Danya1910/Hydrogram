@@ -7,9 +7,9 @@ import com.example.hydrogram.ui.theme.Blue
 
 val GlassBackground = Brush.linearGradient(
     colors = listOf(
-        Color.White.copy(alpha = 0.75f),
+        Color(0xFFDDDDDD).copy(alpha = 1f),
         Color(0xFFF7F7F7).copy(alpha = 1f),
-        Color(0xFFDDDDDD).copy(alpha = 0.85f),
+        Color(0xFFFFFFFF).copy(alpha = 0.65f),
     ),
 )
 
