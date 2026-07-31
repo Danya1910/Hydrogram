@@ -3,10 +3,14 @@ package com.example.hydrogram.presentation.screens
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.util.Log
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,20 +39,26 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -69,6 +79,7 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
+import kotlinx.coroutines.launch
 import kotlin.text.isNotBlank
 import kotlin.text.startsWith
 import kotlin.text.substringAfter
@@ -97,9 +108,7 @@ private fun Content(
     userId: String,
     paddingValues: PaddingValues,
 ) {
-
     val userData by userViewModel.userState.collectAsStateWithLifecycle()
-
     val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
 
     LaunchedEffect(userId) {
@@ -107,46 +116,187 @@ private fun Content(
     }
 
     val scrollState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
-    var overScrollY by remember { mutableStateOf(0f) }
+    /*
+     * Расстояние растягивания фотографии.
+     *
+     * 0f   = обычное состояние
+     * 400f = полностью раскрытая фотография
+     */
+    val overScrollAnim = remember {
+        Animatable(0f)
+    }
 
+    val overScrollY = overScrollAnim.value
+
+    /*
+     * Состояние жеста.
+     *
+     * Нужно для того, чтобы не запускать несколько
+     * анимаций одновременно.
+     */
+    var isDragging by remember {
+        mutableStateOf(false)
+    }
+
+    /*
+     * NestedScroll отвечает за Pull-To-Expand.
+     */
     val nestedScrollConnection = remember {
-        object : androidx.compose.ui.input.nestedscroll.NestedScrollConnection {
+        object : NestedScrollConnection {
+
             override fun onPreScroll(
-                available: androidx.compose.ui.geometry.Offset,
-                source: androidx.compose.ui.input.nestedscroll.NestedScrollSource
-            ): androidx.compose.ui.geometry.Offset {
-                if (scrollState.firstVisibleItemIndex == 0 && scrollState.firstVisibleItemScrollOffset == 0) {
-                    if (available.y > 0) {
-                        overScrollY += available.y * 0.5f
-                        return androidx.compose.ui.geometry.Offset(0f, available.y)
-                    } else if (available.y < 0 && overScrollY > 0f) {
-                        val consumed = available.y
-                        overScrollY = (overScrollY + available.y).coerceAtLeast(0f)
-                        return androidx.compose.ui.geometry.Offset(0f, consumed)
+                available: Offset,
+                source: NestedScrollSource,
+            ): Offset {
+
+                /*
+                 * Только когда LazyColumn находится
+                 * в самом верху.
+                 */
+                val atTop =
+                    scrollState.firstVisibleItemIndex == 0 &&
+                            scrollState.firstVisibleItemScrollOffset == 0
+
+                /*
+                 * Свайп вниз.
+                 */
+                if (atTop && available.y > 0f) {
+
+                    isDragging = true
+
+                    coroutineScope.launch {
+                        /*
+                         * Коэффициент 0.4 делает растягивание
+                         * немного "тяжелее" пальца.
+                         *
+                         * Если хочешь 1:1 с пальцем:
+                         * поставь 1f.
+                         */
+                        val newValue =
+                            (overScrollAnim.value + available.y * 0.45f)
+                                .coerceIn(0f, 400f)
+
+                        overScrollAnim.snapTo(newValue)
                     }
+
+                    return Offset(
+                        x = 0f,
+                        y = available.y,
+                    )
                 }
-                return androidx.compose.ui.geometry.Offset.Zero
+
+                /*
+                 * Если фотография уже растянута,
+                 * свайп вверх уменьшает её.
+                 */
+                if (overScrollAnim.value > 0f && available.y < 0f) {
+
+                    isDragging = true
+
+                    coroutineScope.launch {
+
+                        val newValue =
+                            (overScrollAnim.value + available.y)
+                                .coerceAtLeast(0f)
+
+                        overScrollAnim.snapTo(newValue)
+                    }
+
+                    return Offset(
+                        x = 0f,
+                        y = available.y,
+                    )
+                }
+
+                return Offset.Zero
+            }
+
+            override suspend fun onPostFling(
+                consumed: Velocity,
+                available: Velocity,
+            ): Velocity {
+
+                if (!isDragging) {
+                    return super.onPostFling(
+                        consumed,
+                        available
+                    )
+                }
+
+                isDragging = false
+
+                /*
+                 * Если пользователь потянул достаточно далеко,
+                 * раскрываем фотографию.
+                 */
+                if (overScrollAnim.value > 120f) {
+
+                    overScrollAnim.animateTo(
+                        targetValue = 400f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow,
+                        ),
+                    )
+
+                } else {
+
+                    /*
+                     * Иначе возвращаем фотографию назад.
+                     */
+                    overScrollAnim.animateTo(
+                        targetValue = 0f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness = Spring.StiffnessMediumLow,
+                        ),
+                    )
+                }
+
+                return super.onPostFling(
+                    consumed,
+                    available
+                )
             }
         }
     }
 
+    /*
+     * Закрытие раскрытой фотографии свайпом вверх.
+     *
+     * Это дополнительно обрабатывает случай,
+     * когда фотография уже раскрыта.
+     */
     val collapseFraction by remember {
         derivedStateOf {
+
             if (scrollState.firstVisibleItemIndex == 0) {
-                (scrollState.firstVisibleItemScrollOffset.toFloat() / 240f).coerceIn(0f, 1f)
-            } else 1f
+
+                (
+                        scrollState.firstVisibleItemScrollOffset
+                            .toFloat() / 240f
+                        )
+                    .coerceIn(0f, 1f)
+
+            } else {
+                1f
+            }
         }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues = paddingValues)
+            .padding(paddingValues)
             .nestedScroll(nestedScrollConnection)
     ) {
+
         when (val state = userData) {
+
             is UserState.Loading -> {
+
                 UserInfoHat(
                     user = User(
                         name = "Loading...",
@@ -155,10 +305,22 @@ private fun Content(
                     presenceState = presenceState,
                     collapseFraction = collapseFraction,
                     overScrollY = overScrollY,
+                    onCloseExpanded = {
+                        coroutineScope.launch {
+                            overScrollAnim.animateTo(
+                                targetValue = 0f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            )
+                        }
+                    },
                 )
             }
 
             is UserState.Error -> {
+
                 UserInfoHat(
                     user = User(
                         name = "Error...",
@@ -167,64 +329,101 @@ private fun Content(
                     presenceState = presenceState,
                     collapseFraction = collapseFraction,
                     overScrollY = overScrollY,
+                    onCloseExpanded = {
+                        coroutineScope.launch {
+                            overScrollAnim.animateTo(
+                                targetValue = 0f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            )
+                        }
+                    },
                 )
             }
 
             is UserState.Success -> {
+
                 val user = state.user
 
                 val aboutUser = user?.aboutUser
-                val birtday = user?.birthdayDate
+                val birthday = user?.birthdayDate
                 val userName = user?.userName
 
                 val items = listOfNotNull(
+
                     UserInfoRowItem(
                         title = "мобильный",
-                        text = formatPhoneNumber(rawInput = user?.phone ?: ""),
+                        text = formatPhoneNumber(
+                            rawInput = user?.phone ?: ""
+                        ),
                         textColor = Blue,
-                        onClick = {
-
-                        },
+                        onClick = {},
                     ),
+
                     if (!userName.isNullOrEmpty()) {
+
                         UserInfoRowItem(
                             title = "имя пользователя",
                             text = "@$userName",
                             textColor = Blue,
                             onClick = {},
                         )
+
                     } else {
                         null
                     },
-                    if (!birtday.isNullOrEmpty()) {
+
+                    if (!birthday.isNullOrEmpty()) {
+
                         UserInfoRowItem(
                             title = "день рождения",
-                            text = birtday,
+                            text = birthday,
                             textColor = LightBlack,
                             onClick = {},
                         )
+
                     } else {
                         null
                     },
+
                     if (!aboutUser.isNullOrEmpty()) {
+
                         UserInfoRowItem(
                             title = "о себе",
                             text = aboutUser,
                             textColor = LightBlack,
                             onClick = {},
                         )
+
                     } else {
                         null
                     },
                 )
-                Log.d("UserProfileScreen", "данные пользователя: $user")
+
+                Log.d(
+                    "UserProfileScreen",
+                    "данные пользователя: $user"
+                )
+
+                /*
+                 * Основной контент.
+                 */
                 LazyColumn(
                     state = scrollState,
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(color = LightGrayBackground)
+                        .background(
+                            color = LightGrayBackground
+                        )
                 ) {
+
+                    /*
+                     * Место под шапку.
+                     */
                     item {
+
                         Spacer(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -238,53 +437,50 @@ private fun Content(
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Spacer(
+                            modifier = Modifier.height(16.dp)
+                        )
+
                         ChatDataRow()
                     }
 
                     item {
-                        Spacer(modifier = Modifier.height(40.dp))
+
+                        Spacer(
+                            modifier = Modifier.height(40.dp)
+                        )
                     }
                 }
 
+                /*
+                 * Шапка поверх LazyColumn.
+                 */
                 UserInfoHat(
                     user = user,
                     navController = navController,
                     presenceState = presenceState,
                     collapseFraction = collapseFraction,
                     overScrollY = overScrollY,
+                    onCloseExpanded = {
+
+                        coroutineScope.launch {
+
+                            overScrollAnim.animateTo(
+                                targetValue = 0f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioNoBouncy,
+                                    stiffness = Spring.StiffnessMedium,
+                                ),
+                            )
+                        }
+                    },
                 )
             }
-
         }
     }
 }
 
-@Composable
-private fun ContentPreview(
-    user: User,
-    items: List<UserInfoRowItem>,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = LightGrayBackground
-                )
-        ) {
-            MenuRow(
-                items = items
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            ChatDataRow()
-        }
-
-    }
-}
 
 @Composable
 private fun UserInfoHat(
@@ -293,117 +489,219 @@ private fun UserInfoHat(
     presenceState: UserPresence,
     collapseFraction: Float,
     overScrollY: Float,
+    onCloseExpanded: () -> Unit,
 ) {
 
-    val stretchProgress = (overScrollY / 400f).coerceIn(0f, 1f)
 
-    val configuration = androidx.compose.ui.platform.LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp.dp
-    val currentWidth = if (overScrollY > 0) {
-        // Плавно увеличиваем ширину от 104.dp до полной ширины экрана screenWidthDp
-        104.dp + (screenWidthDp - 104.dp) * stretchProgress
-    } else {
-        104.dp * (1f - collapseFraction * 0.6f)
-    }
+    val stretchProgress =
+        (overScrollY / 400f)
+            .coerceIn(0f, 1f)
 
-    val currentHeight = if (overScrollY > 0) {
-        104.dp + (280.dp - 104.dp) * stretchProgress
-    } else {
-        104.dp * (1f - collapseFraction * 0.6f)
-    }
 
-    val cornerPercent = (50 * (1 - stretchProgress)).toInt()
+
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp.dp
+
+    val targetScale =
+        screenWidth.value / 104f
+
+    val avatarScale =
+        1f + (targetScale - 1f) * stretchProgress
+
+
+    val avatarTranslationY =
+        overScrollY * 0.35f
+
+
+    val cornerRadius =
+        52f * (1f - stretchProgress)
+
+
+    val contentAlpha =
+        (
+                1f - stretchProgress * 2.2f
+                ).coerceIn(0f, 1f)
+
 
     val avatarBitmap = remember(user?.avatarUrl) {
+
         val url = user?.avatarUrl
-        if (url != null && url.isNotBlank() && url.startsWith("data:image/jpeg;base64,")) {
+
+        if (
+            url != null &&
+            url.isNotBlank() &&
+            url.startsWith(
+                "data:image/jpeg;base64,"
+            )
+        ) {
+
             try {
-                val base64String = url.substringAfter("base64,")
-                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+
+                val base64String =
+                    url.substringAfter("base64,")
+
+                val imageBytes =
+                    Base64.decode(
+                        base64String,
+                        Base64.DEFAULT
+                    )
+
+                BitmapFactory.decodeByteArray(
+                    imageBytes,
+                    0,
+                    imageBytes.size
+                )
+
             } catch (e: Exception) {
+
                 e.printStackTrace()
+
                 null
             }
+
         } else {
             null
         }
     }
 
-    val formattedLastSeenTime = formatLastSeen(
-        lastSeenTimestamp = presenceState.lastSeen
-    )
+    val formattedLastSeenTime =
+        formatLastSeen(
+            lastSeenTimestamp = presenceState.lastSeen
+        )
+
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(if (overScrollY > 0) 275.dp + overScrollY.dp else 275.dp)
+            .height(275.dp)
     ) {
+
 
         Box(
             modifier = Modifier
-                .align(if (overScrollY > 0) Alignment.TopCenter else Alignment.TopCenter)
-                .padding(top = if (overScrollY > 0) 0.dp else 56.dp)
-                .graphicsLayer{
-                    if(overScrollY == 0f) {
-                        translationX = collapseFraction * -140f
-                        translationY = collapseFraction * -48f
+                .align(Alignment.TopCenter)
+                .padding(top = 56.dp)
+                .graphicsLayer {
+
+                    if (overScrollY == 0f) {
+
+
+                        translationX =
+                            collapseFraction * -140f
+
+                        translationY =
+                            collapseFraction * -48f
+
+                        val collapseScale =
+                            1f -
+                                    collapseFraction * 0.6f
+
+                        scaleX = collapseScale
+                        scaleY = collapseScale
+
+                    } else {
+
+
+                        scaleX = avatarScale
+                        scaleY = avatarScale
+
+                        translationY =
+                            avatarTranslationY
                     }
                 }
         ) {
-            val avatarModifier = Modifier
-                .width(currentWidth)
-                .height(currentHeight)
-                .clip(
-                    shape = RoundedCornerShape(cornerPercent)
-                )
+
+            val avatarModifier =
+                Modifier
+                    .size(104.dp)
+                    .clip(
+                        RoundedCornerShape(
+                            cornerRadius.dp
+                        )
+                    )
+
             if (avatarBitmap != null) {
+
                 Image(
                     bitmap = avatarBitmap.asImageBitmap(),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = avatarModifier
+                    modifier = avatarModifier,
                 )
+
             } else {
+
                 AsyncImage(
                     model = null,
                     contentDescription = null,
-                    placeholder = painterResource(R.drawable.ic_avatar),
-                    error = painterResource(R.drawable.ic_avatar),
+                    placeholder = painterResource(
+                        R.drawable.ic_avatar
+                    ),
+                    error = painterResource(
+                        R.drawable.ic_avatar
+                    ),
                     contentScale = ContentScale.Crop,
-                    modifier = avatarModifier
+                    modifier = avatarModifier,
                 )
             }
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 8.dp
+                )
+        ) {
+
+            GlassButton(
+                icon = R.drawable.ic_arrow_left,
+                onClick = {
+
+                    if (overScrollY > 0f) {
+
+                        onCloseExpanded()
+
+                    } else {
+
+                        navController.popBackStack()
+                    }
+                }
+            )
+
+            Spacer(
+                modifier = Modifier.weight(1f)
+            )
+
+            GlassButton(
+                text = "Edit",
+                onClick = {}
+            )
         }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .padding(top = 8.dp)
+                .fillMaxWidth()
                 .padding(
-                    horizontal = 16.dp,
+                    horizontal = 16.dp
                 )
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                GlassButton(
-                    icon = R.drawable.ic_arrow_left,
-                    onClick = {
-                        navController.popBackStack()
-                    }
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                GlassButton(
-                    text = "Edit",
-                    onClick = {}
-                )
-            }
-            Spacer(modifier = Modifier.height(104.dp))
+                .graphicsLayer {
 
-            Spacer(modifier = Modifier.height(10.dp))
+                    alpha = contentAlpha
+                }
+        ) {
+
+            Spacer(
+                modifier = Modifier.height(104.dp)
+            )
+
+            Spacer(
+                modifier = Modifier.height(10.dp)
+            )
+
             Text(
                 text = user?.name ?: "Unknown",
                 fontFamily = SfProText,
@@ -412,16 +710,40 @@ private fun UserInfoHat(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.38.sp,
                 modifier = Modifier.graphicsLayer {
+
                     if (overScrollY == 0f) {
-                        translationX = collapseFraction * 60f
-                        translationY = if (collapseFraction > 0.5f) collapseFraction * -105f else collapseFraction * -10f
+
+                        translationX =
+                            collapseFraction * 60f
+
+                        translationY =
+                            if (collapseFraction > 0.5f) {
+
+                                collapseFraction * -105f
+
+                            } else {
+
+                                collapseFraction * -10f
+                            }
+
                     } else {
-                        // При растяжении плавно опускаем текст вниз по фотографии
-                        translationY = overScrollY * 0.15f
+
+                        translationY =
+                            overScrollY * 0.15f
                     }
                 },
             )
-            Spacer(modifier = Modifier.height(5.dp))
+
+            /*
+             * ====================================================
+             * LAST SEEN
+             * ====================================================
+             */
+
+            Spacer(
+                modifier = Modifier.height(5.dp)
+            )
+
             Text(
                 text = formattedLastSeenTime,
                 fontFamily = SfProText,
@@ -430,30 +752,64 @@ private fun UserInfoHat(
                 fontWeight = FontWeight.Medium,
                 letterSpacing = (-0.25).sp,
                 modifier = Modifier.graphicsLayer {
+
                     if (overScrollY == 0f) {
-                        translationX = collapseFraction * 60f
-                        translationY = if (collapseFraction > 0.5f) collapseFraction * -105f else collapseFraction * -10f
+
+                        translationX =
+                            collapseFraction * 60f
+
+                        translationY =
+                            if (collapseFraction > 0.5f) {
+
+                                collapseFraction * -105f
+
+                            } else {
+
+                                collapseFraction * -10f
+                            }
+
                     } else {
-                        translationY = overScrollY * 0.15f
+
+                        translationY =
+                            overScrollY * 0.15f
                     }
                 },
             )
-            Spacer(modifier = Modifier.height(16.dp))
+
+            /*
+             * ====================================================
+             * ACTION ROW
+             * ====================================================
+             */
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
+
             Box(
                 modifier = Modifier.graphicsLayer {
+
+                    alpha = contentAlpha
+
                     if (overScrollY > 0f) {
-                        // Плавно скрываем кнопки шеринга/звонков, когда фото раскрывается на весь экран
-                        alpha = 1f - (stretchProgress * 2.5f).coerceIn(0f, 1f)
-                        translationY = overScrollY * 0.1f
+
+                        translationY =
+                            overScrollY * 0.1f
                     }
                 }
             ) {
+
                 ActionRow()
             }
-            Spacer(modifier = Modifier.height(16.dp))
+
+            Spacer(
+                modifier = Modifier.height(16.dp)
+            )
         }
     }
 }
+
+
 
 @Composable
 private fun GlassButton(

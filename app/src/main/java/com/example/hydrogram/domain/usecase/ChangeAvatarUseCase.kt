@@ -30,10 +30,23 @@ class ChangeAvatarUseCase @Inject constructor(
                 return@withContext Result.failure(Exception("Не удалось прочитать изображение"))
             }
 
-            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 120, 120, true)
+            val maxSideTarget = 1280f
+            val width = originalBitmap.width
+            val height = originalBitmap.height
+
+            val scaleFactor = if (width > height) {
+                maxSideTarget / width
+            } else {
+                maxSideTarget / height
+            }
+
+            val finalWidth = if (scaleFactor < 1f) (width * scaleFactor).toInt() else width
+            val finalHeight = if (scaleFactor < 1f) (height * scaleFactor).toInt() else height
+
+            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
             val outputStream = ByteArrayOutputStream()
 
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
             val byteArray = outputStream.toByteArray()
 
             originalBitmap.recycle()
