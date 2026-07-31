@@ -42,7 +42,6 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -168,11 +167,13 @@ fun ChatScreen(
                                 navController.popBackStack()
                             },
                             onUserClick = {
-                                navController.navigate(
-                                    Screen.UserProfile.createRoute(
-                                        id = penpalId ?: ""
+                                if(penpalId != mineId) {
+                                    navController.navigate(
+                                        Screen.UserProfile.createRoute(
+                                            id = penpalId ?: ""
+                                        )
                                     )
-                                )
+                                }
                             },
                             presenceState = presenceState,
                         )
