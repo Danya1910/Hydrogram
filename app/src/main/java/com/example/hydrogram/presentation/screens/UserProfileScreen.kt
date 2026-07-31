@@ -127,12 +127,16 @@ private fun Content(
                         title = "мобильный",
                         text = formatPhoneNumber(rawInput = user?.phone ?: ""),
                         textColor = Blue,
+                        onClick = {
+
+                        },
                     ),
                     if (!userName.isNullOrEmpty()) {
                         UserInfoRowItem(
                             title = "имя пользователя",
                             text = "@$userName",
                             textColor = Blue,
+                            onClick = {},
                         )
                     } else {
                         null
@@ -142,6 +146,7 @@ private fun Content(
                             title = "день рождения",
                             text = birtday,
                             textColor = LightBlack,
+                            onClick = {},
                         )
                     } else {
                         null
@@ -151,6 +156,7 @@ private fun Content(
                             title = "о себе",
                             text = aboutUser,
                             textColor = LightBlack,
+                            onClick = {},
                         )
                     } else {
                         null
@@ -217,67 +223,60 @@ private fun UserInfoHat(
         lastSeenTimestamp = presenceState.lastSeen
     )
 
-    Box(
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .background(
-                color = Blue
+            .padding(top = 8.dp)
+            .padding(
+                horizontal = 16.dp,
             )
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .padding(top = 8.dp)
-                .padding(
-                    horizontal = 16.dp,
-                )
+                .fillMaxWidth()
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                GlassButton(
-                    icon = R.drawable.ic_arrow_left,
-                    onClick = {
-                        navController.popBackStack()
-                    }
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                GlassButton(
-                    text = "Edit",
-                    onClick = {}
-                )
-            }
-            Icon(
-                painter = painterResource(R.drawable.ic_avatar),
-                contentDescription = null,
-                tint = Color.Unspecified,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(shape = CircleShape)
+            GlassButton(
+                icon = R.drawable.ic_arrow_left,
+                onClick = {
+                    navController.popBackStack()
+                }
             )
-            Spacer(modifier = Modifier.height(10.dp))
-            Text(
-                text = user?.name ?: "Unknown",
-                fontFamily = SfProText,
-                fontSize = 28.sp,
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.38.sp,
+            Spacer(modifier = Modifier.weight(1f))
+            GlassButton(
+                text = "Edit",
+                onClick = {}
             )
-            Spacer(modifier = Modifier.height(5.dp))
-            Text(
-                text = formattedLastSeenTime,
-                fontFamily = SfProText,
-                fontSize = 15.sp,
-                color = Color.Gray,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = (-0.25).sp,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            ActionRow()
-            Spacer(modifier = Modifier.height(16.dp))
         }
+        Icon(
+            painter = painterResource(R.drawable.ic_avatar),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .size(104.dp)
+                .clip(shape = CircleShape)
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = user?.name ?: "Unknown",
+            fontFamily = SfProText,
+            fontSize = 28.sp,
+            color = Color.White,
+            fontWeight = FontWeight.Bold,
+            letterSpacing = 0.38.sp,
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        Text(
+            text = formattedLastSeenTime,
+            fontFamily = SfProText,
+            fontSize = 15.sp,
+            color = Color.Gray,
+            fontWeight = FontWeight.Medium,
+            letterSpacing = (-0.25).sp,
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        ActionRow()
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
@@ -401,45 +400,45 @@ private fun MenuRowItem(
     }
 }
 
-@Composable
-@Preview(showBackground = true)
-private fun UserProfileScreenPreview() {
-
-    val user = User(
-        name = "User Name",
-        phone = "9279434335",
-    )
-
-    val items = listOf(
-        UserInfoRowItem(
-            title = "мобильный",
-            text = formatPhoneNumber(
-                rawInput = user.phone
-            ),
-            textColor = Blue,
-        ),
-        UserInfoRowItem(
-            title = "имя пользователя",
-            text = "@cat",
-            textColor = Blue,
-        ),
-        UserInfoRowItem(
-            title = "день рождения",
-            text = "6 июля",
-            textColor = LightBlack,
-        ),
-        UserInfoRowItem(
-            title = "о себе",
-            text = "EYP",
-            textColor = LightBlack,
-        ),
-    )
-
-    ContentPreview(
-        user = user,
-        items = items,
-    )
-}
+//@Composable
+//@Preview(showBackground = true)
+//private fun UserProfileScreenPreview() {
+//
+//    val user = User(
+//        name = "User Name",
+//        phone = "9279434335",
+//    )
+//
+//    val items = listOf(
+//        UserInfoRowItem(
+//            title = "мобильный",
+//            text = formatPhoneNumber(
+//                rawInput = user.phone
+//            ),
+//            textColor = Blue,
+//        ),
+//        UserInfoRowItem(
+//            title = "имя пользователя",
+//            text = "@cat",
+//            textColor = Blue,
+//        ),
+//        UserInfoRowItem(
+//            title = "день рождения",
+//            text = "6 июля",
+//            textColor = LightBlack,
+//        ),
+//        UserInfoRowItem(
+//            title = "о себе",
+//            text = "EYP",
+//            textColor = LightBlack,
+//        ),
+//    )
+//
+//    ContentPreview(
+//        user = user,
+//        items = items,
+//    )
+//}
 
 @Composable
 private fun ActionRow() {
