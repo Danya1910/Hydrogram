@@ -60,6 +60,7 @@ dependencies {
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")
     implementation(libs.androidx.compose.ui.geometry)
+    implementation(libs.androidx.compose.material.core)
     ksp("com.google.dagger:hilt-compiler:2.56")
     implementation(libs.androidx.hilt.navigation.compose)
 
