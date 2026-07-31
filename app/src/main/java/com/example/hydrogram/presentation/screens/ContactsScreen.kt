@@ -214,7 +214,15 @@ private fun Content(
         )
         Spacer(modifier = Modifier.height(10.dp))
 
-        val globalUsers = (foundUserState as? SearchState.Success)?.users ?: emptyList()
+        val rawGlobalUsers = (foundUserState as? SearchState.Success)?.users ?: emptyList()
+
+        val globalUsers = remember(rawGlobalUsers, filteredContacts) {
+            rawGlobalUsers.filter { globalUser ->
+                filteredContacts.none { contact ->
+                    contact.user.phone == globalUser.phone
+                }
+            }
+        }
 
         if ((filteredContacts.isEmpty() && globalUsers.isEmpty()) || query.isEmpty()) {
             Row(
