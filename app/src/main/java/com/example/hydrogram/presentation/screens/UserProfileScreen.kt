@@ -693,15 +693,12 @@ private fun UserInfoHat(
                     alpha = contentAlpha
                 }
         ) {
-
             Spacer(
                 modifier = Modifier.height(104.dp)
             )
-
             Spacer(
                 modifier = Modifier.height(10.dp)
             )
-
             Text(
                 text = user?.name ?: "Unknown",
                 fontFamily = SfProText,
