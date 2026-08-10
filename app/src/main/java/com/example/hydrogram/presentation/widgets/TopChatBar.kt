@@ -55,6 +55,7 @@ fun TopChatBar(
     onUserClick: () -> Unit,
     onBackClick: () -> Unit,
     presenceState: UserPresence,
+    isFavorites: Boolean,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -70,20 +71,34 @@ fun TopChatBar(
             }
         )
         Spacer(modifier = Modifier.width(30.dp))
-        UserName(
-            onUserClick = {
-                onUserClick()
-            },
-            user = user,
-            presenceState = presenceState,
-        )
-        Spacer(modifier = Modifier.width(30.dp))
-        UserIcon(
-            user = user,
-            onIconClick = {
-                onUserClick()
-            },
-        )
+        if (!isFavorites) {
+            UserName(
+                onUserClick = {
+                    onUserClick()
+                },
+                user = user,
+                presenceState = presenceState,
+            )
+            Spacer(modifier = Modifier.width(30.dp))
+            UserIcon(
+                user = user,
+                onIconClick = {
+                    onUserClick()
+                },
+            )
+        } else {
+            FavoritesName(
+                onUserClick = {
+                    onUserClick()
+                },
+            )
+            Spacer(modifier = Modifier.width(30.dp))
+            FavoritesIcon(
+                onIconClick = {
+                    onUserClick()
+                },
+            )
+        }
     }
 }
 
@@ -186,6 +201,43 @@ private fun UserIcon(
     }
 }
 
+
+@Composable
+private fun FavoritesIcon(
+    onIconClick: () -> Unit,
+) {
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(44.dp)
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape
+            )
+            .clip(
+                shape = CircleShape
+            )
+            .clickable {
+                onIconClick()
+            }
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_favorites),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(38.dp)
+                .clip(shape = CircleShape),
+        )
+    }
+}
+
 @Composable
 private fun UserName(
     onUserClick: () -> Unit,
@@ -242,6 +294,55 @@ private fun UserName(
                 fontSize = 12.sp,
                 color = if (presenceState.isOnline) Blue else OfflineStatusColor,
             )
+        }
+    }
+}
+
+@Composable
+private fun FavoritesName(
+    onUserClick: () -> Unit,
+) {
+
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth(0.6f)
+            .height(44.dp)
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape
+            )
+            .clip(
+                shape = CircleShape
+            )
+            .clickable {
+                onUserClick()
+            }
+            .padding(horizontal = 17.dp, vertical = 5.dp)
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxHeight()
+        ) {
+            Text(
+                text = "Избранное",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                letterSpacing = (-0.23).sp,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+
         }
     }
 }

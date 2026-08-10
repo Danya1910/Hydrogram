@@ -28,7 +28,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -41,18 +40,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asComposeRenderEffect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -81,14 +72,10 @@ import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
 import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
 import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.HazeProgressive
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 import java.util.Date
 
 
@@ -170,6 +157,7 @@ fun ChatScreen(
                                 onUserClick = {},
                                 onBackClick = { navController.popBackStack() },
                                 presenceState = presenceState,
+                                isFavorites = penpalId == mineId,
                             )
                         }
 
@@ -179,6 +167,7 @@ fun ChatScreen(
                                 onUserClick = {},
                                 onBackClick = { navController.popBackStack() },
                                 presenceState = presenceState,
+                                isFavorites = penpalId == mineId,
                             )
                         }
 
@@ -197,6 +186,7 @@ fun ChatScreen(
                                     }
                                 },
                                 presenceState = presenceState,
+                                isFavorites = penpalId == mineId,
                             )
                         }
                     }
