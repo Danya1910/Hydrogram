@@ -44,6 +44,7 @@ import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.formatLastSeen
 import com.example.hydrogram.ui.theme.Blue
+import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.OfflineStatusColor
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
@@ -283,7 +284,7 @@ private fun UserName(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp,
                 letterSpacing = (-0.23).sp,
-                color = Color.Black,
+                color = LightBlack,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -338,7 +339,7 @@ private fun FavoritesName(
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp,
                 letterSpacing = (-0.23).sp,
-                color = Color.Black,
+                color = LightBlack,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
