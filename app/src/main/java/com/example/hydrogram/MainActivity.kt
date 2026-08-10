@@ -13,12 +13,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hydrogram.domain.usecase.StartTrackingPresenceUseCase
 import com.example.hydrogram.presentation.navigation.RootNavGraph
 import com.example.hydrogram.ui.theme.HydrogramTheme
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -29,6 +32,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val auth = Firebase.auth
+
+        val currentUser = auth.currentUser
+
+        val startDescription = if(currentUser!=null) "main_graph" else "auth_graph"
 
         enableEdgeToEdge()
         try {
@@ -51,8 +59,12 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             Log.e("SHA_CHECK", "Error", e)
         }
+
         setContent {
-            RootNavGraph()
+
+            RootNavGraph(
+                startDescription = startDescription,
+            )
         }
     }
 }

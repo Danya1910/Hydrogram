@@ -12,13 +12,15 @@ import androidx.navigation.compose.rememberNavController
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-fun RootNavGraph() {
+fun RootNavGraph(
+    startDescription: String,
+) {
 
     val navController = rememberNavController()
 
     NavHost(
         navController = navController,
-        startDestination = "auth_graph",
+        startDestination = startDescription,
         enterTransition = { EnterTransition.None },
         exitTransition = { ExitTransition.None },
         popEnterTransition = { EnterTransition.None },
