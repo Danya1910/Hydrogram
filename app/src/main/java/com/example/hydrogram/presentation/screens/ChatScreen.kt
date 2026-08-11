@@ -6,6 +6,8 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,8 +46,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -66,6 +70,7 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.DateSeparatorGreen
+import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
@@ -77,6 +82,7 @@ import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import java.util.Date
+import kotlin.contracts.contract
 
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
@@ -128,7 +134,6 @@ fun ChatScreen(
         Scaffold(
             containerColor = Color.Transparent,
             topBar = {
-                // 1. ИСПРАВЛЕНО: Помещаем стейты внутрь Box с hazeChild
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -193,7 +198,6 @@ fun ChatScreen(
                 }
             },
             bottomBar = {
-                // 2. ИСПРАВЛЕНО: Оборачиваем ChatInputField в Box с hazeChild
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -202,15 +206,15 @@ fun ChatScreen(
                             shape = RectangleShape,
                             style = HazeDefaults.style(
                                 backgroundColor = Color.White.copy(alpha = 0.01f),
-                                blurRadius = 6.dp // Слабое размытие для нижней панели
+                                blurRadius = 6.dp
                             )
                         )
                         .background(
                             brush = Brush.verticalGradient(
                                 colors = listOf(
-                                    Color.White.copy(alpha = 0.0f), // Прозрачно на стыке с чатом
+                                    Color.White.copy(alpha = 0.0f),
                                     Color.White.copy(alpha = 0.3f),
-                                    Color.White.copy(alpha = 0.7f)  // Плотнее у нижнего края экрана
+                                    Color.White.copy(alpha = 0.7f)
                                 )
                             )
                         )
@@ -381,6 +385,15 @@ private fun Content(
         }
     }
 
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        NewChatWidget(
+            onGreetingClick = {},
+        )
+    }
 
     LazyColumn(
         state = listState,
@@ -394,6 +407,8 @@ private fun Content(
             .fillMaxSize(),
     ) {
         groupedMessages.forEach { (dayTimestamp, dayMessages) ->
+
+
 
             item(key = "date_$dayTimestamp") {
                 DateSeparator(text = formatHeaderDate(dayTimestamp))
@@ -713,7 +728,71 @@ private fun PenpalTextMessage(
             }
         }
     }
+}
 
+@Composable
+private fun NewChatWidget(
+    onGreetingClick: () -> Unit,
+) {
+
+    val brush = Brush.verticalGradient(
+        colors = listOf<Color>(
+            DateSeparatorGreen,
+            Green,
+            MineMessageTimeColor,
+        )
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+       Column(
+           horizontalAlignment = Alignment.CenterHorizontally,
+           modifier = Modifier
+               .widthIn(max = 280.dp)
+               .clip(
+                   shape = RoundedCornerShape(16.dp)
+               )
+               .background(
+                   brush = brush,
+                   shape = RoundedCornerShape(16.dp)
+               )
+               .clickable{
+                   onGreetingClick()
+               }
+               .padding(
+                   horizontal = 16.dp,
+                   vertical = 10.dp,
+               )
+       ) {
+            Text(
+                textAlign = TextAlign.Center,
+                text = "Сообщений пока нет...",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 15.sp,
+                color = Color.White,
+            )
+           Spacer(modifier = Modifier.height(8.dp))
+           Text(
+               textAlign = TextAlign.Center,
+               text = "Отправьте сообещние или нажмите на приветсвие ниже.",
+               fontFamily = SfProText,
+               fontWeight = FontWeight.Medium,
+               fontSize = 15.sp,
+               color = Color.White,
+           )
+           Spacer(modifier = Modifier.height(10.dp))
+           Image(
+               painter = painterResource(R.drawable.dog_greeting_sticker),
+               contentDescription = null,
+               modifier = Modifier
+                   .size(100.dp)
+           )
+       }
+    }
 }
 
 @Composable

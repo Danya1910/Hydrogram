@@ -4,6 +4,8 @@ import android.util.Log
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
 import com.example.hydrogram.presentation.util.normalizePhoneNumber
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -152,4 +154,21 @@ class UserRepositoryImpl @Inject constructor(
         }
 
     }
+
+    override suspend fun logOut() {
+        val auth = Firebase.auth
+        val currentUser = auth.currentUser
+
+        if(currentUser != null) {
+            try {
+                currentUser.getIdToken(true).await()
+            } catch (e: Exception) {
+
+            }
+        }
+
+        auth.signOut()
+
+    }
+
 }

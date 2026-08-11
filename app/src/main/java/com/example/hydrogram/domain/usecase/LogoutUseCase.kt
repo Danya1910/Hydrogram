@@ -1,14 +1,15 @@
 package com.example.hydrogram.domain.usecase
 
 import com.example.hydrogram.domain.repository.AuthRepository
+import com.example.hydrogram.domain.repository.UserRepository
 import javax.inject.Inject
 
 class LogoutUseCase @Inject constructor(
-    private val authRepository: AuthRepository,
+    private val userRepository: UserRepository,
 ) {
 
-    operator fun invoke() {
-        authRepository.logout()
+    suspend operator fun invoke() {
+        userRepository.logOut()
     }
 
 }

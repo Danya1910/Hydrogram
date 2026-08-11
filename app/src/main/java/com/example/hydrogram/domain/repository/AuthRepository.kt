@@ -10,6 +10,4 @@ interface AuthRepository {
 
     fun isUserLoggedIn() : Boolean
 
-    fun logout()
-
 }

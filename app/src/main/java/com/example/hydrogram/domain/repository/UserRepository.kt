@@ -19,4 +19,6 @@ interface UserRepository {
 
     suspend fun syncContacts(phoneNumbers: List<String>) : List<User>
 
+    suspend fun logOut()
+
 }
