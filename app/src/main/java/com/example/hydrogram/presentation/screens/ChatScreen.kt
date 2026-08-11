@@ -7,7 +7,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
+import android.os.Build.VERSION.SDK_INT
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,7 +46,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import coil3.request.ImageRequest
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.User
@@ -82,8 +83,11 @@ import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import java.util.Date
-import kotlin.contracts.contract
-
+import coil3.compose.AsyncImage
+import coil3.gif.AnimatedImageDecoder
+import coil3.gif.GifDecoder
+import coil3.ImageLoader
+import coil3.request.crossfade
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @RequiresApi(Build.VERSION_CODES.S)
@@ -735,13 +739,32 @@ private fun NewChatWidget(
     onGreetingClick: () -> Unit,
 ) {
 
-    val brush = Brush.verticalGradient(
-        colors = listOf<Color>(
+    val context = LocalContext.current
+
+    val gifImageLoader = ImageLoader.Builder(context)
+        .components {
+            if (SDK_INT >= 28) {
+                add(AnimatedImageDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
+        }
+        .build()
+
+    val brush = Brush.horizontalGradient(
+        colors = listOf(
             DateSeparatorGreen,
-            Green,
-            MineMessageTimeColor,
+            DateSeparatorGreen,
+            DateSeparatorGreen,
+            Color(0xFF72A167),
+            Color(0xFF7DB270),
+            Color(0xFF80B672),
+            Color(0xFF7DB270),
+            DateSeparatorGreen,
         )
     )
+
+
 
     Box(
         contentAlignment = Alignment.Center,
@@ -780,22 +803,28 @@ private fun NewChatWidget(
                textAlign = TextAlign.Center,
                text = "Отправьте сообещние или нажмите на приветсвие ниже.",
                fontFamily = SfProText,
-               fontWeight = FontWeight.Medium,
-               fontSize = 15.sp,
+               fontWeight = FontWeight.Normal,
+               fontSize = 14.sp,
                color = Color.White,
            )
            Spacer(modifier = Modifier.height(10.dp))
-           Image(
-               painter = painterResource(R.drawable.dog_greeting_sticker),
+           AsyncImage(
+               model = ImageRequest.Builder(context)
+                   .data(R.drawable.duck_greeting_animation)
+                   .crossfade(true)
+                   .build(),
+               imageLoader = gifImageLoader,
                contentDescription = null,
-               modifier = Modifier
-                   .size(100.dp)
+               modifier = Modifier.size(200.dp),
            )
        }
     }
 }
 
-@Composable
 @Preview(showBackground = true)
-private fun ChatScreenPreview() {
+@Composable
+private fun NewChatWidgetPreview() {
+    NewChatWidget(
+        onGreetingClick = {}
+    )
 }

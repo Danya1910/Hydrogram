@@ -50,7 +50,7 @@ kotlin {
 }
 
 dependencies {
-    // Firebase - ПОНИЗИМ ВЕРСИЮ
+    // Firebase
     implementation(platform("com.google.firebase:firebase-bom:33.12.0"))
     implementation("com.google.firebase:firebase-auth")
     implementation("com.google.firebase:firebase-firestore")
@@ -71,6 +71,7 @@ dependencies {
     implementation(libs.material)
     implementation(libs.coil.compose)
     implementation(libs.coil.network)
+    implementation("io.coil-kt.coil3:coil-gif:3.0.0")
     implementation("androidx.navigation:navigation-compose:2.8.7")
 
     // AndroidX & Compose
