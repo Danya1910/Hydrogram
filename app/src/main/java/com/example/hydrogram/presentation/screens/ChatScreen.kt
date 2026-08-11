@@ -40,6 +40,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -71,7 +72,6 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
 import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.ui.theme.DateSeparatorGreen
-import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
@@ -199,6 +199,7 @@ fun ChatScreen(
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.height(5.dp))
                 }
             },
             bottomBar = {
