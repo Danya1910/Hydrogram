@@ -14,12 +14,17 @@ import com.example.hydrogram.domain.usecase.SaveUserNameUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
 import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
 import com.example.hydrogram.presentation.states.UserState
+import com.google.firebase.Firebase
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.auth
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -40,7 +45,23 @@ class UserViewModel @Inject constructor(
     private val logoutUseCase: LogoutUseCase,
 ) : ViewModel() {
 
+    private val auth = Firebase.auth
+
+    val isCurrentUserIdInCache = callbackFlow {
+        val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+            trySend(firebaseAuth.currentUser != null)
+        }
+        auth.addAuthStateListener(listener)
+
+        awaitClose { auth.removeAuthStateListener(listener) }
+    }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = auth.currentUser != null,
+        )
     private val _targetUserId = MutableStateFlow("")
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val userState: StateFlow<UserState> = _targetUserId
         .flatMapLatest { uid ->
@@ -143,7 +164,7 @@ class UserViewModel @Inject constructor(
             _errorMessage.value = "Пользователь не найден"
             return
         }
-        if(_isSaving.value) return
+        if (_isSaving.value) return
         viewModelScope.launch {
             _isSaving.value = true
             _isLoading.value = true
@@ -180,11 +201,11 @@ class UserViewModel @Inject constructor(
         uid: String,
         imageUri: Uri,
     ) {
-        if(uid.isBlank()) {
+        if (uid.isBlank()) {
             _errorMessage.value = "Пользователь не найден"
             return
         }
-        if(_isSaving.value) return
+        if (_isSaving.value) return
         viewModelScope.launch {
 
             _isSaving.value = true
@@ -210,7 +231,6 @@ class UserViewModel @Inject constructor(
             logoutUseCase()
         }
     }
-
 
 
     fun resetSaveResult() {

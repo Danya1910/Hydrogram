@@ -80,6 +80,7 @@ import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
+import com.google.firebase.Firebase
 
 @Composable
 fun ChangeUserDataScreen(
@@ -286,6 +287,21 @@ private fun Content(
     userViewModel: UserViewModel,
 ) {
 
+    val isCurrentUserIdInCache by userViewModel.isCurrentUserIdInCache.collectAsStateWithLifecycle()
+
+    LaunchedEffect(
+        isCurrentUserIdInCache
+    ) {
+        if(!isCurrentUserIdInCache) {
+            navController.navigate("auth_graph") {
+                popUpTo(navController.graph.startDestinationId) {
+                    inclusive = true
+                }
+                launchSingleTop = true
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -342,7 +358,9 @@ private fun Content(
         AccountButton(
             text = "Выйти",
             textColor = Red,
-            onClick = {},
+            onClick = {
+                userViewModel.logout()
+            },
         )
     }
 
