@@ -35,6 +35,4 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun isUserLoggedIn(): Boolean = auth.currentUser != null
 
-    override fun logout() = auth.signOut()
-
 }
