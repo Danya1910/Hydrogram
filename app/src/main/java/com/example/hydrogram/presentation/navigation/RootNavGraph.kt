@@ -33,7 +33,7 @@ fun RootNavGraph(
             AuthNavGraph(navController = navController)
         }
         navigation(
-            startDestination = Screen.ContactsScreen.route,
+            startDestination = Screen.ChatList.route,
             route = "main_graph"
         ) {
             MainNavGraph(navController = navController)

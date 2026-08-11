@@ -308,7 +308,7 @@ private fun FavoritesName(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .fillMaxWidth(0.6f)
+            .fillMaxWidth(fraction = 0.6f)
             .height(44.dp)
             .background(
                 brush = GlassBackground,
