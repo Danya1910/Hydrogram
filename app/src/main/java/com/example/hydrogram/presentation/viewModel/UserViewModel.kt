@@ -8,6 +8,7 @@ import com.example.hydrogram.domain.model.UserPresence
 import com.example.hydrogram.domain.usecase.ChangeAvatarUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetUserByIdUseCase
+import com.example.hydrogram.domain.usecase.LogoutUseCase
 import com.example.hydrogram.domain.usecase.ObserveUserPresenceUseCase
 import com.example.hydrogram.domain.usecase.SaveUserNameUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
@@ -36,6 +37,7 @@ class UserViewModel @Inject constructor(
     private val saveUserNameUseCase: SaveUserNameUseCase,
     private val observeUserPresenceUseCase: ObserveUserPresenceUseCase,
     private val changeAvatarUseCase: ChangeAvatarUseCase,
+    private val logoutUseCase: LogoutUseCase,
 ) : ViewModel() {
 
     private val _targetUserId = MutableStateFlow("")
@@ -200,6 +202,12 @@ class UserViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = "Ошибка обновления аватара" }
+        }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            logoutUseCase()
         }
     }
 
