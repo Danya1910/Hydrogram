@@ -57,7 +57,7 @@ fun ChatInputField(
             .padding(horizontal = 8.dp)
             .padding(
                 top = 4.dp,
-                bottom = 28.dp,
+                bottom = 0.dp,
             )
     ) {
         AttachButton(

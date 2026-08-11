@@ -152,16 +152,16 @@ private fun Content(
         AcceptButton(
             isAvailable = isAvailable,
             onClick = {
-//                authViewModel.signIn(
-//                    email = authViewModel.authData.value.email,
-//                    password = password,
-//                )
-                authViewModel.signUp(
+                authViewModel.signIn(
                     email = authViewModel.authData.value.email,
                     password = password,
-                    name = authViewModel.authData.value.name,
-                    phone = authViewModel.authData.value.phone,
                 )
+//                authViewModel.signUp(
+//                    email = authViewModel.authData.value.email,
+//                    password = password,
+//                    name = authViewModel.authData.value.name,
+//                    phone = authViewModel.authData.value.phone,
+//                )
             },
         )
     }

@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.screens
 
+import android.content.Context
 import android.os.Build
 import android.text.format.DateFormat
 import android.util.Log
@@ -8,6 +9,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import android.os.Build.VERSION.SDK_INT
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,6 +27,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -88,6 +93,9 @@ import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import coil3.ImageLoader
 import coil3.request.crossfade
+import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.ui.theme.LightGrayBackground
+
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
 @RequiresApi(Build.VERSION_CODES.S)
@@ -202,47 +210,6 @@ fun ChatScreen(
                     Spacer(modifier = Modifier.height(5.dp))
                 }
             },
-            bottomBar = {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .hazeChild(
-                            state = hazeState,
-                            shape = RectangleShape,
-                            style = HazeDefaults.style(
-                                backgroundColor = Color.White.copy(alpha = 0.01f),
-                                blurRadius = 6.dp
-                            )
-                        )
-                        .background(
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.0f),
-                                    Color.White.copy(alpha = 0.3f),
-                                    Color.White.copy(alpha = 0.7f)
-                                )
-                            )
-                        )
-                ) {
-                    ChatInputField(
-                        inputText = textState,
-                        onValueChange = { newValue -> textState = newValue },
-                        onSendClick = {
-                            if (textState.isNotBlank()) {
-                                val messageText = textState
-                                textState = ""
-                                chatViewModel.sendMessage(
-                                    senderId = mineId,
-                                    chatId = chatId,
-                                    text = messageText,
-                                    type = "text",
-                                )
-                            }
-                        },
-                        onAttachClick = { println("Нажата скрепка") }
-                    )
-                }
-            }
         ) { paddingValues ->
             Box(
                 modifier = Modifier
@@ -305,6 +272,22 @@ private fun Content(
     chatId: String,
 ) {
 
+    val context = LocalContext.current
+
+    var textState by remember { mutableStateOf("") }
+
+    val gifImageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components {
+                if (SDK_INT >= 28) {
+                    add(AnimatedImageDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
     val groupedMessages = remember(messages) {
         messages.groupBy { message -> getStartOfDay(message.timestamp) }
     }
@@ -312,6 +295,8 @@ private fun Content(
     val listState = rememberLazyListState()
 
     var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
+
+    val hazeState = remember { HazeState() }
 
     LaunchedEffect(Unit) {
         firstUnreadMessageId = messages
@@ -390,57 +375,112 @@ private fun Content(
         }
     }
 
-    if(messages.isEmpty()) {
-        Box(
-            contentAlignment = Alignment.Center,
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+
+        if (messages.isEmpty()) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+            ) {
+                NewChatWidget(
+                    onGreetingClick = {},
+                    context = context,
+                    gifImageLoader = gifImageLoader,
+                )
+            }
+        }
+
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(
+                top = 86.dp,
+                bottom = 75.dp,
+            ),
             modifier = Modifier
                 .fillMaxSize()
+                .haze(hazeState),
         ) {
-            NewChatWidget(
-                onGreetingClick = {},
-            )
+            groupedMessages.forEach { (dayTimestamp, dayMessages) ->
+
+
+                item(key = "date_$dayTimestamp") {
+                    DateSeparator(text = formatHeaderDate(dayTimestamp))
+                }
+
+                items(
+                    items = dayMessages,
+                    key = { message -> message.messageId }
+                ) { message ->
+
+                    if (message.messageId == firstUnreadMessageId) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UnreadMessageSeparator()
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
+                    if (message.senderId == mineId) {
+                        MineTextMessage(message = message)
+                    } else {
+                        PenpalTextMessage(message = message)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .hazeChild(
+                        state = hazeState,
+                        shape = RectangleShape,
+                        style = HazeDefaults.style(
+                            backgroundColor = Color.White.copy(alpha = 0.01f),
+                            blurRadius = 6.dp
+                        )
+                    )
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = 0.0f),
+                                Color.White.copy(alpha = 0.3f),
+                                Color.White.copy(alpha = 0.7f)
+                            )
+                        )
+                    )
+            ) {
+                ChatInputField(
+                    inputText = textState,
+                    onValueChange = { newValue -> textState = newValue },
+                    onSendClick = {
+                        if (textState.isNotBlank()) {
+                            val messageText = textState
+                            textState = ""
+                            chatViewModel.sendMessage(
+                                senderId = mineId,
+                                chatId = chatId,
+                                text = messageText,
+                                type = "text",
+                            )
+                        }
+                    },
+                    onAttachClick = { println("Нажата скрепка") }
+                )
+            }
         }
     }
 
-    LazyColumn(
-        state = listState,
-        verticalArrangement = Arrangement.Bottom,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        contentPadding = PaddingValues(
-            top = 86.dp,
-            bottom = bottomPadding + 8.dp,
-        ),
-        modifier = Modifier
-            .fillMaxSize(),
-    ) {
-        groupedMessages.forEach { (dayTimestamp, dayMessages) ->
-
-
-
-            item(key = "date_$dayTimestamp") {
-                DateSeparator(text = formatHeaderDate(dayTimestamp))
-            }
-
-            items(
-                items = dayMessages,
-                key = { message -> message.messageId }
-            ) { message ->
-
-                if (message.messageId == firstUnreadMessageId) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    UnreadMessageSeparator()
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-
-                if (message.senderId == mineId) {
-                    MineTextMessage(message = message)
-                } else {
-                    PenpalTextMessage(message = message)
-                }
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-        }
-    }
 }
 
 @Composable
@@ -740,19 +780,9 @@ private fun PenpalTextMessage(
 @Composable
 private fun NewChatWidget(
     onGreetingClick: () -> Unit,
+    context: Context,
+    gifImageLoader: ImageLoader,
 ) {
-
-    val context = LocalContext.current
-
-    val gifImageLoader = ImageLoader.Builder(context)
-        .components {
-            if (SDK_INT >= 28) {
-                add(AnimatedImageDecoder.Factory())
-            } else {
-                add(GifDecoder.Factory())
-            }
-        }
-        .build()
 
     val brush = Brush.horizontalGradient(
         colors = listOf(
@@ -824,10 +854,98 @@ private fun NewChatWidget(
     }
 }
 
+@Composable
+private fun StickerWidget(
+    context: Context,
+    gifImageLoader: ImageLoader,
+) {
+
+    val list = listOf(
+        R.raw.duck_greeting_sticker,
+        R.raw.duck_crying_sticker,
+        R.raw.duck_andry_sticker,
+        R.raw.duck_puking_sticker,
+    )
+
+    var selectedSticker by remember { mutableStateOf("") }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(300.dp)
+            .clip(
+                shape = RoundedCornerShape(16.dp)
+            )
+            .background(
+                color = LightGrayBackground,
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape
+            )
+            .padding(
+                vertical = 16.dp,
+            )
+    ) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 90.dp),
+            contentPadding = PaddingValues(8.dp),
+
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = LightGrayBackground,
+                )
+        ) {
+            items(list.size) { index ->
+                val resourceId = list[index]
+
+                StickerItem(
+                    iconPath = resourceId,
+                    onStickerClick = { resId ->
+                        selectedSticker = resId
+                    },
+                    context = context,
+                    gifImageLoader = gifImageLoader,
+                )
+            }
+        }
+    }
+
+}
+
+@Composable
+private fun StickerItem(
+    iconPath: Int,
+    onStickerClick: (String) -> Unit,
+    context: Context,
+    gifImageLoader:  ImageLoader,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .aspectRatio(1f)
+            .clickable{
+                onStickerClick(iconPath.toString())
+            }
+    ) {
+        AsyncImage(
+            model = ImageRequest.Builder(context)
+                .data(iconPath)
+                .crossfade(true)
+                .build(),
+            imageLoader = gifImageLoader,
+            contentDescription = null,
+            modifier = Modifier.size(200.dp),
+        )
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun NewChatWidgetPreview() {
-    NewChatWidget(
-        onGreetingClick = {}
-    )
+
 }
