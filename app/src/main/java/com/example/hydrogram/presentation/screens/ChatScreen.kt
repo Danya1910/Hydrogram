@@ -387,7 +387,7 @@ private fun Content(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.CenterHorizontally,
         contentPadding = PaddingValues(
-            top = 76.dp,
+            top = 86.dp,
             bottom = bottomPadding + 8.dp,
         ),
         modifier = Modifier
