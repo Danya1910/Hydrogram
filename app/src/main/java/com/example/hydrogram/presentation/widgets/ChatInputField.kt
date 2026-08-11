@@ -46,6 +46,7 @@ fun ChatInputField(
     onValueChange: (String) -> Unit,
     onSendClick: () -> Unit,
     onAttachClick: () -> Unit,
+    onStickerClick: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -68,6 +69,7 @@ fun ChatInputField(
             inputText = inputText,
             onValueChange = onValueChange,
             onSendClick = onSendClick,
+            onStickerClick = onStickerClick,
             modifier = Modifier.weight(1f)
         )
         Spacer(modifier = Modifier.width(6.dp))
@@ -171,6 +173,7 @@ private fun MessageInputField(
     inputText: String,
     onValueChange: (String) -> Unit,
     onSendClick: () -> Unit,
+    onStickerClick: () -> Unit,
     modifier: Modifier,
 ) {
     Box(
@@ -223,7 +226,7 @@ private fun MessageInputField(
                         tint = Gray,
                         modifier = Modifier
                             .clickable {
-                                onSendClick()
+                                onStickerClick()
                             }
 
                     )
@@ -251,7 +254,10 @@ private fun ChatInputFieldPreview() {
         },
         onAttachClick = {
             println("Нажата скрепка")
-        }
+        },
+        onStickerClick = {
+
+        },
     )
 
 }

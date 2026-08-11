@@ -9,7 +9,15 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import android.os.Build.VERSION.SDK_INT
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -45,9 +53,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -106,7 +114,6 @@ fun ChatScreen(
     userViewModel: UserViewModel,
     penpalId: String?,
 ) {
-    var textState by remember { mutableStateOf("") }
 
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
@@ -226,7 +233,9 @@ fun ChatScreen(
                     when (val state = uiState) {
                         is ChatUiState.Loading -> {
                             Box(
-                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 CircularProgressIndicator()
@@ -235,7 +244,9 @@ fun ChatScreen(
 
                         is ChatUiState.Error -> {
                             Box(
-                                modifier = Modifier.weight(1f).fillMaxWidth(),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(text = state.message, color = Color.Red)
@@ -298,6 +309,8 @@ private fun Content(
 
     val hazeState = remember { HazeState() }
 
+    var isStickerWidgetVisible by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         firstUnreadMessageId = messages
             .filter { it.senderId != mineId && it.status != "read" }
@@ -316,7 +329,7 @@ private fun Content(
                 var targetIndex = 0
                 var found = false
 
-                for ((dayTimestamp, dayMessages) in groupedMessages) {
+                for ((_, dayMessages) in groupedMessages) {
                     if (found) break
                     targetIndex++
 
@@ -404,7 +417,16 @@ private fun Content(
             ),
             modifier = Modifier
                 .fillMaxSize()
-                .haze(hazeState),
+                .haze(hazeState)
+                .clickable(
+                    enabled = isStickerWidgetVisible,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    if (isStickerWidgetVisible) {
+                        isStickerWidgetVisible = false
+                    }
+                },
         ) {
             groupedMessages.forEach { (dayTimestamp, dayMessages) ->
 
@@ -475,10 +497,36 @@ private fun Content(
                             )
                         }
                     },
-                    onAttachClick = { println("Нажата скрепка") }
+                    onAttachClick = { println("Нажата скрепка") },
+                    onStickerClick = {
+                        isStickerWidgetVisible = !isStickerWidgetVisible
+                    }
                 )
             }
         }
+
+        AnimatedVisibility(
+            visible = isStickerWidgetVisible,
+            enter = slideInVertically(
+                animationSpec = spring(stiffness = 400f),
+                initialOffsetY = { fullHeight -> fullHeight }
+            ) + fadeIn(animationSpec = tween(200)),
+            exit = slideOutVertically(
+                animationSpec = spring(stiffness = 400f),
+                targetOffsetY = { fullHeight -> fullHeight }
+            ) + fadeOut(animationSpec = tween(200)),
+        ) {
+            Column(
+                verticalArrangement = Arrangement.Bottom,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                StickerWidget(
+                    context = context,
+                    gifImageLoader = gifImageLoader,
+                )
+            }
+        }
+
     }
 
 }
@@ -804,25 +852,25 @@ private fun NewChatWidget(
         modifier = Modifier
             .fillMaxWidth()
     ) {
-       Column(
-           horizontalAlignment = Alignment.CenterHorizontally,
-           modifier = Modifier
-               .widthIn(max = 280.dp)
-               .clip(
-                   shape = RoundedCornerShape(16.dp)
-               )
-               .background(
-                   brush = brush,
-                   shape = RoundedCornerShape(16.dp)
-               )
-               .clickable{
-                   onGreetingClick()
-               }
-               .padding(
-                   horizontal = 16.dp,
-                   vertical = 10.dp,
-               )
-       ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .widthIn(max = 280.dp)
+                .clip(
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .background(
+                    brush = brush,
+                    shape = RoundedCornerShape(16.dp)
+                )
+                .clickable {
+                    onGreetingClick()
+                }
+                .padding(
+                    horizontal = 16.dp,
+                    vertical = 10.dp,
+                )
+        ) {
             Text(
                 textAlign = TextAlign.Center,
                 text = "Сообщений пока нет...",
@@ -831,26 +879,26 @@ private fun NewChatWidget(
                 fontSize = 15.sp,
                 color = Color.White,
             )
-           Spacer(modifier = Modifier.height(8.dp))
-           Text(
-               textAlign = TextAlign.Center,
-               text = "Отправьте сообещние или нажмите на приветсвие ниже.",
-               fontFamily = SfProText,
-               fontWeight = FontWeight.Normal,
-               fontSize = 14.sp,
-               color = Color.White,
-           )
-           Spacer(modifier = Modifier.height(10.dp))
-           AsyncImage(
-               model = ImageRequest.Builder(context)
-                   .data(R.raw.duck_greeting_sticker)
-                   .crossfade(true)
-                   .build(),
-               imageLoader = gifImageLoader,
-               contentDescription = null,
-               modifier = Modifier.size(200.dp),
-           )
-       }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                textAlign = TextAlign.Center,
+                text = "Отправьте сообещние или нажмите на приветсвие ниже.",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 14.sp,
+                color = Color.White,
+            )
+            Spacer(modifier = Modifier.height(10.dp))
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(R.raw.duck_greeting_sticker)
+                    .crossfade(true)
+                    .build(),
+                imageLoader = gifImageLoader,
+                contentDescription = null,
+                modifier = Modifier.size(200.dp),
+            )
+        }
     }
 }
 
@@ -874,7 +922,7 @@ private fun StickerWidget(
             .fillMaxWidth()
             .height(300.dp)
             .clip(
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(16.dp),
             )
             .background(
                 color = LightGrayBackground,
@@ -882,35 +930,50 @@ private fun StickerWidget(
             .border(
                 width = 1.dp,
                 brush = GlassBorder,
-                shape = CircleShape
+                shape = RoundedCornerShape(16.dp),
             )
             .padding(
                 vertical = 16.dp,
             )
     ) {
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 90.dp),
-            contentPadding = PaddingValues(8.dp),
-
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    color = LightGrayBackground,
-                )
         ) {
-            items(list.size) { index ->
-                val resourceId = list[index]
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "ИЗБРАННЫЕ СТИКЕРЫ",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Normal,
+                fontFamily = SfProText,
+                color = Color.Gray,
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 90.dp),
+                contentPadding = PaddingValues(8.dp),
 
-                StickerItem(
-                    iconPath = resourceId,
-                    onStickerClick = { resId ->
-                        selectedSticker = resId
-                    },
-                    context = context,
-                    gifImageLoader = gifImageLoader,
-                )
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        color = LightGrayBackground,
+                    )
+            ) {
+                items(list.size) { index ->
+                    val resourceId = list[index]
+
+                    StickerItem(
+                        iconPath = resourceId,
+                        onStickerClick = { resId ->
+                            selectedSticker = resId
+                        },
+                        context = context,
+                        gifImageLoader = gifImageLoader,
+                    )
+                }
             }
         }
     }
@@ -922,13 +985,13 @@ private fun StickerItem(
     iconPath: Int,
     onStickerClick: (String) -> Unit,
     context: Context,
-    gifImageLoader:  ImageLoader,
+    gifImageLoader: ImageLoader,
 ) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .aspectRatio(1f)
-            .clickable{
+            .clickable {
                 onStickerClick(iconPath.toString())
             }
     ) {
