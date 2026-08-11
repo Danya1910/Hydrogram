@@ -812,7 +812,7 @@ private fun NewChatWidget(
            Spacer(modifier = Modifier.height(10.dp))
            AsyncImage(
                model = ImageRequest.Builder(context)
-                   .data(R.drawable.duck_greeting_animation)
+                   .data(R.raw.duck_greeting_sticker)
                    .crossfade(true)
                    .build(),
                imageLoader = gifImageLoader,
