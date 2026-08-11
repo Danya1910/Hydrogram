@@ -389,14 +389,16 @@ private fun Content(
         }
     }
 
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        NewChatWidget(
-            onGreetingClick = {},
-        )
+    if(messages.isEmpty()) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+            NewChatWidget(
+                onGreetingClick = {},
+            )
+        }
     }
 
     LazyColumn(
