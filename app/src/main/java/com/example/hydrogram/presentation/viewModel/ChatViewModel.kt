@@ -1,6 +1,8 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.usecase.ChangeMessageStatusUseCase
@@ -47,8 +49,9 @@ class ChatViewModel @Inject constructor(
         chatId: String,
         text: String,
         type: String,
+        stickerPath: String,
     ) {
-        if (text.isBlank()) {
+        if (text.isBlank() && stickerPath.isBlank()) {
             _errorMessage.value = "Пустое сообщение"
             return
         }
@@ -56,6 +59,7 @@ class ChatViewModel @Inject constructor(
             return
         }
 
+        Log.d("ChatVM", "sent message called")
         viewModelScope.launch {
             _isSending.value = true
             val result = sendMessageUseCase(
@@ -63,8 +67,10 @@ class ChatViewModel @Inject constructor(
                 chatId = chatId,
                 text = text,
                 type = type,
+                stickerPath = stickerPath,
             )
             _isSending.value = false
+            Log.d("ChatVM", "sent message result: $result")
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }

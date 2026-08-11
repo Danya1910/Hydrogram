@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.repository
 
+import android.util.Log
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -19,7 +20,8 @@ class ChatRepositoryImpl @Inject constructor(
         senderId: String,
         chatId: String,
         text: String,
-        type: String
+        type: String,
+        stickerPath: String,
     ): Result<Unit> {
         return try {
             val chatRef = firestore.collection("chats").document(chatId)
@@ -33,7 +35,10 @@ class ChatRepositoryImpl @Inject constructor(
                 type = type,
                 timestamp = currentTime,
                 status = "sent",
+                stickerPath = stickerPath,
             )
+
+            Log.d("ChatRepositoryImpl", "message: $newMessage")
 
             val targetUserId = chatId.split("_").firstOrNull() { it != senderId } ?: ""
 

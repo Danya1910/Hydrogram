@@ -12,12 +12,14 @@ class SendMessageUseCase @Inject constructor(
         chatId: String,
         text: String,
         type: String = "text",
+        stickerPath: String,
     ) : Result<Unit> {
         return chatRepository.sendMessage(
             senderId = senderId,
             chatId = chatId,
             text = text,
             type = type,
+            stickerPath = stickerPath,
         )
     }
 

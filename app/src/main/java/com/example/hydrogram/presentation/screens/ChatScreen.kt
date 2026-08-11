@@ -494,6 +494,7 @@ private fun Content(
                                 chatId = chatId,
                                 text = messageText,
                                 type = "text",
+                                stickerPath = "",
                             )
                         }
                     },
@@ -523,6 +524,15 @@ private fun Content(
                 StickerWidget(
                     context = context,
                     gifImageLoader = gifImageLoader,
+                    onStickerClick = { stickerString ->
+                        chatViewModel.sendMessage(
+                            senderId = mineId,
+                            chatId = chatId,
+                            text = "",
+                            type = "sticker",
+                            stickerPath = stickerString,
+                        )
+                    },
                 )
             }
         }
@@ -906,6 +916,7 @@ private fun NewChatWidget(
 private fun StickerWidget(
     context: Context,
     gifImageLoader: ImageLoader,
+    onStickerClick: (String) -> Unit,
 ) {
 
     val list = listOf(
@@ -914,8 +925,6 @@ private fun StickerWidget(
         R.raw.duck_andry_sticker,
         R.raw.duck_puking_sticker,
     )
-
-    var selectedSticker by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -967,8 +976,8 @@ private fun StickerWidget(
 
                     StickerItem(
                         iconPath = resourceId,
-                        onStickerClick = { resId ->
-                            selectedSticker = resId
+                        onStickerClick = { stickerString ->
+                            onStickerClick(stickerString)
                         },
                         context = context,
                         gifImageLoader = gifImageLoader,
@@ -993,6 +1002,7 @@ private fun StickerItem(
             .aspectRatio(1f)
             .clickable {
                 onStickerClick(iconPath.toString())
+                Log.d("ChatScreen", "stickerPath: $iconPath")
             }
     ) {
         AsyncImage(

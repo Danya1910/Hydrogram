@@ -10,6 +10,7 @@ interface ChatRepository {
         chatId: String,
         text: String,
         type: String,
+        stickerPath: String,
     ) : Result<Unit>
 
     fun getChatHistory(chatId: String) : Flow<List<Message>>
