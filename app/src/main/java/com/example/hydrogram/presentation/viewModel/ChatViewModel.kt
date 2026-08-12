@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.enums.enumEntries
 
 
 @HiltViewModel
@@ -44,14 +45,12 @@ class ChatViewModel @Inject constructor(
 
     private val updatingMessageIds = mutableSetOf<String>()
 
-    fun sendMessage(
+    fun sendText(
         senderId: String,
         chatId: String,
         text: String,
-        type: String,
-        stickerPath: String,
     ) {
-        if (text.isBlank() && stickerPath.isBlank()) {
+        if (text.isBlank()) {
             _errorMessage.value = "Пустое сообщение"
             return
         }
@@ -59,18 +58,46 @@ class ChatViewModel @Inject constructor(
             return
         }
 
-        Log.d("ChatVM", "sent message called")
+        Log.d("ChatVM", "sent text message called")
         viewModelScope.launch {
             _isSending.value = true
             val result = sendMessageUseCase(
                 senderId = senderId,
                 chatId = chatId,
-                text = text,
-                type = type,
-                stickerPath = stickerPath,
+                content = text,
+                isText = true,
             )
             _isSending.value = false
-            Log.d("ChatVM", "sent message result: $result")
+            Log.d("ChatVM", "sent text message result: $result")
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+        }
+    }
+
+    fun sendSticker(
+        senderId: String,
+        chatId: String,
+        stickerPath: String,
+    ) {
+        if(stickerPath.isBlank()) {
+            _errorMessage.value = "Пустой Стикер"
+            return
+        }
+        if(_isSending.value) {
+            return
+        }
+        Log.d("ChatVM", "sent sticker message called")
+        viewModelScope.launch {
+            _isSending.value = true
+            val result = sendMessageUseCase(
+                senderId = senderId,
+                chatId = chatId,
+                content = stickerPath,
+                isText = false,
+            )
+            _isSending.value = false
+            Log.d("ChatVM", "sent sticker message result: $result")
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }

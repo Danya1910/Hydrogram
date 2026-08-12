@@ -8,9 +8,7 @@ interface ChatRepository {
     suspend fun sendMessage(
         senderId: String,
         chatId: String,
-        text: String,
-        type: String,
-        stickerPath: String,
+        message: Message,
     ) : Result<Unit>
 
     fun getChatHistory(chatId: String) : Flow<List<Message>>

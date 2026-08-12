@@ -447,9 +447,25 @@ private fun Content(
                     }
 
                     if (message.senderId == mineId) {
-                        MineTextMessage(message = message)
+                        if (message.type == "text") {
+                            MineTextMessage(message = message as Message.Text)
+                        } else {
+                            MineStickerMessage(
+                                sticker = message as Message.Sticker,
+                                context = context,
+                                gifImageLoader = gifImageLoader,
+                            )
+                        }
                     } else {
-                        PenpalTextMessage(message = message)
+                        if (message.type == "text") {
+                            PenpalTextMessage(message = message as Message.Text)
+                        } else {
+                            PenpalStickerMessage(
+                                sticker = message as Message.Sticker,
+                                context = context,
+                                gifImageLoader = gifImageLoader,
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                 }
@@ -489,12 +505,10 @@ private fun Content(
                         if (textState.isNotBlank()) {
                             val messageText = textState
                             textState = ""
-                            chatViewModel.sendMessage(
+                            chatViewModel.sendText(
                                 senderId = mineId,
                                 chatId = chatId,
                                 text = messageText,
-                                type = "text",
-                                stickerPath = "",
                             )
                         }
                     },
@@ -525,11 +539,9 @@ private fun Content(
                     context = context,
                     gifImageLoader = gifImageLoader,
                     onStickerClick = { stickerString ->
-                        chatViewModel.sendMessage(
+                        chatViewModel.sendSticker(
                             senderId = mineId,
                             chatId = chatId,
-                            text = "",
-                            type = "sticker",
                             stickerPath = stickerString,
                         )
                     },
@@ -601,7 +613,7 @@ private fun DateSeparator(
 
 @Composable
 private fun MineTextMessage(
-    message: Message,
+    message: Message.Text,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -632,99 +644,101 @@ private fun MineTextMessage(
                     color = LightGreen,
                 )
         ) {
-            if (message.text.length <= 20) {
-                Text(
-                    text = message.text,
-                    fontFamily = SfProText,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .padding(
-                            top = 5.dp,
-                            start = 10.dp,
-                            end = 62.dp,
-                            bottom = 5.dp
-                        )
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 3.dp)
-                        .align(
-                            Alignment.BottomEnd
-                        ),
-                ) {
+            message.text?.length?.let {
+                if (it <= 20) {
                     Text(
-                        text = formattedTime,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
+                        text = message.text,
                         fontFamily = SfProText,
-                        color = MineMessageTimeColor,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(
+                                top = 5.dp,
+                                start = 10.dp,
+                                end = 62.dp,
+                                bottom = 5.dp
+                            )
                     )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    if (message.status == "read") {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_read_status),
-                            contentDescription = null,
-                            tint = MineMessageTimeColor,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 3.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = MineMessageTimeColor,
                         )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sent_status),
-                            contentDescription = null,
-                            tint = MineMessageTimeColor,
-                            modifier = Modifier.size(15.dp)
-                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
                     }
-                }
-            } else {
-                Text(
-                    text = message.text,
-                    fontFamily = SfProText,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black,
-                    letterSpacing = (-0.43).sp,
-                    modifier = Modifier
-                        .padding(
-                            top = 5.dp,
-                            start = 10.dp,
-                            end = 16.dp,
-                            bottom = 16.dp
-                        )
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 2.dp)
-                        .align(
-                            Alignment.BottomEnd
-                        ),
-                ) {
+                } else {
                     Text(
-                        text = formattedTime,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.Normal,
+                        text = message.text,
                         fontFamily = SfProText,
-                        color = MineMessageTimeColor,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        letterSpacing = (-0.43).sp,
+                        modifier = Modifier
+                            .padding(
+                                top = 5.dp,
+                                start = 10.dp,
+                                end = 16.dp,
+                                bottom = 16.dp
+                            )
                     )
-                    Spacer(modifier = Modifier.width(5.dp))
-                    if (message.status == "read") {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_read_status),
-                            contentDescription = null,
-                            tint = MineMessageTimeColor,
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 2.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = MineMessageTimeColor,
                         )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sent_status),
-                            contentDescription = null,
-                            tint = MineMessageTimeColor,
-                            modifier = Modifier.size(15.dp)
-                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -732,9 +746,184 @@ private fun MineTextMessage(
     }
 }
 
+
+@Composable
+private fun PenpalStickerMessage(
+    sticker: Message.Sticker,
+    context: Context,
+    gifImageLoader: ImageLoader,
+) {
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(192.dp)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(R.raw.duck_greeting_sticker)
+                    .crossfade(true)
+                    .build(),
+                imageLoader = gifImageLoader,
+                contentDescription = null,
+            )
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                StickerPenpalTime(
+                    time = sticker.timestamp,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StickerPenpalTime(
+    time: Long
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(time)
+    ).toString()
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(18.dp)
+            .blur(radius = 1.dp)
+            .background(
+                color = DateSeparatorGreen.copy(alpha = 0.65f),
+                shape = CircleShape
+            )
+            .padding(
+                horizontal = 8.dp
+            )
+    ) {
+        Text(
+            text = formattedTime,
+            fontFamily = SfProText,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 10.dp),
+            letterSpacing = (-0.08).sp,
+        )
+    }
+}
+
+
+@Composable
+private fun MineStickerMessage(
+    sticker: Message.Sticker,
+    context: Context,
+    gifImageLoader: ImageLoader,
+) {
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.CenterEnd,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+    ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .width(192.dp)
+        ) {
+            AsyncImage(
+                model = ImageRequest.Builder(context)
+                    .data(R.raw.duck_greeting_sticker)
+                    .crossfade(true)
+                    .build(),
+                imageLoader = gifImageLoader,
+                contentDescription = null,
+            )
+            Row(
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                StickerMineTime(
+                    time = sticker.timestamp,
+                    status = sticker.status,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun StickerMineTime(
+    time: Long,
+    status: String,
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(time)
+    ).toString()
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .height(18.dp)
+            .blur(radius = 1.dp)
+            .background(
+                color = DateSeparatorGreen.copy(alpha = 0.85f),
+                shape = CircleShape
+            )
+            .padding(
+                horizontal = 8.dp
+            )
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = formattedTime,
+                fontFamily = SfProText,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = Color.White,
+                modifier = Modifier.padding(horizontal = 10.dp),
+                letterSpacing = (-0.08).sp,
+            )
+            Spacer(modifier = Modifier.width(5.dp))
+            if (status == "read") {
+                Icon(
+                    painter = painterResource(R.drawable.ic_read_status),
+                    contentDescription = null,
+                    tint = MineMessageTimeColor,
+                )
+            } else {
+                Icon(
+                    painter = painterResource(R.drawable.ic_sent_status),
+                    contentDescription = null,
+                    tint = MineMessageTimeColor,
+                    modifier = Modifier.size(15.dp)
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun PenpalTextMessage(
-    message: Message,
+    message: Message.Text,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -765,70 +954,72 @@ private fun PenpalTextMessage(
                     color = Color.White,
                 )
         ) {
-            if (message.text.length <= 20) {
-                Text(
-                    text = message.text,
-                    fontFamily = SfProText,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black,
-                    modifier = Modifier
-                        .padding(
-                            top = 5.dp,
-                            start = 10.dp,
-                            end = 42.dp,
-                            bottom = 5.dp
-                        )
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 3.dp)
-                        .align(
-                            Alignment.BottomEnd
-                        ),
-                ) {
+            message.text?.length?.let {
+                if (it <= 20) {
                     Text(
-                        text = formattedTime,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Normal,
+                        text = message.text,
                         fontFamily = SfProText,
-                        color = PenpalMessageTimeColor,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(
+                                top = 5.dp,
+                                start = 10.dp,
+                                end = 42.dp,
+                                bottom = 5.dp
+                            )
                     )
-                }
-            } else {
-                Text(
-                    text = message.text,
-                    fontFamily = SfProText,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = Color.Black,
-                    letterSpacing = (-0.43).sp,
-                    modifier = Modifier
-                        .padding(
-                            top = 5.dp,
-                            start = 10.dp,
-                            end = 16.dp,
-                            bottom = 16.dp
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 3.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = PenpalMessageTimeColor,
                         )
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                        .padding(bottom = 2.dp)
-                        .align(
-                            Alignment.BottomEnd
-                        ),
-                ) {
+                    }
+                } else {
                     Text(
-                        text = formattedTime,
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Normal,
+                        text = message.text,
                         fontFamily = SfProText,
-                        color = PenpalMessageTimeColor,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        letterSpacing = (-0.43).sp,
+                        modifier = Modifier
+                            .padding(
+                                top = 5.dp,
+                                start = 10.dp,
+                                end = 16.dp,
+                                bottom = 16.dp
+                            )
                     )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 2.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = PenpalMessageTimeColor,
+                        )
+                    }
                 }
             }
         }

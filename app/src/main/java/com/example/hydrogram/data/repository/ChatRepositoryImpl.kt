@@ -1,11 +1,14 @@
 package com.example.hydrogram.data.repository
 
 import android.util.Log
+import com.example.hydrogram.data.dto.MessageDto
+import com.example.hydrogram.data.wrapper.toDomain
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,41 +22,60 @@ class ChatRepositoryImpl @Inject constructor(
     override suspend fun sendMessage(
         senderId: String,
         chatId: String,
-        text: String,
-        type: String,
-        stickerPath: String,
+        message: Message,
     ): Result<Unit> {
         return try {
             val chatRef = firestore.collection("chats").document(chatId)
             val messageRef = chatRef.collection("messages").document()
             val currentTime = System.currentTimeMillis()
 
-            val newMessage = Message(
-                messageId = messageRef.id,
-                senderId = senderId,
-                text = text,
-                type = type,
-                timestamp = currentTime,
-                status = "sent",
-                stickerPath = stickerPath,
-            )
-
-            Log.d("ChatRepositoryImpl", "message: $newMessage")
+            Log.d("ChatRepositoryImpl", "message: $message")
 
             val targetUserId = chatId.split("_").firstOrNull() { it != senderId } ?: ""
 
+            val (lastMessagePreview, lastMessageType) = when(message) {
+                is Message.Text -> {
+                    message.text to "text"
+                }
+                is Message.Sticker -> {
+                    "Стикер" to "sticker"
+                }
+            }
+
+            val messageDto = when(message) {
+                is Message.Sticker ->{
+                    MessageDto(
+                        messageId = message.messageId,
+                        senderId = message.senderId,
+                        timestamp = message.timestamp,
+                        status = message.status,
+                        type = "sticker",
+                        stickerPath = message.stickerPath,
+                    )
+                }
+                is Message.Text ->  {
+                    MessageDto(
+                        messageId = message.messageId,
+                        senderId = message.senderId,
+                        timestamp = message.timestamp,
+                        status = message.status,
+                        type = "text",
+                        text = message.text,
+                    )
+                }
+            }
 
             val chatUpdate = mapOf(
                 "chatId" to chatId,
                 "members" to listOf(senderId, targetUserId),
-                "lastMessage" to text,
-                "lastMessageType" to type,
+                "lastMessage" to lastMessagePreview,
+                "lastMessageType" to lastMessageType,
                 "lastMessageSenderId" to senderId,
                 "lastMessageTimestamp" to currentTime
             )
             val batch = firestore.batch()
 
-            batch.set(messageRef, newMessage)
+            batch.set(messageRef, messageDto)
             batch.set(chatRef, chatUpdate, SetOptions.merge())
 
             batch.commit().await()
@@ -75,11 +97,13 @@ class ChatRepositoryImpl @Inject constructor(
                     return@addSnapshotListener
                 }
                 if (snapshot != null) {
-                    val messages = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Message::class.java)
+                    val dtos = snapshot.toObjects(MessageDto::class.java)
+
+                    val domainMessages = dtos.map {
+                        it.toDomain()
                     }
 
-                    trySend(messages)
+                    trySend(domainMessages)
                 }
             }
         awaitClose { listener.remove() }
