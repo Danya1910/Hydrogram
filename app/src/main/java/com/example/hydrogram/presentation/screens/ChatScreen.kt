@@ -768,7 +768,7 @@ private fun PenpalStickerMessage(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(R.raw.duck_greeting_sticker)
+                    .data("android.resource://${context.packageName}/${sticker.stickerPath}")
                     .crossfade(true)
                     .build(),
                 imageLoader = gifImageLoader,
@@ -813,10 +813,9 @@ private fun StickerPenpalTime(
         Text(
             text = formattedTime,
             fontFamily = SfProText,
-            fontWeight = FontWeight.SemiBold,
+            fontWeight = FontWeight.Normal,
             fontSize = 13.sp,
             color = Color.White,
-            modifier = Modifier.padding(horizontal = 10.dp),
             letterSpacing = (-0.08).sp,
         )
     }
@@ -845,7 +844,7 @@ private fun MineStickerMessage(
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
-                    .data(R.raw.duck_greeting_sticker)
+                    .data("android.resource://${context.packageName}/${sticker.stickerPath}")
                     .crossfade(true)
                     .build(),
                 imageLoader = gifImageLoader,
@@ -896,10 +895,9 @@ private fun StickerMineTime(
             Text(
                 text = formattedTime,
                 fontFamily = SfProText,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Normal,
                 fontSize = 13.sp,
                 color = Color.White,
-                modifier = Modifier.padding(horizontal = 10.dp),
                 letterSpacing = (-0.08).sp,
             )
             Spacer(modifier = Modifier.width(5.dp))
