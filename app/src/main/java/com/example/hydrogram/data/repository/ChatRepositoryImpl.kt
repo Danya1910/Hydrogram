@@ -45,7 +45,7 @@ class ChatRepositoryImpl @Inject constructor(
             val messageDto = when(message) {
                 is Message.Sticker ->{
                     MessageDto(
-                        messageId = message.messageId,
+                        messageId = messageRef.id,
                         senderId = message.senderId,
                         timestamp = message.timestamp,
                         status = message.status,
@@ -55,7 +55,7 @@ class ChatRepositoryImpl @Inject constructor(
                 }
                 is Message.Text ->  {
                     MessageDto(
-                        messageId = message.messageId,
+                        messageId = messageRef.id,
                         senderId = message.senderId,
                         timestamp = message.timestamp,
                         status = message.status,
