@@ -748,19 +748,15 @@ private fun PenpalStickerMessage(
     context: Context,
     gifImageLoader: ImageLoader,
 ) {
-
-    BoxWithConstraints(
-        contentAlignment = Alignment.CenterStart,
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        contentAlignment = Alignment.CenterStart
     ) {
-        val maxBubbleWidth = maxWidth * 0.85f
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .width(192.dp)
+        Box(
+            modifier = Modifier.size(192.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
@@ -769,42 +765,35 @@ private fun PenpalStickerMessage(
                     .build(),
                 imageLoader = gifImageLoader,
                 contentDescription = null,
+                modifier = Modifier.fillMaxSize()
             )
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                StickerPenpalTime(
-                    time = sticker.timestamp,
-                )
-            }
+
+            StickerPenpalTime(
+                time = sticker.timestamp,
+                modifier = Modifier.padding(top = 12.dp, end = 6.dp)
+            )
         }
     }
 }
 
+
 @Composable
 private fun StickerPenpalTime(
-    time: Long
+    time: Long,
+    modifier: Modifier = Modifier
 ) {
-
-    val formattedTime = DateFormat.format(
-        "HH:mm", Date(time)
-    ).toString()
+    val formattedTime = remember(time) {
+        DateFormat.format("HH:mm", Date(time)).toString()
+    }
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .height(18.dp)
-            .blur(radius = 1.dp)
+        modifier = modifier
             .background(
-                color = DateSeparatorGreen.copy(alpha = 0.65f),
-                shape = CircleShape
+                color = Color.Black.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(10.dp)
             )
-            .padding(
-                horizontal = 8.dp
-            )
+            .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Text(
             text = formattedTime,
@@ -812,7 +801,7 @@ private fun StickerPenpalTime(
             fontWeight = FontWeight.Normal,
             fontSize = 11.sp,
             color = Color.White,
-            letterSpacing = (-0.08).sp,
+            letterSpacing = (-0.08).sp
         )
     }
 }
@@ -825,18 +814,15 @@ private fun MineStickerMessage(
     gifImageLoader: ImageLoader,
 ) {
 
-    BoxWithConstraints(
-        contentAlignment = Alignment.CenterEnd,
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        contentAlignment = Alignment.CenterEnd
     ) {
-        val maxBubbleWidth = maxWidth * 0.85f
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .width(192.dp)
+        Box(
+            modifier = Modifier.size(192.dp),
+            contentAlignment = Alignment.BottomEnd
         ) {
             AsyncImage(
                 model = ImageRequest.Builder(context)
@@ -845,18 +831,14 @@ private fun MineStickerMessage(
                     .build(),
                 imageLoader = gifImageLoader,
                 contentDescription = null,
+                modifier = Modifier.fillMaxSize()
             )
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                StickerMineTime(
-                    time = sticker.timestamp,
-                    status = sticker.status,
-                )
-            }
+
+            StickerMineTime(
+                time = sticker.timestamp,
+                status = sticker.status,
+                modifier = Modifier.padding(top = 12.dp, end = 6.dp),
+            )
         }
     }
 }
@@ -865,6 +847,7 @@ private fun MineStickerMessage(
 private fun StickerMineTime(
     time: Long,
     status: String,
+    modifier: Modifier,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -873,16 +856,12 @@ private fun StickerMineTime(
 
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .height(18.dp)
-            .blur(radius = 1.dp)
+        modifier = modifier
             .background(
-                color = DateSeparatorGreen.copy(alpha = 0.85f),
-                shape = CircleShape
+                color = Color.Black.copy(alpha = 0.4f),
+                shape = RoundedCornerShape(10.dp)
             )
-            .padding(
-                horizontal = 8.dp
-            )
+            .padding(horizontal = 6.dp, vertical = 2.dp)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
