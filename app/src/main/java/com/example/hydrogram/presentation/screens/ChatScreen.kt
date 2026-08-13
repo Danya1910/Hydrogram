@@ -305,9 +305,11 @@ private fun Content(
 
     val listState = rememberLazyListState()
 
-    var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
 
     val hazeState = remember { HazeState() }
+
+    var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
+    var hasInitializedUnreadId by remember { mutableStateOf(false) }
 
     var isStickerWidgetVisible by remember { mutableStateOf(false) }
 
@@ -317,52 +319,55 @@ private fun Content(
 //        label = "ChatBottomPadding"
 //    )
 
+    if (!hasInitializedUnreadId && messages.isNotEmpty()) {
+        val firstUnread = messages
+            .filter { it.senderId != mineId && it.status != "read" }
+            .minByOrNull { it.timestamp }?.messageId
+
+        firstUnreadMessageId = firstUnread
+        hasInitializedUnreadId = true
+    }
+
     LaunchedEffect(firstUnreadMessageId, messages.size, isStickerWidgetVisible) {
         val unreadId = firstUnreadMessageId
 
         if (unreadId != null) {
+            // Сценарий А: Есть зафиксированное непрочитанное -> скроллим к нему
             val itemIndex = listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.key == unreadId }?.index
 
             if (itemIndex != null) {
-                listState.animateScrollToItem(index = itemIndex, scrollOffset = 0)
+                listState.scrollToItem(index = itemIndex, scrollOffset = 0)
             } else {
                 var targetIndex = 0
                 var found = false
                 for ((_, dayMessages) in groupedMessages) {
                     if (found) break
-                    targetIndex++
+                    targetIndex++ // Пропускаем плашку даты
                     for (msg in dayMessages) {
                         if (msg.messageId == unreadId) { found = true; break }
                         targetIndex++
                     }
                 }
-                if (found) listState.animateScrollToItem(index = targetIndex, scrollOffset = 0)
+                if (found) listState.scrollToItem(index = targetIndex, scrollOffset = 0)
             }
         } else {
+            // Сценарий Б: Чат полностью прочитан -> скроллим плавно в самый низ к инпут-бару
             if (messages.isNotEmpty()) {
                 val totalItems = listState.layoutInfo.totalItemsCount
                 if (totalItems > 0) {
-                    listState.animateScrollToItem(
-                        index = totalItems - 1,
-                        scrollOffset = 0
-                    )
+                    // Анимация идет синхронно с ростом dynamicBottomPadding
+                    listState.animateScrollToItem(index = totalItems - 1, scrollOffset = 0)
                 }
             }
         }
     }
-
-
-
-
-
 
     LaunchedEffect(listState.layoutInfo.visibleItemsInfo) {
         val visibleItems = listState.layoutInfo.visibleItemsInfo
         if (visibleItems.isNotEmpty()) {
             visibleItems.forEach { visibleItem ->
                 val keyString = visibleItem.key as? String
-
                 if (keyString != null && !keyString.startsWith("date_")) {
                     val message = messages.find { it.messageId == keyString }
                     if (message != null && message.senderId != mineId && message.status != "read") {
