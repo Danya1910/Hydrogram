@@ -573,7 +573,6 @@ private fun UserInfoHat(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(275.dp)
     ) {
 
 
@@ -694,7 +693,7 @@ private fun UserInfoHat(
                 }
         ) {
             Spacer(
-                modifier = Modifier.height(104.dp)
+                modifier = Modifier.height(160.dp)
             )
             Spacer(
                 modifier = Modifier.height(10.dp)
