@@ -10,6 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import android.os.Build.VERSION.SDK_INT
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -310,47 +311,51 @@ private fun Content(
 
     var isStickerWidgetVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        firstUnreadMessageId = messages
-            .filter { it.senderId != mineId && it.status != "read" }
-            .minByOrNull { it.timestamp }?.messageId
-    }
+//    val dynamicBottomPadding by animateDpAsState(
+//        targetValue = bottomPadding + 8.dp + if (isStickerWidgetVisible) 300.dp else bottomPadding + 10.dp,
+//        animationSpec = spring(stiffness = 400f),
+//        label = "ChatBottomPadding"
+//    )
 
-    LaunchedEffect(firstUnreadMessageId) {
+    LaunchedEffect(firstUnreadMessageId, messages.size, isStickerWidgetVisible) {
         val unreadId = firstUnreadMessageId
+
         if (unreadId != null) {
             val itemIndex = listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.key == unreadId }?.index
 
             if (itemIndex != null) {
-                listState.scrollToItem(index = itemIndex, scrollOffset = 0)
+                listState.animateScrollToItem(index = itemIndex, scrollOffset = 0)
             } else {
                 var targetIndex = 0
                 var found = false
-
                 for ((_, dayMessages) in groupedMessages) {
                     if (found) break
                     targetIndex++
-
                     for (msg in dayMessages) {
-                        if (msg.messageId == unreadId) {
-                            found = true
-                            break
-                        }
+                        if (msg.messageId == unreadId) { found = true; break }
                         targetIndex++
                     }
                 }
-
-                if (found) {
-                    listState.scrollToItem(index = targetIndex, scrollOffset = 0)
-                }
+                if (found) listState.animateScrollToItem(index = targetIndex, scrollOffset = 0)
             }
         } else {
             if (messages.isNotEmpty()) {
-                listState.scrollToItem(index = listState.layoutInfo.totalItemsCount)
+                val totalItems = listState.layoutInfo.totalItemsCount
+                if (totalItems > 0) {
+                    listState.animateScrollToItem(
+                        index = totalItems - 1,
+                        scrollOffset = 0
+                    )
+                }
             }
         }
     }
+
+
+
+
+
 
     LaunchedEffect(listState.layoutInfo.visibleItemsInfo) {
         val visibleItems = listState.layoutInfo.visibleItemsInfo
@@ -369,21 +374,6 @@ private fun Content(
                     }
                 }
             }
-        }
-    }
-
-    LaunchedEffect(messages.size) {
-
-        if (messages.isNotEmpty()) {
-            val lastItemIndex = listState.layoutInfo.totalItemsCount
-
-            if (lastItemIndex > 0) {
-                listState.scrollToItem(
-                    index = lastItemIndex - 1,
-                    scrollOffset = 0,
-                )
-            }
-
         }
     }
 
@@ -413,6 +403,7 @@ private fun Content(
             contentPadding = PaddingValues(
                 top = 86.dp,
                 bottom = 75.dp,
+//                bottom = dynamicBottomPadding,
             ),
             modifier = Modifier
                 .fillMaxSize()
@@ -814,7 +805,7 @@ private fun StickerPenpalTime(
             text = formattedTime,
             fontFamily = SfProText,
             fontWeight = FontWeight.Normal,
-            fontSize = 13.sp,
+            fontSize = 11.sp,
             color = Color.White,
             letterSpacing = (-0.08).sp,
         )
@@ -896,7 +887,7 @@ private fun StickerMineTime(
                 text = formattedTime,
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
-                fontSize = 13.sp,
+                fontSize = 11.sp,
                 color = Color.White,
                 letterSpacing = (-0.08).sp,
             )
@@ -905,7 +896,7 @@ private fun StickerMineTime(
                 Icon(
                     painter = painterResource(R.drawable.ic_read_status),
                     contentDescription = null,
-                    tint = MineMessageTimeColor,
+                    tint = Color.White,
                 )
             } else {
                 Icon(
