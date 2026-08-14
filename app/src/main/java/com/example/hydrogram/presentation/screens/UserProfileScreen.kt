@@ -55,6 +55,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -407,6 +408,12 @@ private fun Content(
                     "данные пользователя: $user"
                 )
 
+                val density = LocalDensity.current
+                val overScrollDp = remember(overScrollY) {
+                    with(density) { (overScrollY * 0.40f).toDp() }
+                }
+                val baseHatHeight = 310.dp
+
                 /*
                  * Основной контент.
                  */
@@ -419,18 +426,17 @@ private fun Content(
                         )
                 ) {
 
-                    /*
-                     * Место под шапку.
-                     */
                     item {
-
                         Spacer(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(275.dp)
-                                .background(Color.White)
+                                .height(baseHatHeight + overScrollDp)
+                                .background(
+                                    color = LightGrayBackground
+                                )
                         )
                     }
+
 
                     item {
                         MenuRow(items = items)
@@ -452,10 +458,6 @@ private fun Content(
                         )
                     }
                 }
-
-                /*
-                 * Шапка поверх LazyColumn.
-                 */
                 UserInfoHat(
                     user = user,
                     navController = navController,
@@ -476,6 +478,7 @@ private fun Content(
                         }
                     },
                 )
+
             }
         }
     }
@@ -573,6 +576,9 @@ private fun UserInfoHat(
     Box(
         modifier = Modifier
             .fillMaxWidth()
+            .background(
+                color = LightGrayBackground,
+            )
     ) {
 
 
@@ -586,14 +592,14 @@ private fun UserInfoHat(
 
 
                         translationX =
-                            collapseFraction * -140f
+                            collapseFraction * -100f
 
                         translationY =
-                            collapseFraction * -48f
+                            collapseFraction * -10f
 
                         val collapseScale =
                             1f -
-                                    collapseFraction * 0.6f
+                                    collapseFraction * 0.2f
 
                         scaleX = collapseScale
                         scaleY = collapseScale
@@ -801,6 +807,8 @@ private fun UserInfoHat(
             Spacer(
                 modifier = Modifier.height(16.dp)
             )
+
+
         }
     }
 }
