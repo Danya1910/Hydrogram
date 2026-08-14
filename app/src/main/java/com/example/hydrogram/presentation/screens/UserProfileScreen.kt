@@ -58,6 +58,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
@@ -495,11 +496,12 @@ private fun UserInfoHat(
     onCloseExpanded: () -> Unit,
 ) {
 
+    val density = LocalDensity.current
+
 
     val stretchProgress =
         (overScrollY / 400f)
             .coerceIn(0f, 1f)
-
 
 
     val configuration = LocalConfiguration.current
@@ -686,24 +688,43 @@ private fun UserInfoHat(
             )
         }
 
+        val configuration = LocalConfiguration.current
+        val screenWidthPx = configuration.screenWidthDp * density.density
+
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            // Оставляем Start, чтобы внутренние тексты могли прижиматься влево в Тулбаре
+            horizontalAlignment = Alignment.Start,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(
-                    horizontal = 16.dp
-                )
+                // Переносим горизонтальный паддинг на внутренние элементы,
+                // чтобы не ломать расчеты пикселей (Width Bounds) в graphicsLayer
                 .graphicsLayer {
+                    if (overScrollY == 0f) {
+                        // === СКРОЛЛ ВВЕРХ (СХЛОПЫВАНИЕ) ===
 
-                    alpha = contentAlpha
+                        // Вычисляем сдвиг влево так, чтобы текст встал ровно к левому краю (48 пикселей от угла)
+                        // В обычном состоянии (collapseFraction = 0) сдвиг равен 0f (идеальный центр)
+                        translationX = collapseFraction * (with(density) { 48.dp.toPx() })
+                        translationY = collapseFraction * -125f
+
+                        val textScale = 1f - (collapseFraction * 0.22f)
+                        scaleX = textScale
+                        scaleY = textScale
+                    } else {
+                        // === ОВЕРСКРОЛЛ ВНИЗ (РАСТЯЖЕНИЕ) ===
+
+                        // Текст плавно уплывает из центра влево относительно аватарки
+                        // В обычном состоянии (stretchProgress = 0) сдвиг равен 0f (центр)
+                        val targetLeftShift = with(density) { -16.dp.toPx() } // Корректируем левый край под аву
+                        translationX = stretchProgress * targetLeftShift
+                        translationY = overScrollY
+                    }
                 }
         ) {
-            Spacer(
-                modifier = Modifier.height(160.dp)
-            )
-            Spacer(
-                modifier = Modifier.height(10.dp)
-            )
+            Spacer(modifier = Modifier.height(160.dp))
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // ИМЯ ПОЛЬЗОВАТЕЛЯ
             Text(
                 text = user?.name ?: "Unknown",
                 fontFamily = SfProText,
@@ -711,40 +732,15 @@ private fun UserInfoHat(
                 color = LightBlack,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 0.38.sp,
-                modifier = Modifier.graphicsLayer {
-
-                    if (overScrollY == 0f) {
-
-                        translationX =
-                            collapseFraction * 60f
-
-                        translationY =
-                            if (collapseFraction > 0.5f) {
-
-                                collapseFraction * -105f
-
-                            } else {
-
-                                collapseFraction * -10f
-                            }
-
-                    } else {
-
-                        translationY =
-                            overScrollY * 0.15f
-                    }
-                },
+                // Если тянем вниз — ровняем по левому краю, иначе — строго по центру!
+                textAlign = if (overScrollY > 0f) TextAlign.Start else TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp) // Безопасный внутренний паддинг
             )
 
-            /*
-             * ====================================================
-             * LAST SEEN
-             * ====================================================
-             */
-
-            Spacer(
-                modifier = Modifier.height(5.dp)
-            )
+            /* ВРЕМЯ ЗАХОДА (LAST SEEN) */
+            Spacer(modifier = Modifier.height(5.dp))
 
             Text(
                 text = formattedLastSeenTime,
@@ -753,66 +749,39 @@ private fun UserInfoHat(
                 color = Color.Gray,
                 fontWeight = FontWeight.Medium,
                 letterSpacing = (-0.25).sp,
-                modifier = Modifier.graphicsLayer {
-
-                    if (overScrollY == 0f) {
-
-                        translationX =
-                            collapseFraction * 60f
-
-                        translationY =
-                            if (collapseFraction > 0.5f) {
-
-                                collapseFraction * -105f
-
-                            } else {
-
-                                collapseFraction * -10f
-                            }
-
-                    } else {
-
-                        translationY =
-                            overScrollY * 0.15f
-                    }
-                },
+                textAlign = if (overScrollY > 0f) TextAlign.Start else TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer {
+                        // Убираем прыгающий translationY, оставляем только прозрачность для тулбара
+                        alpha = if (overScrollY == 0f) (1f - collapseFraction * 3f).coerceIn(0f, 1f) else contentAlpha
+                    },
             )
 
-            /*
-             * ====================================================
-             * ACTION ROW
-             * ====================================================
-             */
-
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
+            /* КНОПКИ ДЕЙСТВИЙ (ACTION ROW) */
+            Spacer(modifier = Modifier.height(16.dp))
 
             Box(
-                modifier = Modifier.graphicsLayer {
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .graphicsLayer {
+                        alpha = if (overScrollY == 0f) (1f - collapseFraction * 3f).coerceIn(0f, 1f) else contentAlpha
 
-                    alpha = contentAlpha
-
-                    if (overScrollY > 0f) {
-
-                        translationY =
-                            overScrollY * 0.1f
-                    }
-                }
+                        if (overScrollY > 0f) {
+                            translationY = overScrollY * 0.1f // Эффект параллакса
+                        }
+                    },
+                contentAlignment = Alignment.Center // Кнопки всегда строго по центру экрана
             ) {
-
                 ActionRow()
             }
 
-            Spacer(
-                modifier = Modifier.height(16.dp)
-            )
-
-
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
-
 
 
 @Composable
