@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.net.Uri
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalGraphicsContext
@@ -65,7 +66,7 @@ class ChatViewModel @Inject constructor(
                 senderId = senderId,
                 chatId = chatId,
                 content = text,
-                isText = true,
+                messageType = "text",
             )
             _isSending.value = false
             Log.d("ChatVM", "sent text message result: $result")
@@ -94,10 +95,35 @@ class ChatViewModel @Inject constructor(
                 senderId = senderId,
                 chatId = chatId,
                 content = stickerPath,
-                isText = false,
+                messageType = "sticker",
             )
             _isSending.value = false
             Log.d("ChatVM", "sent sticker message result: $result")
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+        }
+    }
+
+    fun sendImage(
+        senderId: String,
+        chatId: String,
+        imageUri: Uri,
+    ) {
+        if(_isSending.value) {
+            return
+        }
+        Log.d("ChatVM", "sent image message called")
+        viewModelScope.launch {
+            _isSending.value = true
+            val result = sendMessageUseCase(
+                senderId = senderId,
+                chatId = chatId,
+                messageType = "image",
+                imageUri = imageUri,
+            )
+            _isSending.value = false
+            Log.d("ChatVM", "sent image message result: $result")
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
