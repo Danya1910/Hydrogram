@@ -7,5 +7,6 @@ data class MessageDto(
     val status: String = "",
     val type: String = "",
     val text: String? = null,
-    val stickerPath: String? = null
+    val stickerPath: String? = null,
+    val image: String? = null,
 )

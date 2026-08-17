@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.screens
 
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.os.Build
 import android.text.format.DateFormat
 import android.util.Log
@@ -9,6 +10,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import android.os.Build.VERSION.SDK_INT
+import android.util.Base64
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
@@ -103,6 +108,8 @@ import coil3.ImageLoader
 import coil3.request.crossfade
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.LightGrayBackground
+import kotlin.text.startsWith
+import kotlin.text.substringAfter
 
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
@@ -345,7 +352,9 @@ private fun Content(
                     if (found) break
                     targetIndex++ // Пропускаем плашку даты
                     for (msg in dayMessages) {
-                        if (msg.messageId == unreadId) { found = true; break }
+                        if (msg.messageId == unreadId) {
+                            found = true; break
+                        }
                         targetIndex++
                     }
                 }
@@ -379,6 +388,18 @@ private fun Content(
                     }
                 }
             }
+        }
+    }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            chatViewModel.sendImage(
+                senderId = mineId,
+                chatId = chatId,
+                imageUri = uri,
+            )
         }
     }
 
@@ -507,7 +528,11 @@ private fun Content(
                             )
                         }
                     },
-                    onAttachClick = { println("Нажата скрепка") },
+                    onAttachClick = {
+                        photoPickerLauncher.launch(
+                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                        )
+                    },
                     onStickerClick = {
                         isStickerWidgetVisible = !isStickerWidgetVisible
                     }

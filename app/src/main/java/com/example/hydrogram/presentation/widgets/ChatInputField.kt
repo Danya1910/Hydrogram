@@ -92,6 +92,9 @@ private fun AttachButton(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(42.dp)
+            .clip(
+                shape = CircleShape,
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
@@ -101,6 +104,9 @@ private fun AttachButton(
                 brush = GlassBorder,
                 shape = CircleShape
             )
+            .clickable{
+                onAttachClick()
+            }
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_clip),

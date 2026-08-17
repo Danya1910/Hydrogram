@@ -40,6 +40,9 @@ class ChatRepositoryImpl @Inject constructor(
                 is Message.Sticker -> {
                     "Стикер" to "sticker"
                 }
+                is Message.Image -> {
+                    "Фото" to "image"
+                }
             }
 
             val messageDto = when(message) {
@@ -61,6 +64,16 @@ class ChatRepositoryImpl @Inject constructor(
                         status = message.status,
                         type = "text",
                         text = message.text,
+                    )
+                }
+                is Message.Image ->  {
+                    MessageDto(
+                        messageId = messageRef.id,
+                        senderId = message.senderId,
+                        timestamp = message.timestamp,
+                        status = message.status,
+                        type = "image",
+                        image = message.image,
                     )
                 }
             }
