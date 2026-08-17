@@ -1,42 +1,116 @@
 package com.example.hydrogram.domain.usecase
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import android.util.Base64
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.repository.ChatRepository
+import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import kotlin.String
+import androidx.core.graphics.scale
 
 class SendMessageUseCase @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val chatRepository: ChatRepository,
 ) {
 
     suspend operator fun invoke(
         senderId: String,
         chatId: String,
-        content: String,
-        isText: Boolean,
-    ): Result<Unit> {
+        content: String = "",
+        messageType: String,
+        imageUri: Uri? = null,
+    ): Result<Unit> = withContext(Dispatchers.IO) {
 
-        val message = if (isText) {
-            Message.Text(
+        try {
+            val message = when (messageType) {
+                "text" -> {
+                    Message.Text(
+                        senderId = senderId,
+                        status = "sent",
+                        timestamp = System.currentTimeMillis(),
+                        text = content,
+                    )
+                }
+                "sticker" -> {
+                    Message.Sticker(
+                        senderId = senderId,
+                        status = "sent",
+                        timestamp = System.currentTimeMillis(),
+                        stickerPath = content,
+                    )
+                }
+                "image" -> {
+                    val uri = imageUri ?: return@withContext Result.failure(
+                        Exception("URI изображения не передан")
+                    )
+
+                    val imageData = convertImageToOptimizedBase64(uri)
+
+                    Message.Image(
+                        senderId = senderId,
+                        status = "sent",
+                        timestamp = System.currentTimeMillis(),
+                        image = imageData,
+                    )
+                }
+                else -> {
+                    return@withContext Result.failure(Exception("Неизвестный тип сообщения"))
+                }
+            }
+
+            return@withContext chatRepository.sendMessage(
                 senderId = senderId,
-                status = "sent",
-                timestamp = System.currentTimeMillis(),
-                text = content,
+                chatId = chatId,
+                message = message,
             )
-        } else {
-            Message.Sticker(
-                senderId = senderId,
-                status = "sent",
-                timestamp = System.currentTimeMillis(),
-                stickerPath = content,
-            )
+
+        } catch (e: Exception) {
+            return@withContext Result.failure(e)
         }
-
-        return chatRepository.sendMessage(
-            senderId = senderId,
-            chatId = chatId,
-            message = message,
-        )
     }
 
+    private fun convertImageToOptimizedBase64(imageUri: Uri): String {
+        val inputStream = context.contentResolver.openInputStream(imageUri)
+            ?: throw Exception("Не удалось открыть поток изображения")
+
+        val originalBitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream.close()
+
+        if (originalBitmap == null) {
+            throw Exception("Не удалось декодировать изображение")
+        }
+
+        val maxSideTarget = 1000f
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+
+        val scaleFactor = if (width > height) {
+            maxSideTarget / width
+        } else {
+            maxSideTarget / height
+        }
+
+        val finalWidth = if (scaleFactor < 1f) (width * scaleFactor).toInt() else width
+        val finalHeight = if (scaleFactor < 1f) (height * scaleFactor).toInt() else height
+
+        val scaledBitmap = originalBitmap.scale(finalWidth, finalHeight)
+
+        originalBitmap.recycle()
+
+        val outputStream = ByteArrayOutputStream()
+        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+        val byteArray = outputStream.toByteArray()
+
+        scaledBitmap.recycle()
+
+        val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        return "data:image/jpeg;base64,$base64String"
+    }
 }

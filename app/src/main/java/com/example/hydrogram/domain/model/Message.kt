@@ -25,4 +25,13 @@ sealed interface Message {
         val stickerPath: String? = "",
     ) : Message
 
+    data class Image(
+        override val messageId: String = "",
+        override val senderId: String = "",
+        override val type: String = "image",
+        override val status: String = "sent",
+        override val timestamp: Long = 0L,
+        val image: String? = "",
+    ) : Message
+
 }
