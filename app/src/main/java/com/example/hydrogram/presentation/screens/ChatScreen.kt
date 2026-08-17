@@ -16,7 +16,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -71,6 +70,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -658,7 +658,7 @@ private fun MineTextMessage(
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 12.dp)
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
@@ -790,7 +790,7 @@ private fun PenpalStickerMessage(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterStart
     ) {
         Box(
@@ -856,7 +856,7 @@ private fun MineStickerMessage(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
+            .padding(horizontal = 12.dp),
         contentAlignment = Alignment.CenterEnd
     ) {
         Box(
@@ -946,7 +946,7 @@ private fun PenpalTextMessage(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
+            .padding(horizontal = 12.dp)
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
@@ -1083,22 +1083,22 @@ private fun PenpalImageMessage(
         }
 
         Modifier
-            .width(finalWidth.dp)
+            .widthIn(max = maxWidth)
             .height(finalHeight.dp)
             .clickable { /* Открыть в полном размере */ }
     } else {
         Modifier
-            .fillMaxWidth()
-            .heightIn(max = 400.dp)
+            .widthIn(max = maxWidth)
+            .heightIn(max = maxHeight)
             .aspectRatio(1f)
             .clickable { /* Открыть в полном размере */ }
     }
 
     Box(
-        contentAlignment = Alignment.CenterStart,
         modifier = Modifier
-            .fillMaxWidth(0.85f)
-            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp),
+        contentAlignment = Alignment.CenterStart
     ) {
         Card(
             modifier = containerModifier,
@@ -1188,40 +1188,49 @@ private fun MineImageMessage(
     }
 
     val (imageWidth, imageHeight) = imageSize
-    val maxWidth = 300.dp
+
+    // Получаем ширину экрана
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+
+    // Максимальная ширина - 70% от экрана, но не больше 300dp
+    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(300.dp)
     val maxHeight = 400.dp
 
+    // Вычисляем размеры изображения
     val containerModifier = if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
         val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
 
-        val widthLimit = maxWidth.value
-        val heightLimit = maxHeight.value
+        var finalWidth = maxWidth.value
+        var finalHeight = maxWidth.value / aspectRatio
 
-        var finalWidth = widthLimit
-        var finalHeight = widthLimit / aspectRatio
-
-        if (finalHeight > heightLimit) {
-            finalHeight = heightLimit
-            finalWidth = heightLimit * aspectRatio
+        if (finalHeight > maxHeight.value) {
+            finalHeight = maxHeight.value
+            finalWidth = maxHeight.value * aspectRatio
         }
 
         Modifier
             .width(finalWidth.dp)
             .height(finalHeight.dp)
+            .clip(RoundedCornerShape(12.dp))
             .clickable { /* Открыть в полном размере */ }
     } else {
         Modifier
-            .fillMaxWidth()
-            .heightIn(max = 400.dp)
+            .width(maxWidth)
+            .heightIn(max = maxHeight)
             .aspectRatio(1f)
+            .clip(RoundedCornerShape(12.dp))
             .clickable { /* Открыть в полном размере */ }
     }
 
+    // Выравнивание по правому краю
     Box(
-        contentAlignment = Alignment.BottomEnd,
         modifier = Modifier
-            .fillMaxWidth(0.85f)
-            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .padding(
+                horizontal = 12.dp
+            ),
+        contentAlignment = Alignment.CenterEnd
     ) {
         Card(
             modifier = containerModifier,
@@ -1229,72 +1238,77 @@ private fun MineImageMessage(
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
         ) {
-            if (isBase64) {
-                val bitmap = remember(message.image) {
-                    decodeBase64Image(message.image)
-                }
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { /* Открыть в полном размере */ }
+            ) {
+                if (isBase64) {
+                    val bitmap = remember(message.image) {
+                        decodeBase64Image(message.image)
+                    }
 
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Изображение в чате",
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        PlaceholderContent()
+                    }
+                } else {
+                    AsyncImage(
+                        model = message.image,
                         contentDescription = "Изображение в чате",
                         contentScale = ContentScale.FillBounds,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        placeholder = painterResource(R.drawable.ic_avatar),
+                        error = painterResource(R.drawable.ic_avatar),
                     )
-                } else {
-                    PlaceholderContent()
                 }
-            } else {
-                AsyncImage(
-                    model = message.image,
-                    contentDescription = "Изображение в чате",
-                    contentScale = ContentScale.FillBounds,
-                    modifier = Modifier.fillMaxSize(),
-                    placeholder = painterResource(R.drawable.ic_avatar),
-                    error = painterResource(R.drawable.ic_avatar),
-                )
-            }
-        }
-        Box(
-            contentAlignment = Alignment.BottomEnd,
-            modifier = Modifier
-                .padding(
-                    horizontal = 7.dp,
-                    vertical = 3.dp,
-                )
-                .height(18.dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.4f),
-                    shape = RoundedCornerShape(10.dp)
-                )
-                .padding(horizontal = 6.dp, vertical = 2.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End,
-            ) {
-                Text(
-                    text = formattedTime,
-                    fontFamily = SfProText,
-                    fontWeight = FontWeight.Normal,
-                    fontSize = 11.sp,
-                    color = Color.White,
-                    letterSpacing = (-0.08).sp,
-                )
-                Spacer(modifier = Modifier.width(2.dp))
-                if (message.status == "read") {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_read_status),
-                        contentDescription = null,
-                        tint = Color.White,
-                    )
-                } else {
-                    Icon(
-                        painter = painterResource(R.drawable.ic_sent_status),
-                        contentDescription = null,
-                        tint = MineMessageTimeColor,
-                        modifier = Modifier.size(15.dp)
-                    )
+
+                // Время и статус - поверх изображения, справа внизу
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 7.dp, bottom = 7.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End,
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 11.sp,
+                            color = Color.White,
+                            letterSpacing = (-0.08).sp,
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    }
                 }
             }
         }
