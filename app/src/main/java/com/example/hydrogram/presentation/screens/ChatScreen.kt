@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.screens
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
 import android.text.format.DateFormat
@@ -47,6 +48,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Build
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -64,6 +69,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -465,21 +471,29 @@ private fun Content(
                     if (message.senderId == mineId) {
                         if (message.type == "text") {
                             MineTextMessage(message = message as Message.Text)
-                        } else {
+                        } else if (message.type == "sticker") {
                             MineStickerMessage(
                                 sticker = message as Message.Sticker,
                                 context = context,
                                 gifImageLoader = gifImageLoader,
                             )
+                        } else {
+                            MineImageMessage(
+                                message = message as Message.Image
+                            )
                         }
                     } else {
                         if (message.type == "text") {
                             PenpalTextMessage(message = message as Message.Text)
-                        } else {
+                        } else if (message.type == "sticker") {
                             PenpalStickerMessage(
                                 sticker = message as Message.Sticker,
                                 context = context,
                                 gifImageLoader = gifImageLoader,
+                            )
+                        } else {
+                            PenpalImageMessage(
+                                message = message as Message.Image
                             )
                         }
                     }
@@ -1021,6 +1035,299 @@ private fun PenpalTextMessage(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun PenpalImageMessage(
+    message: Message.Image,
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    val isBase64 = remember(message.image) {
+        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
+    }
+
+    val imageSize = remember(message.image) {
+        if (isBase64) {
+            val bitmap = decodeBase64Image(message.image)
+            if (bitmap != null) {
+                bitmap.width to bitmap.height
+            } else {
+                null to null
+            }
+        } else {
+            null to null
+        }
+    }
+
+    val (imageWidth, imageHeight) = imageSize
+    val maxWidth = 300.dp
+    val maxHeight = 400.dp
+
+    val containerModifier = if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
+        val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
+
+        val widthLimit = maxWidth.value
+        val heightLimit = maxHeight.value
+
+        var finalWidth = widthLimit
+        var finalHeight = widthLimit / aspectRatio
+
+        if (finalHeight > heightLimit) {
+            finalHeight = heightLimit
+            finalWidth = heightLimit * aspectRatio
+        }
+
+        Modifier
+            .width(finalWidth.dp)
+            .height(finalHeight.dp)
+            .clickable { /* Открыть в полном размере */ }
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .heightIn(max = 400.dp)
+            .aspectRatio(1f)
+            .clickable { /* Открыть в полном размере */ }
+    }
+
+    Box(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .padding(vertical = 4.dp)
+    ) {
+        Card(
+            modifier = containerModifier,
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { /* Открыть в полном размере */ }
+            ) {
+                if (isBase64) {
+                    val bitmap = remember(message.image) {
+                        decodeBase64Image(message.image)
+                    }
+
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = "Изображение в чате",
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        PlaceholderContent()
+                    }
+                } else {
+                    AsyncImage(
+                        model = message.image,
+                        contentDescription = "Изображение в чате",
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.fillMaxSize(),
+                        placeholder = painterResource(R.drawable.ic_avatar),
+                        error = painterResource(R.drawable.ic_avatar),
+                    )
+                }
+
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 7.dp, bottom = 7.dp)
+                        .background(
+                            color = Color.Black.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(10.dp)
+                        )
+                        .padding(horizontal = 8.dp, vertical = 3.dp)
+                ) {
+                    Text(
+                        text = formattedTime,
+                        fontFamily = SfProText,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 11.sp,
+                        color = Color.White,
+                        letterSpacing = (-0.08).sp
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun MineImageMessage(
+    message: Message.Image
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    val isBase64 = remember(message.image) {
+        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
+    }
+
+    val imageSize = remember(message.image) {
+        if (isBase64) {
+            val bitmap = decodeBase64Image(message.image)
+            if (bitmap != null) {
+                bitmap.width to bitmap.height
+            } else {
+                null to null
+            }
+        } else {
+            null to null
+        }
+    }
+
+    val (imageWidth, imageHeight) = imageSize
+    val maxWidth = 300.dp
+    val maxHeight = 400.dp
+
+    val containerModifier = if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
+        val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
+
+        val widthLimit = maxWidth.value
+        val heightLimit = maxHeight.value
+
+        var finalWidth = widthLimit
+        var finalHeight = widthLimit / aspectRatio
+
+        if (finalHeight > heightLimit) {
+            finalHeight = heightLimit
+            finalWidth = heightLimit * aspectRatio
+        }
+
+        Modifier
+            .width(finalWidth.dp)
+            .height(finalHeight.dp)
+            .clickable { /* Открыть в полном размере */ }
+    } else {
+        Modifier
+            .fillMaxWidth()
+            .heightIn(max = 400.dp)
+            .aspectRatio(1f)
+            .clickable { /* Открыть в полном размере */ }
+    }
+
+    Box(
+        contentAlignment = Alignment.BottomEnd,
+        modifier = Modifier
+            .fillMaxWidth(0.85f)
+            .padding(vertical = 4.dp)
+    ) {
+        Card(
+            modifier = containerModifier,
+            shape = RoundedCornerShape(12.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.White)
+        ) {
+            if (isBase64) {
+                val bitmap = remember(message.image) {
+                    decodeBase64Image(message.image)
+                }
+
+                if (bitmap != null) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Изображение в чате",
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    PlaceholderContent()
+                }
+            } else {
+                AsyncImage(
+                    model = message.image,
+                    contentDescription = "Изображение в чате",
+                    contentScale = ContentScale.FillBounds,
+                    modifier = Modifier.fillMaxSize(),
+                    placeholder = painterResource(R.drawable.ic_avatar),
+                    error = painterResource(R.drawable.ic_avatar),
+                )
+            }
+        }
+        Box(
+            contentAlignment = Alignment.BottomEnd,
+            modifier = Modifier
+                .padding(
+                    horizontal = 7.dp,
+                    vertical = 3.dp,
+                )
+                .height(18.dp)
+                .background(
+                    color = Color.Black.copy(alpha = 0.4f),
+                    shape = RoundedCornerShape(10.dp)
+                )
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+            ) {
+                Text(
+                    text = formattedTime,
+                    fontFamily = SfProText,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 11.sp,
+                    color = Color.White,
+                    letterSpacing = (-0.08).sp,
+                )
+                Spacer(modifier = Modifier.width(2.dp))
+                if (message.status == "read") {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_read_status),
+                        contentDescription = null,
+                        tint = Color.White,
+                    )
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sent_status),
+                        contentDescription = null,
+                        tint = MineMessageTimeColor,
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
+private fun decodeBase64Image(imageData: String?): Bitmap? {
+    if (imageData.isNullOrBlank() || !imageData.startsWith("data:image/jpeg;base64,")) {
+        return null
+    }
+    return try {
+        val base64String = imageData.substringAfter("base64,")
+        val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
+        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
+}
+
+@Composable
+private fun PlaceholderContent() {
+    Box(
+        modifier = Modifier
+            .size(104.dp)
+            .background(Color.Gray)
+    ) {
+        Icon(
+            imageVector = Icons.Default.Build,
+            contentDescription = "Ошибка загрузки",
+            tint = Color.White,
+            modifier = Modifier.align(Alignment.Center)
+        )
     }
 }
 

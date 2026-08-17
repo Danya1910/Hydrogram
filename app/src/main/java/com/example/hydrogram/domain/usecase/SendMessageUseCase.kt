@@ -13,7 +13,6 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import kotlin.String
-import androidx.core.graphics.scale
 
 class SendMessageUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -87,30 +86,46 @@ class SendMessageUseCase @Inject constructor(
             throw Exception("Не удалось декодировать изображение")
         }
 
-        val maxSideTarget = 1000f
-        val width = originalBitmap.width
-        val height = originalBitmap.height
+        try {
+            val maxSideTarget = 800f
+            val width = originalBitmap.width
+            val height = originalBitmap.height
 
-        val scaleFactor = if (width > height) {
-            maxSideTarget / width
-        } else {
-            maxSideTarget / height
+            val scaleFactor = if (width > height) {
+                maxSideTarget / width
+            } else {
+                maxSideTarget / height
+            }
+
+            val bitmapToCompress = if (scaleFactor < 1f) {
+                val finalWidth = (width * scaleFactor).toInt()
+                val finalHeight = (height * scaleFactor).toInt()
+                Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
+            } else {
+                originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+            }
+
+            originalBitmap.recycle()
+
+            if (bitmapToCompress == null || bitmapToCompress.isRecycled) {
+                throw Exception("Не удалось создать изображение для сжатия")
+            }
+
+            val outputStream = ByteArrayOutputStream()
+            bitmapToCompress.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+            val byteArray = outputStream.toByteArray()
+            outputStream.close()
+
+            bitmapToCompress.recycle()
+
+            val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+            return "data:image/jpeg;base64,$base64String"
+
+        } catch (e: Exception) {
+            if (!originalBitmap.isRecycled) {
+                originalBitmap.recycle()
+            }
+            throw e
         }
-
-        val finalWidth = if (scaleFactor < 1f) (width * scaleFactor).toInt() else width
-        val finalHeight = if (scaleFactor < 1f) (height * scaleFactor).toInt() else height
-
-        val scaledBitmap = originalBitmap.scale(finalWidth, finalHeight)
-
-        originalBitmap.recycle()
-
-        val outputStream = ByteArrayOutputStream()
-        scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
-        val byteArray = outputStream.toByteArray()
-
-        scaledBitmap.recycle()
-
-        val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-        return "data:image/jpeg;base64,$base64String"
     }
 }
