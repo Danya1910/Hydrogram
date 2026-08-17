@@ -931,46 +931,6 @@ private fun MenuRowItem(
     }
 }
 
-//@Composable
-//@Preview(showBackground = true)
-//private fun UserProfileScreenPreview() {
-//
-//    val user = User(
-//        name = "User Name",
-//        phone = "9279434335",
-//    )
-//
-//    val items = listOf(
-//        UserInfoRowItem(
-//            title = "мобильный",
-//            text = formatPhoneNumber(
-//                rawInput = user.phone
-//            ),
-//            textColor = Blue,
-//        ),
-//        UserInfoRowItem(
-//            title = "имя пользователя",
-//            text = "@cat",
-//            textColor = Blue,
-//        ),
-//        UserInfoRowItem(
-//            title = "день рождения",
-//            text = "6 июля",
-//            textColor = LightBlack,
-//        ),
-//        UserInfoRowItem(
-//            title = "о себе",
-//            text = "EYP",
-//            textColor = LightBlack,
-//        ),
-//    )
-//
-//    ContentPreview(
-//        user = user,
-//        items = items,
-//    )
-//}
-
 @Composable
 private fun ActionRow() {
     Row(
