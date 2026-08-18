@@ -510,7 +510,10 @@ private fun Content(
                             } else {
                                 MineReplyTextMessage(
                                     message = message as Message.Text,
-                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
                                 )
                             }
                         } else if (message.type == "sticker") {
@@ -518,10 +521,16 @@ private fun Content(
                                 sticker = message as Message.Sticker,
                                 context = context,
                                 gifImageLoader = gifImageLoader,
+                                onReply = {
+                                    currentMessageAnswer = it
+                                }
                             )
                         } else {
                             MineImageMessage(
-                                message = message as Message.Image
+                                message = message as Message.Image,
+                                onReply = {
+                                    currentMessageAnswer = it
+                                }
                             )
                         }
                     } else {
@@ -536,17 +545,26 @@ private fun Content(
                                 )
                             } else PenpalReplyTextMessage(
                                 message = message as Message.Text,
-                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName
+                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                onReply = {
+                                    currentMessageAnswer = it
+                                }
                             )
                         } else if (message.type == "sticker") {
                             PenpalStickerMessage(
                                 sticker = message as Message.Sticker,
                                 context = context,
                                 gifImageLoader = gifImageLoader,
+                                onReply = {
+                                    currentMessageAnswer = it
+                                }
                             )
                         } else {
                             PenpalImageMessage(
-                                message = message as Message.Image
+                                message = message as Message.Image,
+                                onReply = {
+                                    currentMessageAnswer = it
+                                }
                             )
                         }
                     }
@@ -933,11 +951,13 @@ private fun MineReplyTextMessagePreview() {
         MineReplyTextMessage(
             message = replyTextMessage,
             replyName = "Ivan",
+            onReply = {}
         )
         Spacer(modifier = Modifier.height(5.dp))
         PenpalReplyTextMessage(
             message = replyTextMessage,
-            replyName = "Dmitry"
+            replyName = "Dmitry",
+            onReply = {}
         )
     }
 }
@@ -945,6 +965,7 @@ private fun MineReplyTextMessagePreview() {
 @Composable
 private fun MineReplyTextMessage(
     message: Message.Text,
+    onReply: (Message.Text) -> Unit,
     replyName: String,
 ) {
 
@@ -952,16 +973,54 @@ private fun MineReplyTextMessage(
         "HH:mm", Date(message.timestamp)
     ).toString()
 
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
     BoxWithConstraints(
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            }
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
         Box(
             modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .heightIn(min = 73.dp)
                 .widthIn(max = maxBubbleWidth)
                 .clip(
@@ -1096,22 +1155,61 @@ private fun MineReplyTextMessage(
 private fun PenpalReplyTextMessage(
     message: Message.Text,
     replyName: String,
+    onReply: (Message.Text) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
 
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
     BoxWithConstraints(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            }
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
         Box(
             modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .heightIn(min = 73.dp)
                 .widthIn(max = maxBubbleWidth)
                 .clip(
@@ -1232,15 +1330,56 @@ private fun PenpalStickerMessage(
     sticker: Message.Sticker,
     context: Context,
     gifImageLoader: ImageLoader,
+    onReply: (Message.Sticker) -> Unit,
 ) {
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(sticker)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
         contentAlignment = Alignment.CenterStart
     ) {
         Box(
-            modifier = Modifier.size(192.dp),
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                .size(192.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
             AsyncImage(
@@ -1297,16 +1436,56 @@ private fun MineStickerMessage(
     sticker: Message.Sticker,
     context: Context,
     gifImageLoader: ImageLoader,
+    onReply: (Message.Sticker) -> Unit,
 ) {
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
 
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(sticker)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
         contentAlignment = Alignment.CenterEnd
     ) {
         Box(
-            modifier = Modifier.size(192.dp),
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                .size(192.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
             AsyncImage(
@@ -1526,11 +1705,21 @@ private fun PenpalTextMessage(
 @Composable
 private fun PenpalImageMessage(
     message: Message.Image,
+    onReply: (Message.Image) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
 
     val isBase64 = remember(message.image) {
         !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
@@ -1583,11 +1772,40 @@ private fun PenpalImageMessage(
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp),
+            .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
         contentAlignment = Alignment.CenterStart
     ) {
         Card(
-            modifier = containerModifier,
+            modifier = containerModifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) },
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
@@ -1649,12 +1867,22 @@ private fun PenpalImageMessage(
 
 @Composable
 private fun MineImageMessage(
-    message: Message.Image
+    message: Message.Image,
+    onReply: (Message.Image) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
 
     val isBase64 = remember(message.image) {
         !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
@@ -1716,11 +1944,40 @@ private fun MineImageMessage(
             .fillMaxWidth()
             .padding(
                 horizontal = 12.dp
-            ),
+            )
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
         contentAlignment = Alignment.CenterEnd
     ) {
         Card(
-            modifier = containerModifier,
+            modifier = containerModifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) },
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
             colors = CardDefaults.cardColors(containerColor = Color.White)
