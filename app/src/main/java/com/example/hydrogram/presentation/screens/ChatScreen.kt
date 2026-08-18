@@ -780,6 +780,173 @@ private fun MineTextMessage(
     }
 }
 
+@Composable
+@Preview(showBackground = true)
+private fun MineReplyTextMessagePreview() {
+
+    // 1. Предположим, это оригинальное сообщение из чата, на которое отвечает пользователь
+    val originalMessage: Message = Message.Image(
+        messageId = "-O123456789abcdef",
+        senderId = "user_ivan",
+        timestamp = 1718873400000L,
+        image = "https://firebase.storage"
+    )
+
+// 2. Создаем переменную текстового сообщения-ответа
+    val replyTextMessage: Message.Text = Message.Text(
+        messageId = "-O987654321fedcba", // Сгенерированный ID нового сообщения
+        senderId = "my_current_user_id", // ID текущего пользователя, который пишет ответ
+        timestamp = System.currentTimeMillis(), // Текущее время отправки
+        text = "Классная фотография! Где это снято?", // Сам текст ответа
+
+        // Заполняем данные о том, на что мы ответили
+        replyData = ReplyData(
+            messageId = originalMessage.messageId, // Ссылка на ID оригинала
+            senderId = originalMessage.senderId,   // Кто отправил оригинал
+            type = originalMessage.type,           // Тип оригинала ("image")
+            content = "📷 Фотография"               // Текст для превью в плашке ответа
+        )
+    )
+
+    MineReplyTextMessage(
+
+    )
+}
+
+@Composable
+private fun MineReplyTextMessage(
+    message: Message.Text,
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.CenterEnd,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+    ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
+        Box(
+            modifier = Modifier
+                .heightIn(min = 32.dp)
+                .widthIn(max = maxBubbleWidth)
+                .clip(
+                    shape = RoundedCornerShape(
+                        bottomEnd = 2.dp,
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = 16.dp,
+                    )
+                )
+                .background(
+                    color = LightGreen,
+                )
+        ) {
+            message.text?.length?.let {
+                if (it <= 20) {
+                    Text(
+                        text = message.text,
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .padding(
+                                top = 5.dp,
+                                start = 10.dp,
+                                end = 62.dp,
+                                bottom = 5.dp
+                            )
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 3.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = MineMessageTimeColor,
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+                } else {
+                    Text(
+                        text = message.text,
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        letterSpacing = (-0.43).sp,
+                        modifier = Modifier
+                            .padding(
+                                top = 5.dp,
+                                start = 10.dp,
+                                end = 16.dp,
+                                bottom = 16.dp
+                            )
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 2.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = MineMessageTimeColor,
+                        )
+                        Spacer(modifier = Modifier.width(5.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun PenpalStickerMessage(
