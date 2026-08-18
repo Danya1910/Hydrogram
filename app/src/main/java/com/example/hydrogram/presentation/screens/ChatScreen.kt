@@ -1081,18 +1081,31 @@ private fun MineReplyTextMessage(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Spacer(modifier = Modifier.height(1.dp))
-                        message.replyData?.content.let {
-                            if (it != null) {
-                                Text(
-                                    text = it,
-                                    fontFamily = SfProText,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 15.sp,
-                                    letterSpacing = -(0.23).sp,
-                                    color = Color.Black,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                        if(message.replyData?.type == "sticker") {
+                            Text(
+                                text = "Стикер",
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        } else {
+                            message.replyData?.content.let {
+                                if (it != null) {
+                                    Text(
+                                        text = it,
+                                        fontFamily = SfProText,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
@@ -1270,18 +1283,31 @@ private fun PenpalReplyTextMessage(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Spacer(modifier = Modifier.height(1.dp))
-                        message.replyData?.content.let {
-                            if (it != null) {
-                                Text(
-                                    text = it,
-                                    fontFamily = SfProText,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 15.sp,
-                                    letterSpacing = -(0.23).sp,
-                                    color = Color.Black,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                        if(message.replyData?.type == "sticker") {
+                            Text(
+                                text = "Стикер",
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        } else {
+                            message.replyData?.content.let {
+                                if (it != null) {
+                                    Text(
+                                        text = it,
+                                        fontFamily = SfProText,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     }
