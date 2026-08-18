@@ -793,7 +793,7 @@ private fun MineReplyTextMessagePreview() {
         messageId = "-O123456789abcdef",
         senderId = "user_ivan",
         timestamp = 1718873400000L,
-        text = "Привет, как дела уебок?"
+        text = "Привет, как дела уеrgfdkgdkp23402-3059345-2034124324бок?"
     )
 
 // 2. Создаем переменную текстового сообщения-ответа
@@ -813,9 +813,15 @@ private fun MineReplyTextMessagePreview() {
         )
     )
 
-    MineReplyTextMessage(
-        message = replyTextMessage
-    )
+    Column {
+        MineReplyTextMessage(
+            message = replyTextMessage
+        )
+        Spacer(modifier = Modifier.height(5.dp))
+        PenpalReplyTextMessage(
+            message = replyTextMessage
+        )
+    }
 }
 
 @Composable
@@ -868,7 +874,7 @@ private fun MineReplyTextMessage(
                             shape = RoundedCornerShape(4.dp)
                         )
                         .background(
-                            color = DateSeparatorGreen
+                            color = Color(0xFFE2F7CA)
                         )
                         .padding(
                             end = 8.dp
@@ -879,7 +885,7 @@ private fun MineReplyTextMessage(
                             .width(3.dp)
                             .height(41.dp)
                             .background(
-                                color = Color.Red
+                                color = Color(0xFF9EDB4E),
                             )
                     )
                     Spacer(modifier = Modifier.width(7.dp))
@@ -892,7 +898,7 @@ private fun MineReplyTextMessage(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
                             letterSpacing = -(0.23).sp,
-                            color = Color.Red,
+                            color = Color(0xFF9EDB4E),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -913,57 +919,189 @@ private fun MineReplyTextMessage(
                         }
                     }
                 }
-                Box {
-                    message.text?.length?.let {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 10.dp)
+                ) {
+                    Text(
+                        text = message.text ?: "",
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 65.dp, bottom = 5.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 3.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
                         Text(
-                            text = message.text,
+                            text = formattedTime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
                             fontFamily = SfProText,
-                            fontSize = 17.sp,
-                            fontWeight = FontWeight.Medium,
-                            color = Color.Black,
-                            modifier = Modifier
-                                .padding(
-                                    top = 5.dp,
-                                    start = 10.dp,
-                                    end = 62.dp,
-                                    bottom = 5.dp
-                                )
+                            color = MineMessageTimeColor,
                         )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(horizontal = 10.dp)
-                                .padding(bottom = 3.dp)
-                                .align(
-                                    Alignment.BottomEnd
-                                ),
-                        ) {
-                            Text(
-                                text = formattedTime,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Normal,
-                                fontFamily = SfProText,
-                                color = MineMessageTimeColor,
+                        Spacer(modifier = Modifier.width(5.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
                             )
-                            Spacer(modifier = Modifier.width(5.dp))
-                            if (message.status == "read") {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_read_status),
-                                    contentDescription = null,
-                                    tint = MineMessageTimeColor,
-                                )
-                            } else {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_sent_status),
-                                    contentDescription = null,
-                                    tint = MineMessageTimeColor,
-                                    modifier = Modifier.size(15.dp)
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = MineMessageTimeColor,
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+@Composable
+private fun PenpalReplyTextMessage(
+    message: Message.Text,
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    BoxWithConstraints(
+        contentAlignment = Alignment.CenterStart,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+    ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
+        Box(
+            modifier = Modifier
+                .heightIn(min = 73.dp)
+                .widthIn(max = maxBubbleWidth)
+                .clip(
+                    shape = RoundedCornerShape(
+                        bottomEnd = 16.dp,
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = 2.dp,
+                    )
+                )
+                .background(
+                    color = Color.White,
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .widthIn(min = 120.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(
+                            all = 9.dp,
+                        )
+                        .fillMaxWidth()
+                        .height(41.dp)
+                        .clip(
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .background(
+                            color = Color(0xFFFFEBD6)
+                        )
+                        .padding(
+                            end = 8.dp
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(3.dp)
+                            .height(41.dp)
+                            .background(
+                                color = Color(0xFFFFBF7B),
+                            )
+                    )
+                    Spacer(modifier = Modifier.width(7.dp))
+                    Column(
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = "Name",
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFFFFBF7B),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Spacer(modifier = Modifier.height(1.dp))
+                        message.replyData?.content.let {
+                            if (it != null) {
+                                Text(
+                                    text = it,
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                             }
                         }
                     }
-
                 }
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 10.dp)
+                ) {
+                    Text(
+                        text = message.text ?: "",
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 65.dp, bottom = 5.dp)
+                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 3.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Normal,
+                            fontFamily = SfProText,
+                            color = PenpalMessageTimeColor,
+                        )
+                    }
+                }
+
             }
         }
     }
