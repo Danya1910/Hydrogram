@@ -485,7 +485,7 @@ private fun Content(
                     if (message.senderId == mineId) {
                         if (message.type == "text") {
                             MineTextMessage(
-                                message = (message as Message.Text),
+                                message = message as Message.Text,
                                 onReply = {
                                     Log.d("ChatScreen", it.toString())
                                 }
@@ -503,7 +503,12 @@ private fun Content(
                         }
                     } else {
                         if (message.type == "text") {
-                            PenpalTextMessage(message = message as Message.Text)
+                            PenpalTextMessage(
+                                message = message as Message.Text,
+                                onReply = {
+                                    Log.d("ChatScreen", it.toString())
+                                }
+                            )
                         } else if (message.type == "sticker") {
                             PenpalStickerMessage(
                                 sticker = message as Message.Sticker,
@@ -1315,22 +1320,61 @@ private fun StickerMineTime(
 @Composable
 private fun PenpalTextMessage(
     message: Message.Text,
+    onReply: (Message.Text) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
 
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
     BoxWithConstraints(
         contentAlignment = Alignment.CenterStart,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            }
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
         Box(
             modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .heightIn(min = 32.dp)
                 .widthIn(max = maxBubbleWidth)
                 .clip(
