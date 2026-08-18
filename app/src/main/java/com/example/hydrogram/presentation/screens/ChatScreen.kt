@@ -125,8 +125,10 @@ import coil3.gif.GifDecoder
 import coil3.ImageLoader
 import coil3.request.crossfade
 import com.example.hydrogram.domain.model.ReplyData
+import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.LightGrayBackground
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.text.startsWith
 import kotlin.text.substringAfter
@@ -157,6 +159,14 @@ fun ChatScreen(
     LaunchedEffect(penpalId) {
         userViewModel.setTargetUserId(uid = penpalId ?: "")
     }
+
+    LaunchedEffect(mineId) {
+        if (mineId.isNotBlank()) {
+            userViewModel.setTargetMineId(uid = mineId)
+        }
+    }
+
+    val mineData by userViewModel.mineState.collectAsStateWithLifecycle()
 
     val penpalData by userViewModel.userState.collectAsStateWithLifecycle()
 
@@ -290,6 +300,8 @@ fun ChatScreen(
                                 bottomPadding = paddingValues.calculateBottomPadding(),
                                 mineId = mineId,
                                 chatId = chatId,
+                                penpalName = (penpalData as UserState.Success).user?.name ?: "",
+                                mineName = (mineData as MineState.Success).user?.name ?: "",
                             )
                         }
                     }
@@ -308,6 +320,8 @@ private fun Content(
     bottomPadding: Dp,
     mineId: String,
     chatId: String,
+    penpalName: String,
+    mineName: String,
 ) {
 
     val context = LocalContext.current
@@ -485,13 +499,20 @@ private fun Content(
 
                     if (message.senderId == mineId) {
                         if (message.type == "text") {
-                            MineTextMessage(
-                                message = message as Message.Text,
-                                onReply = {
-                                    currentMessageAnswer = it
-                                    Log.d("ChatScreen", it.toString())
-                                }
-                            )
+                            if (message.replyData == null) {
+                                MineTextMessage(
+                                    message = message as Message.Text,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                        Log.d("ChatScreen", it.toString())
+                                    }
+                                )
+                            } else {
+                                MineReplyTextMessage(
+                                    message = message as Message.Text,
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName
+                                )
+                            }
                         } else if (message.type == "sticker") {
                             MineStickerMessage(
                                 sticker = message as Message.Sticker,
@@ -505,12 +526,17 @@ private fun Content(
                         }
                     } else {
                         if (message.type == "text") {
-                            PenpalTextMessage(
+                            if (message.replyData == null) {
+                                PenpalTextMessage(
+                                    message = message as Message.Text,
+                                    onReply = {
+                                        currentMessageAnswer = message
+                                        Log.d("ChatScreen", it.toString())
+                                    }
+                                )
+                            } else PenpalReplyTextMessage(
                                 message = message as Message.Text,
-                                onReply = {
-                                    currentMessageAnswer = message
-                                    Log.d("ChatScreen", it.toString())
-                                }
+                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName
                             )
                         } else if (message.type == "sticker") {
                             PenpalStickerMessage(
@@ -571,9 +597,15 @@ private fun Content(
                                 )
                             } else {
                                 val content = when (currentMessageAnswer) {
-                                    is Message.Text -> (currentMessageAnswer as Message.Text).text ?: ""
-                                    is Message.Image -> (currentMessageAnswer as Message.Image).image ?: ""
-                                    is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath ?: ""
+                                    is Message.Text -> (currentMessageAnswer as Message.Text).text
+                                        ?: ""
+
+                                    is Message.Image -> (currentMessageAnswer as Message.Image).image
+                                        ?: ""
+
+                                    is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
+                                        ?: ""
+
                                     else -> {
                                         ""
                                     }
@@ -899,11 +931,13 @@ private fun MineReplyTextMessagePreview() {
 
     Column {
         MineReplyTextMessage(
-            message = replyTextMessage
+            message = replyTextMessage,
+            replyName = "Ivan",
         )
         Spacer(modifier = Modifier.height(5.dp))
         PenpalReplyTextMessage(
-            message = replyTextMessage
+            message = replyTextMessage,
+            replyName = "Dmitry"
         )
     }
 }
@@ -911,6 +945,7 @@ private fun MineReplyTextMessagePreview() {
 @Composable
 private fun MineReplyTextMessage(
     message: Message.Text,
+    replyName: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -977,7 +1012,7 @@ private fun MineReplyTextMessage(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Name",
+                            text = replyName,
                             fontFamily = SfProText,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
@@ -1060,6 +1095,7 @@ private fun MineReplyTextMessage(
 @Composable
 private fun PenpalReplyTextMessage(
     message: Message.Text,
+    replyName: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -1126,7 +1162,7 @@ private fun PenpalReplyTextMessage(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Name",
+                            text = replyName,
                             fontFamily = SfProText,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,

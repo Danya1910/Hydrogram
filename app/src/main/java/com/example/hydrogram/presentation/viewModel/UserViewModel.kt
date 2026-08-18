@@ -13,6 +13,7 @@ import com.example.hydrogram.domain.usecase.ObserveUserPresenceUseCase
 import com.example.hydrogram.domain.usecase.SaveUserNameUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
 import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
+import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.states.UserState
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -61,6 +62,7 @@ class UserViewModel @Inject constructor(
             initialValue = auth.currentUser != null,
         )
     private val _targetUserId = MutableStateFlow("")
+    private val _targetMineId = MutableStateFlow("")
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val userState: StateFlow<UserState> = _targetUserId
@@ -77,6 +79,23 @@ class UserViewModel @Inject constructor(
             scope = viewModelScope,
             started = SharingStarted.Lazily,
             initialValue = UserState.Loading
+        )
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val mineState: StateFlow<MineState> = _targetMineId
+        .flatMapLatest { uid ->
+            if (uid.isBlank()) {
+                flowOf(MineState.Loading)
+            } else {
+                getUserByIdUseCase(uid = uid)
+                    .map { user -> MineState.Success(user = user) as MineState }
+                    .catch { emit(MineState.Error(it.localizedMessage ?: "Ошибка")) }
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Lazily,
+            initialValue = MineState.Loading
         )
 
     private val _isLoading = MutableStateFlow(false)
@@ -100,6 +119,12 @@ class UserViewModel @Inject constructor(
     fun setTargetUserId(uid: String) {
         if (_targetUserId.value != uid) {
             _targetUserId.value = uid
+        }
+    }
+
+    fun setTargetMineId(uid: String) {
+        if (_targetMineId.value != uid) {
+            _targetMineId.value = uid
         }
     }
 
