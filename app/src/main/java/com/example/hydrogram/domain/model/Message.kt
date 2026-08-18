@@ -6,6 +6,7 @@ sealed interface Message {
     val type: String
     val timestamp: Long
     val status: String
+    val replyData: ReplyData?
 
     data class Text(
         override val messageId: String = "",
@@ -13,6 +14,7 @@ sealed interface Message {
         override val type: String = "text",
         override val status: String = "sent",
         override val timestamp: Long = 0L,
+        override val replyData: ReplyData? = null,
         val text: String? = "",
     ) : Message
 
@@ -22,6 +24,7 @@ sealed interface Message {
         override val type: String = "sticker",
         override val status: String = "sent",
         override val timestamp: Long = 0L,
+        override val replyData: ReplyData? = null,
         val stickerPath: String? = "",
     ) : Message
 
@@ -31,7 +34,16 @@ sealed interface Message {
         override val type: String = "image",
         override val status: String = "sent",
         override val timestamp: Long = 0L,
+        override val replyData: ReplyData? = null,
         val image: String? = "",
     ) : Message
 
+
 }
+
+data class ReplyData(
+    val messageId: String = "",
+    val senderId: String = "",
+    val type: String = "",
+    val content: String = "",
+)
