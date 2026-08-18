@@ -340,11 +340,8 @@ private fun Content(
 
     var isStickerWidgetVisible by remember { mutableStateOf(false) }
 
-//    val dynamicBottomPadding by animateDpAsState(
-//        targetValue = bottomPadding + 8.dp + if (isStickerWidgetVisible) 300.dp else bottomPadding + 10.dp,
-//        animationSpec = spring(stiffness = 400f),
-//        label = "ChatBottomPadding"
-//    )
+    var currentMessageAnswer by remember { mutableStateOf<Message?>(null) }
+
 
     if (!hasInitializedUnreadId && messages.isNotEmpty()) {
         val firstUnread = messages
@@ -423,6 +420,10 @@ private fun Content(
         }
     }
 
+    LaunchedEffect(currentMessageAnswer) {
+        Log.d("ChatScreen", currentMessageAnswer.toString())
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -487,6 +488,7 @@ private fun Content(
                             MineTextMessage(
                                 message = message as Message.Text,
                                 onReply = {
+                                    currentMessageAnswer = it
                                     Log.d("ChatScreen", it.toString())
                                 }
                             )
@@ -506,6 +508,7 @@ private fun Content(
                             PenpalTextMessage(
                                 message = message as Message.Text,
                                 onReply = {
+                                    currentMessageAnswer = message
                                     Log.d("ChatScreen", it.toString())
                                 }
                             )
@@ -559,11 +562,34 @@ private fun Content(
                         if (textState.isNotBlank()) {
                             val messageText = textState
                             textState = ""
-                            chatViewModel.sendText(
-                                senderId = mineId,
-                                chatId = chatId,
-                                text = messageText,
-                            )
+                            Log.d("ChatScreen", currentMessageAnswer.toString())
+                            if (currentMessageAnswer == null) {
+                                chatViewModel.sendText(
+                                    senderId = mineId,
+                                    chatId = chatId,
+                                    text = messageText,
+                                )
+                            } else {
+                                val content = when (currentMessageAnswer) {
+                                    is Message.Text -> (currentMessageAnswer as Message.Text).text ?: ""
+                                    is Message.Image -> (currentMessageAnswer as Message.Image).image ?: ""
+                                    is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath ?: ""
+                                    else -> {
+                                        ""
+                                    }
+                                }
+                                chatViewModel.sendText(
+                                    senderId = mineId,
+                                    chatId = chatId,
+                                    text = messageText,
+                                    replyData = ReplyData(
+                                        messageId = currentMessageAnswer!!.messageId,
+                                        senderId = currentMessageAnswer!!.senderId,
+                                        type = currentMessageAnswer!!.type,
+                                        content = content,
+                                    )
+                                )
+                            }
                         }
                     },
                     onAttachClick = {

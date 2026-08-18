@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.usecase.ChangeMessageStatusUseCase
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
@@ -50,6 +51,7 @@ class ChatViewModel @Inject constructor(
         senderId: String,
         chatId: String,
         text: String,
+        replyData: ReplyData? = null,
     ) {
         if (text.isBlank()) {
             _errorMessage.value = "Пустое сообщение"
@@ -67,6 +69,7 @@ class ChatViewModel @Inject constructor(
                 chatId = chatId,
                 content = text,
                 messageType = "text",
+                replyData = replyData,
             )
             _isSending.value = false
             Log.d("ChatVM", "sent text message result: $result")

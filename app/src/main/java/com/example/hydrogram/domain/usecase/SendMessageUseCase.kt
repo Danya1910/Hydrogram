@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.repository.ChatRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ class SendMessageUseCase @Inject constructor(
         content: String = "",
         messageType: String,
         imageUri: Uri? = null,
+        replyData: ReplyData? = null,
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         try {
@@ -35,6 +37,7 @@ class SendMessageUseCase @Inject constructor(
                         status = "sent",
                         timestamp = System.currentTimeMillis(),
                         text = content,
+                        replyData = replyData,
                     )
                 }
                 "sticker" -> {
