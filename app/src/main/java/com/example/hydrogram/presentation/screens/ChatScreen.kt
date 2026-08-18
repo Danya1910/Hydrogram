@@ -12,6 +12,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import android.os.Build.VERSION.SDK_INT
 import android.util.Base64
+import android.widget.Space
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -65,6 +67,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -75,6 +78,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -112,6 +116,7 @@ import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import coil3.ImageLoader
 import coil3.request.crossfade
+import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import kotlin.text.startsWith
@@ -784,12 +789,11 @@ private fun MineTextMessage(
 @Preview(showBackground = true)
 private fun MineReplyTextMessagePreview() {
 
-    // 1. Предположим, это оригинальное сообщение из чата, на которое отвечает пользователь
-    val originalMessage: Message = Message.Image(
+    val originalMessage: Message.Text = Message.Text(
         messageId = "-O123456789abcdef",
         senderId = "user_ivan",
         timestamp = 1718873400000L,
-        image = "https://firebase.storage"
+        text = "Привет, как дела уебок?"
     )
 
 // 2. Создаем переменную текстового сообщения-ответа
@@ -797,19 +801,20 @@ private fun MineReplyTextMessagePreview() {
         messageId = "-O987654321fedcba", // Сгенерированный ID нового сообщения
         senderId = "my_current_user_id", // ID текущего пользователя, который пишет ответ
         timestamp = System.currentTimeMillis(), // Текущее время отправки
-        text = "Классная фотография! Где это снято?", // Сам текст ответа
+        text = "Всё отлично!?", // Текст вашего ответа
 
         // Заполняем данные о том, на что мы ответили
         replyData = ReplyData(
             messageId = originalMessage.messageId, // Ссылка на ID оригинала
             senderId = originalMessage.senderId,   // Кто отправил оригинал
-            type = originalMessage.type,           // Тип оригинала ("image")
-            content = "📷 Фотография"               // Текст для превью в плашке ответа
+            type = originalMessage.type,           // Тип оригинала ("text")
+            content = originalMessage.text
+                ?: ""   // Берутся текстовые данные из оригинала для превью
         )
     )
 
     MineReplyTextMessage(
-
+        message = replyTextMessage
     )
 }
 
@@ -832,7 +837,7 @@ private fun MineReplyTextMessage(
 
         Box(
             modifier = Modifier
-                .heightIn(min = 32.dp)
+                .heightIn(min = 73.dp)
                 .widthIn(max = maxBubbleWidth)
                 .clip(
                     shape = RoundedCornerShape(
@@ -846,102 +851,118 @@ private fun MineReplyTextMessage(
                     color = LightGreen,
                 )
         ) {
-            message.text?.length?.let {
-                if (it <= 20) {
-                    Text(
-                        text = message.text,
-                        fontFamily = SfProText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
+            Column(
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .widthIn(min = 120.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(
+                            all = 9.dp,
+                        )
+                        .fillMaxWidth()
+                        .height(41.dp)
+                        .clip(
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .background(
+                            color = DateSeparatorGreen
+                        )
+                        .padding(
+                            end = 8.dp
+                        )
+                ) {
+                    Box(
                         modifier = Modifier
-                            .padding(
-                                top = 5.dp,
-                                start = 10.dp,
-                                end = 62.dp,
-                                bottom = 5.dp
+                            .width(3.dp)
+                            .height(41.dp)
+                            .background(
+                                color = Color.Red
                             )
                     )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(horizontal = 10.dp)
-                            .padding(bottom = 3.dp)
-                            .align(
-                                Alignment.BottomEnd
-                            ),
+                    Spacer(modifier = Modifier.width(7.dp))
+                    Column(
+                        verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = formattedTime,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
+                            text = "Name",
                             fontFamily = SfProText,
-                            color = MineMessageTimeColor,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color.Red,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        if (message.status == "read") {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_read_status),
-                                contentDescription = null,
-                                tint = MineMessageTimeColor,
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sent_status),
-                                contentDescription = null,
-                                tint = MineMessageTimeColor,
-                                modifier = Modifier.size(15.dp)
-                            )
+                        Spacer(modifier = Modifier.height(1.dp))
+                        message.replyData?.content.let {
+                            if (it != null) {
+                                Text(
+                                    text = it,
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
-                } else {
-                    Text(
-                        text = message.text,
-                        fontFamily = SfProText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
-                        letterSpacing = (-0.43).sp,
-                        modifier = Modifier
-                            .padding(
-                                top = 5.dp,
-                                start = 10.dp,
-                                end = 16.dp,
-                                bottom = 16.dp
-                            )
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(horizontal = 10.dp)
-                            .padding(bottom = 2.dp)
-                            .align(
-                                Alignment.BottomEnd
-                            ),
-                    ) {
+                }
+                Box {
+                    message.text?.length?.let {
                         Text(
-                            text = formattedTime,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal,
+                            text = message.text,
                             fontFamily = SfProText,
-                            color = MineMessageTimeColor,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .padding(
+                                    top = 5.dp,
+                                    start = 10.dp,
+                                    end = 62.dp,
+                                    bottom = 5.dp
+                                )
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        if (message.status == "read") {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_read_status),
-                                contentDescription = null,
-                                tint = MineMessageTimeColor,
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(horizontal = 10.dp)
+                                .padding(bottom = 3.dp)
+                                .align(
+                                    Alignment.BottomEnd
+                                ),
+                        ) {
+                            Text(
+                                text = formattedTime,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Normal,
+                                fontFamily = SfProText,
+                                color = MineMessageTimeColor,
                             )
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sent_status),
-                                contentDescription = null,
-                                tint = MineMessageTimeColor,
-                                modifier = Modifier.size(15.dp)
-                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            if (message.status == "read") {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_read_status),
+                                    contentDescription = null,
+                                    tint = MineMessageTimeColor,
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_sent_status),
+                                    contentDescription = null,
+                                    tint = MineMessageTimeColor,
+                                    modifier = Modifier.size(15.dp)
+                                )
+                            }
                         }
                     }
+
                 }
             }
         }
@@ -1235,31 +1256,32 @@ private fun PenpalImageMessage(
     val maxWidth = 300.dp
     val maxHeight = 400.dp
 
-    val containerModifier = if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-        val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
+    val containerModifier =
+        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
+            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
 
-        val widthLimit = maxWidth.value
-        val heightLimit = maxHeight.value
+            val widthLimit = maxWidth.value
+            val heightLimit = maxHeight.value
 
-        var finalWidth = widthLimit
-        var finalHeight = widthLimit / aspectRatio
+            var finalWidth = widthLimit
+            var finalHeight = widthLimit / aspectRatio
 
-        if (finalHeight > heightLimit) {
-            finalHeight = heightLimit
-            finalWidth = heightLimit * aspectRatio
+            if (finalHeight > heightLimit) {
+                finalHeight = heightLimit
+                finalWidth = heightLimit * aspectRatio
+            }
+
+            Modifier
+                .widthIn(max = maxWidth)
+                .height(finalHeight.dp)
+                .clickable { /* Открыть в полном размере */ }
+        } else {
+            Modifier
+                .widthIn(max = maxWidth)
+                .heightIn(max = maxHeight)
+                .aspectRatio(1f)
+                .clickable { /* Открыть в полном размере */ }
         }
-
-        Modifier
-            .widthIn(max = maxWidth)
-            .height(finalHeight.dp)
-            .clickable { /* Открыть в полном размере */ }
-    } else {
-        Modifier
-            .widthIn(max = maxWidth)
-            .heightIn(max = maxHeight)
-            .aspectRatio(1f)
-            .clickable { /* Открыть в полном размере */ }
-    }
 
     Box(
         modifier = Modifier
@@ -1365,30 +1387,31 @@ private fun MineImageMessage(
     val maxHeight = 400.dp
 
     // Вычисляем размеры изображения
-    val containerModifier = if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-        val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
+    val containerModifier =
+        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
+            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
 
-        var finalWidth = maxWidth.value
-        var finalHeight = maxWidth.value / aspectRatio
+            var finalWidth = maxWidth.value
+            var finalHeight = maxWidth.value / aspectRatio
 
-        if (finalHeight > maxHeight.value) {
-            finalHeight = maxHeight.value
-            finalWidth = maxHeight.value * aspectRatio
+            if (finalHeight > maxHeight.value) {
+                finalHeight = maxHeight.value
+                finalWidth = maxHeight.value * aspectRatio
+            }
+
+            Modifier
+                .width(finalWidth.dp)
+                .height(finalHeight.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { /* Открыть в полном размере */ }
+        } else {
+            Modifier
+                .width(maxWidth)
+                .heightIn(max = maxHeight)
+                .aspectRatio(1f)
+                .clip(RoundedCornerShape(12.dp))
+                .clickable { /* Открыть в полном размере */ }
         }
-
-        Modifier
-            .width(finalWidth.dp)
-            .height(finalHeight.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { /* Открыть в полном размере */ }
-    } else {
-        Modifier
-            .width(maxWidth)
-            .heightIn(max = maxHeight)
-            .aspectRatio(1f)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { /* Открыть в полном размере */ }
-    }
 
     // Выравнивание по правому краю
     Box(
