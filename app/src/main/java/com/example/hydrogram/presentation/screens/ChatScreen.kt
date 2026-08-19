@@ -923,11 +923,11 @@ private fun MineTextMessage(
 @Preview(showBackground = true)
 private fun MineReplyTextMessagePreview() {
 
-    val originalMessage: Message.Text = Message.Text(
+    val originalMessage: Message.Image = Message.Image(
         messageId = "-O123456789abcdef",
         senderId = "user_ivan",
         timestamp = 1718873400000L,
-        text = "Привет, как дела уеrgfdkgdkp23402-3059345-2034124324бок?"
+        image = ""
     )
 
 // 2. Создаем переменную текстового сообщения-ответа
@@ -942,7 +942,7 @@ private fun MineReplyTextMessagePreview() {
             messageId = originalMessage.messageId, // Ссылка на ID оригинала
             senderId = originalMessage.senderId,   // Кто отправил оригинал
             type = originalMessage.type,           // Тип оригинала ("text")
-            content = originalMessage.text
+            content = originalMessage.image
                 ?: ""   // Берутся текстовые данные из оригинала для превью
         )
     )
@@ -1067,7 +1067,7 @@ private fun MineReplyTextMessage(
                             )
                     )
                     Spacer(modifier = Modifier.width(7.dp))
-                    if(message.replyData?.type == "sticker") {
+                    if (message.replyData?.type == "sticker") {
                         Text(
                             text = "Стикер",
                             fontFamily = SfProText,
@@ -1078,7 +1078,7 @@ private fun MineReplyTextMessage(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                    } else if(message.replyData?.type == "text") {
+                    } else if (message.replyData?.type == "text") {
                         message.replyData?.content.let {
                             if (it != null) {
                                 Text(
@@ -1130,16 +1130,29 @@ private fun MineReplyTextMessage(
                                 }
                             }
                             Spacer(modifier = Modifier.width(5.dp))
-                            Text(
-                                text = "Фотография",
-                                fontFamily = SfProText,
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 15.sp,
-                                letterSpacing = -(0.23).sp,
-                                color = Color.Black,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Column(
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                    Text(
+                                        text = replyName,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color(0xFF9EDB4E),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                Text(
+                                    text = "Фотография",
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color(0xFF8FC748),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }
@@ -1298,25 +1311,14 @@ private fun PenpalReplyTextMessage(
                             .width(3.dp)
                             .height(41.dp)
                             .background(
-                                color = Color(0xFFFFBF7B),
+                                color = Color(0xFFFDB86F),
                             )
                     )
                     Spacer(modifier = Modifier.width(7.dp))
                     Column(
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text(
-                            text = replyName,
-                            fontFamily = SfProText,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp,
-                            letterSpacing = -(0.23).sp,
-                            color = Color(0xFFFFBF7B),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Spacer(modifier = Modifier.height(1.dp))
-                        if(message.replyData?.type == "sticker") {
+                        if (message.replyData?.type == "sticker") {
                             Text(
                                 text = "Стикер",
                                 fontFamily = SfProText,
@@ -1327,7 +1329,7 @@ private fun PenpalReplyTextMessage(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                        } else if(message.replyData?.type == "text") {
+                        } else if (message.replyData?.type == "text") {
                             message.replyData?.content.let {
                                 if (it != null) {
                                     Text(
@@ -1352,7 +1354,7 @@ private fun PenpalReplyTextMessage(
                                 }
                                 Box(
                                     modifier = Modifier
-                                    .size(36.dp)
+                                        .size(36.dp)
                                 ) {
                                     if (isBase64) {
                                         val bitmap = remember(replyContent) {
@@ -1379,16 +1381,30 @@ private fun PenpalReplyTextMessage(
                                     }
                                 }
                                 Spacer(modifier = Modifier.width(5.dp))
-                                Text(
-                                    text = "Фотография",
-                                    fontFamily = SfProText,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 15.sp,
-                                    letterSpacing = -(0.23).sp,
-                                    color = Color.Black,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Column(
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = replyName,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color(0xFFFDB86F),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        text = "Фотография",
+                                        fontFamily = SfProText,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color(0xFFEFB578),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
+
                             }
                         }
                     }
