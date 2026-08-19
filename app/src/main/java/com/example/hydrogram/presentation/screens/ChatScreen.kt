@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -996,7 +997,7 @@ private fun MineReplyTextMessagePreview() {
         messageId = "-O123456789abcdef",
         senderId = "user_ivan",
         timestamp = 1718873400000L,
-        text = "Как дела?ewrwpkefkspfoksdpofker",
+        text = "Как дела?",
     )
 
 // 2. Создаем переменную текстового сообщения-ответа
@@ -1821,19 +1822,20 @@ private fun MineStickerReplyMessage(
                     }
                 )
             },
-        contentAlignment = Alignment.TopStart
+        contentAlignment = Alignment.TopEnd
     ) {
         Row(
             modifier = Modifier
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .fillMaxWidth()
+                .width(IntrinsicSize.Min)
         ) {
             MineReplyMessageHelper(
                 replyName = replyName,
                 replyData = sticker.replyData,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.wrapContentWidth()
             )
-            Spacer(modifier = Modifier.width(30.dp))
+            Spacer(modifier = Modifier.weight(1f))
             Box(
                 contentAlignment = Alignment.BottomEnd,
                 modifier = Modifier
@@ -1916,6 +1918,7 @@ private fun PenpalStickerReplyMessage(
             modifier = Modifier
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .fillMaxWidth()
+                .width(IntrinsicSize.Min)
         ) {
             Box(
                 contentAlignment = Alignment.BottomEnd,
@@ -1938,11 +1941,11 @@ private fun PenpalStickerReplyMessage(
                     modifier = Modifier.padding(top = 12.dp, end = 6.dp),
                 )
             }
-            Spacer(modifier = Modifier.width(30.dp))
+            Spacer(modifier = Modifier.weight(1f))
             MineReplyMessageHelper(
                 replyName = replyName,
                 replyData = sticker.replyData,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.wrapContentWidth()
             )
         }
     }
@@ -2040,6 +2043,9 @@ private fun MineReplyMessageHelper(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
+                            .clip(
+                                shape = RoundedCornerShape(4.dp)
+                            )
                     ) {
                         if (isBase64) {
                             val bitmap = remember(replyContent) {
