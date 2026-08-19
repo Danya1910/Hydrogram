@@ -968,6 +968,7 @@ private fun MineReplyTextMessage(
     onReply: (Message.Text) -> Unit,
     replyName: String,
 ) {
+
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
@@ -1001,6 +1002,7 @@ private fun MineReplyTextMessage(
                     },
                     onHorizontalDrag = { change, dragAmountPx ->
                         change.consume()
+
                         val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
                         dragAmount = newOffset
 
@@ -1016,12 +1018,11 @@ private fun MineReplyTextMessage(
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
-        // Главный контейнер пузыря сообщения
         Box(
             modifier = Modifier
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                // РЕШЕНИЕ: Задаем жесткие рамки ширины. Пузырь будет растягиваться под текст, но не превысит maxBubbleWidth
-                .widthIn(min = 140.dp, max = maxBubbleWidth)
+                .heightIn(min = 73.dp)
+                .widthIn(max = maxBubbleWidth)
                 .clip(
                     shape = RoundedCornerShape(
                         bottomEnd = 2.dp,
@@ -1030,52 +1031,107 @@ private fun MineReplyTextMessage(
                         bottomStart = 16.dp,
                     )
                 )
-                .background(color = LightGreen)
-                .padding(bottom = 6.dp) // Отступ снизу для красоты
+                .background(
+                    color = LightGreen,
+                )
         ) {
-            // Используем обычный Column БЕЗ IntrinsicSize.Max
             Column(
-                modifier = Modifier.align(Alignment.TopStart)
+                modifier = Modifier
+                    .width(IntrinsicSize.Max)
+                    .widthIn(min = 120.dp)
             ) {
-                // Блок ответа (показывается, если есть replyData)
-                message.replyData?.let { reply ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(start = 9.dp, end = 9.dp, top = 9.dp, bottom = 4.dp)
-                            // РЕШЕНИЕ: Вместо fillMaxWidth() используем простой padding.
-                            // Плашка займет всю ширину, которую ей продиктует внешний Box сообщения
-                            .height(41.dp)
-                            .clip(shape = RoundedCornerShape(4.dp))
-                            .background(color = Color(0xFFE2F7CA))
-                            .padding(end = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(3.dp)
-                                .height(41.dp)
-                                .background(color = Color(0xFF9EDB4E))
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(
+                            all = 9.dp,
                         )
-                        Spacer(modifier = Modifier.width(7.dp))
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = replyName,
-                                fontFamily = SfProText,
-                                fontWeight = FontWeight.SemiBold,
-                                fontSize = 15.sp,
-                                letterSpacing = -(0.23).sp,
+                        .fillMaxWidth()
+                        .height(41.dp)
+                        .clip(
+                            shape = RoundedCornerShape(4.dp)
+                        )
+                        .background(
+                            color = Color(0xFFE2F7CA)
+                        )
+                        .padding(
+                            end = 8.dp
+                        )
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .width(3.dp)
+                            .height(41.dp)
+                            .background(
                                 color = Color(0xFF9EDB4E),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
                             )
-                            Spacer(modifier = Modifier.height(1.dp))
+                    )
+                    Spacer(modifier = Modifier.width(7.dp))
+                    if(message.replyData?.type == "sticker") {
+                        Text(
+                            text = "Стикер",
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    } else if(message.replyData?.type == "text") {
+                        message.replyData?.content.let {
+                            if (it != null) {
+                                Text(
+                                    text = it,
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val replyContent = message.replyData?.content
+                            val isBase64 = remember(replyContent) {
+                                !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
+                            }
+                            Box(
+                                modifier = Modifier
+                                    .size(36.dp)
+                            ) {
+                                if (isBase64) {
+                                    val bitmap = remember(replyContent) {
+                                        decodeBase64Image(replyContent)
+                                    }
 
-                            val contentText = if (reply.type == "sticker") "🖼️ Стикер" else reply.content
+                                    if (bitmap != null) {
+                                        Image(
+                                            bitmap = bitmap.asImageBitmap(),
+                                            contentDescription = "Превью изображения в ответе",
+                                            contentScale = ContentScale.Crop,
+                                        )
+                                    } else {
+                                        PlaceholderContent()
+                                    }
+                                } else {
+                                    AsyncImage(
+                                        model = replyContent,
+                                        contentDescription = "Превью изображения в ответе",
+                                        contentScale = ContentScale.Crop,
+                                        placeholder = painterResource(R.drawable.ic_avatar),
+                                        error = painterResource(R.drawable.ic_avatar),
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = contentText,
+                                text = "Фотография",
                                 fontFamily = SfProText,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 15.sp,
@@ -1087,11 +1143,10 @@ private fun MineReplyTextMessage(
                         }
                     }
                 }
-
-                // Блок основного текста сообщения и времени
                 Box(
                     modifier = Modifier
-                        .padding(start = 10.dp, end = 10.dp, top = 2.dp)
+                        .fillMaxWidth()
+                        .padding(start = 10.dp)
                 ) {
                     Text(
                         text = message.text ?: "",
@@ -1100,16 +1155,17 @@ private fun MineReplyTextMessage(
                         fontWeight = FontWeight.Medium,
                         color = Color.Black,
                         modifier = Modifier
-                            // Пэддинг справа резервирует место под часы, чтобы текст на них не налезал
-                            .padding(end = 68.dp, bottom = 4.dp)
+                            .fillMaxWidth()
+                            .padding(end = 65.dp, bottom = 5.dp)
                     )
-
-                    // Время и статус строго в нижнем правом углу
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(bottom = 2.dp)
+                            .padding(horizontal = 10.dp)
+                            .padding(bottom = 3.dp)
+                            .align(
+                                Alignment.BottomEnd
+                            ),
                     ) {
                         Text(
                             text = formattedTime,
@@ -1118,13 +1174,12 @@ private fun MineReplyTextMessage(
                             fontFamily = SfProText,
                             color = MineMessageTimeColor,
                         )
-                        Spacer(modifier = Modifier.width(4.dp))
+                        Spacer(modifier = Modifier.width(5.dp))
                         if (message.status == "read") {
                             Icon(
                                 painter = painterResource(R.drawable.ic_read_status),
                                 contentDescription = null,
                                 tint = MineMessageTimeColor,
-                                modifier = Modifier.size(16.dp)
                             )
                         } else {
                             Icon(
@@ -1136,11 +1191,11 @@ private fun MineReplyTextMessage(
                         }
                     }
                 }
+
             }
         }
     }
 }
-
 
 @Composable
 private fun PenpalReplyTextMessage(
@@ -1261,7 +1316,7 @@ private fun PenpalReplyTextMessage(
                             overflow = TextOverflow.Ellipsis,
                         )
                         Spacer(modifier = Modifier.height(1.dp))
-                        if (message.replyData?.type == "sticker") {
+                        if(message.replyData?.type == "sticker") {
                             Text(
                                 text = "Стикер",
                                 fontFamily = SfProText,
@@ -1272,7 +1327,7 @@ private fun PenpalReplyTextMessage(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                        } else if (message.replyData?.type == "text") {
+                        } else if(message.replyData?.type == "text") {
                             message.replyData?.content.let {
                                 if (it != null) {
                                     Text(
@@ -1291,36 +1346,33 @@ private fun PenpalReplyTextMessage(
                             Row(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val isBase64 = remember(message.replyData?.content) {
-                                    message.replyData?.content.isNullOrBlank() && message.replyData?.content!!.startsWith(
-                                        "data:image/jpeg;base64,"
-                                    )
+                                val replyContent = message.replyData?.content
+                                val isBase64 = remember(replyContent) {
+                                    !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
                                 }
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
+                                    .size(36.dp)
                                 ) {
                                     if (isBase64) {
-                                        val bitmap = remember(message.replyData?.content) {
-                                            decodeBase64Image(message.replyData?.content)
+                                        val bitmap = remember(replyContent) {
+                                            decodeBase64Image(replyContent)
                                         }
 
                                         if (bitmap != null) {
                                             Image(
                                                 bitmap = bitmap.asImageBitmap(),
-                                                contentDescription = "Изображение в чате",
-                                                contentScale = ContentScale.FillBounds,
-                                                modifier = Modifier.fillMaxSize()
+                                                contentDescription = "Превью изображения в ответе",
+                                                contentScale = ContentScale.Crop,
                                             )
                                         } else {
                                             PlaceholderContent()
                                         }
                                     } else {
                                         AsyncImage(
-                                            model = message.replyData?.content,
-                                            contentDescription = "Изображение в чате",
-                                            contentScale = ContentScale.FillBounds,
-                                            modifier = Modifier.fillMaxSize(),
+                                            model = replyContent,
+                                            contentDescription = "Превью изображения в ответе",
+                                            contentScale = ContentScale.Crop,
                                             placeholder = painterResource(R.drawable.ic_avatar),
                                             error = painterResource(R.drawable.ic_avatar),
                                         )
@@ -1328,7 +1380,7 @@ private fun PenpalReplyTextMessage(
                                 }
                                 Spacer(modifier = Modifier.width(5.dp))
                                 Text(
-                                    text = "Стикер",
+                                    text = "Фотография",
                                     fontFamily = SfProText,
                                     fontWeight = FontWeight.Normal,
                                     fontSize = 15.sp,
@@ -1792,6 +1844,7 @@ private fun PenpalImageMessage(
             null to null
         }
     }
+
 
     val (imageWidth, imageHeight) = imageSize
     val maxWidth = 300.dp
