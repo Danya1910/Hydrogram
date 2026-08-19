@@ -46,6 +46,7 @@ class SendMessageUseCase @Inject constructor(
                         status = "sent",
                         timestamp = System.currentTimeMillis(),
                         stickerPath = content,
+                        replyData = replyData,
                     )
                 }
                 "image" -> {
@@ -60,6 +61,7 @@ class SendMessageUseCase @Inject constructor(
                         status = "sent",
                         timestamp = System.currentTimeMillis(),
                         image = imageData,
+                        replyData = replyData,
                     )
                 }
                 else -> {

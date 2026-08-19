@@ -26,6 +26,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,6 +37,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -517,14 +519,26 @@ private fun Content(
                                 )
                             }
                         } else if (message.type == "sticker") {
-                            MineStickerMessage(
-                                sticker = message as Message.Sticker,
-                                context = context,
-                                gifImageLoader = gifImageLoader,
-                                onReply = {
-                                    currentMessageAnswer = it
-                                }
-                            )
+                            if (message.replyData == null) {
+                                MineStickerMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
+                                )
+                            } else {
+                                MineStickerReplyMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
+                                )
+                            }
                         } else {
                             MineImageMessage(
                                 message = message as Message.Image,
@@ -551,14 +565,26 @@ private fun Content(
                                 }
                             )
                         } else if (message.type == "sticker") {
-                            PenpalStickerMessage(
-                                sticker = message as Message.Sticker,
-                                context = context,
-                                gifImageLoader = gifImageLoader,
-                                onReply = {
-                                    currentMessageAnswer = it
-                                }
-                            )
+                            if (message.replyData == null) {
+                                PenpalStickerMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
+                                )
+                            } else {
+                                PenpalStickerReplyMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
+                                )
+                            }
                         } else {
                             PenpalImageMessage(
                                 message = message as Message.Image,
@@ -673,11 +699,39 @@ private fun Content(
                     context = context,
                     gifImageLoader = gifImageLoader,
                     onStickerClick = { stickerString ->
-                        chatViewModel.sendSticker(
-                            senderId = mineId,
-                            chatId = chatId,
-                            stickerPath = stickerString,
-                        )
+                        if (currentMessageAnswer == null) {
+                            chatViewModel.sendSticker(
+                                senderId = mineId,
+                                chatId = chatId,
+                                stickerPath = stickerString,
+                            )
+                        } else {
+                            val content = when (currentMessageAnswer) {
+                                is Message.Text -> (currentMessageAnswer as Message.Text).text
+                                    ?: ""
+
+                                is Message.Image -> (currentMessageAnswer as Message.Image).image
+                                    ?: ""
+
+                                is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
+                                    ?: ""
+
+                                else -> {
+                                    ""
+                                }
+                            }
+                            chatViewModel.sendSticker(
+                                senderId = mineId,
+                                chatId = chatId,
+                                stickerPath = stickerString,
+                                replyData = ReplyData(
+                                    messageId = currentMessageAnswer!!.messageId,
+                                    senderId = currentMessageAnswer!!.senderId,
+                                    type = currentMessageAnswer!!.type,
+                                    content = content,
+                                )
+                            )
+                        }
                     },
                 )
             }
@@ -923,41 +977,76 @@ private fun MineTextMessage(
 @Preview(showBackground = true)
 private fun MineReplyTextMessagePreview() {
 
-    val originalMessage: Message.Image = Message.Image(
+    val context = LocalContext.current
+
+
+    val gifImageLoader = remember(context) {
+        ImageLoader.Builder(context)
+            .components {
+                if (SDK_INT >= 28) {
+                    add(AnimatedImageDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+            }
+            .build()
+    }
+
+    val originalMessage: Message.Text = Message.Text(
         messageId = "-O123456789abcdef",
         senderId = "user_ivan",
         timestamp = 1718873400000L,
-        image = ""
+        text = "Как дела?ewrwpkefkspfoksdpofker",
     )
 
 // 2. Создаем переменную текстового сообщения-ответа
-    val replyTextMessage: Message.Text = Message.Text(
+    val replyStickerMessage: Message.Sticker = Message.Sticker(
         messageId = "-O987654321fedcba", // Сгенерированный ID нового сообщения
         senderId = "my_current_user_id", // ID текущего пользователя, который пишет ответ
         timestamp = System.currentTimeMillis(), // Текущее время отправки
-        text = "Всё отлично!?", // Текст вашего ответа
+        stickerPath = "",
 
         // Заполняем данные о том, на что мы ответили
         replyData = ReplyData(
             messageId = originalMessage.messageId, // Ссылка на ID оригинала
             senderId = originalMessage.senderId,   // Кто отправил оригинал
             type = originalMessage.type,           // Тип оригинала ("text")
-            content = originalMessage.image
+            content = originalMessage.text
+                ?: ""   // Берутся текстовые данные из оригинала для превью
+        )
+    )
+
+    val replyTextMessage: Message.Text = Message.Text(
+        messageId = "-O987654321fedcba", // Сгенерированный ID нового сообщения
+        senderId = "my_current_user_id", // ID текущего пользователя, который пишет ответ
+        timestamp = System.currentTimeMillis(), // Текущее время отправки
+        text = "fdgddkfgpesd",
+
+        // Заполняем данные о том, на что мы ответили
+        replyData = ReplyData(
+            messageId = originalMessage.messageId, // Ссылка на ID оригинала
+            senderId = originalMessage.senderId,   // Кто отправил оригинал
+            type = originalMessage.type,           // Тип оригинала ("text")
+            content = originalMessage.text
                 ?: ""   // Берутся текстовые данные из оригинала для превью
         )
     )
 
     Column {
-        MineReplyTextMessage(
-            message = replyTextMessage,
-            replyName = "Ivan",
-            onReply = {}
+        PenpalStickerReplyMessage(
+            sticker = replyStickerMessage,
+            replyName = "Dmitry",
+            onReply = {},
+            context = context,
+            gifImageLoader = gifImageLoader
         )
         Spacer(modifier = Modifier.height(5.dp))
-        PenpalReplyTextMessage(
-            message = replyTextMessage,
+        MineStickerReplyMessage(
+            sticker = replyStickerMessage,
             replyName = "Dmitry",
-            onReply = {}
+            onReply = {},
+            context = context,
+            gifImageLoader = gifImageLoader
         )
     }
 }
@@ -1068,29 +1157,55 @@ private fun MineReplyTextMessage(
                     )
                     Spacer(modifier = Modifier.width(7.dp))
                     if (message.replyData?.type == "sticker") {
-                        Text(
-                            text = "Стикер",
-                            fontFamily = SfProText,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 15.sp,
-                            letterSpacing = -(0.23).sp,
-                            color = Color.Black,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = replyName,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFF9EDB4E),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = "Стикер",
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     } else if (message.replyData?.type == "text") {
                         message.replyData?.content.let {
                             if (it != null) {
-                                Text(
-                                    text = it,
-                                    fontFamily = SfProText,
-                                    fontWeight = FontWeight.Normal,
-                                    fontSize = 15.sp,
-                                    letterSpacing = -(0.23).sp,
-                                    color = Color.Black,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                Column(
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = replyName,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color(0xFF9EDB4E),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        text = it,
+                                        fontFamily = SfProText,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color.Black,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                             }
                         }
                     } else {
@@ -1133,15 +1248,15 @@ private fun MineReplyTextMessage(
                             Column(
                                 verticalArrangement = Arrangement.Center
                             ) {
-                                    Text(
-                                        text = replyName,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                        letterSpacing = -(0.23).sp,
-                                        color = Color(0xFF9EDB4E),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                Text(
+                                    text = replyName,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color(0xFF9EDB4E),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
                                 Text(
                                     text = "Фотография",
                                     fontFamily = SfProText,
@@ -1319,29 +1434,55 @@ private fun PenpalReplyTextMessage(
                         verticalArrangement = Arrangement.Center
                     ) {
                         if (message.replyData?.type == "sticker") {
-                            Text(
-                                text = "Стикер",
-                                fontFamily = SfProText,
-                                fontWeight = FontWeight.Normal,
-                                fontSize = 15.sp,
-                                letterSpacing = -(0.23).sp,
-                                color = Color.Black,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                            Column(
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = replyName,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color(0xFFFDB86F),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = "Стикер",
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         } else if (message.replyData?.type == "text") {
                             message.replyData?.content.let {
                                 if (it != null) {
-                                    Text(
-                                        text = it,
-                                        fontFamily = SfProText,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 15.sp,
-                                        letterSpacing = -(0.23).sp,
-                                        color = Color.Black,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
+                                    Column(
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = replyName,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp,
+                                            letterSpacing = -(0.23).sp,
+                                            color = Color(0xFFFDB86F),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = it,
+                                            fontFamily = SfProText,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 15.sp,
+                                            letterSpacing = -(0.23).sp,
+                                            color = Color.Black,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
                                 }
                             }
                         } else {
@@ -1626,6 +1767,330 @@ private fun MineStickerMessage(
                 status = sticker.status,
                 modifier = Modifier.padding(top = 12.dp, end = 6.dp),
             )
+        }
+    }
+}
+
+@Composable
+private fun MineStickerReplyMessage(
+    sticker: Message.Sticker,
+    context: Context,
+    gifImageLoader: ImageLoader,
+    replyName: String,
+    onReply: (Message.Sticker) -> Unit,
+) {
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(sticker)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.TopStart
+    ) {
+        Row(
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                .fillMaxWidth()
+        ) {
+            MineReplyMessageHelper(
+                replyName = replyName,
+                replyData = sticker.replyData,
+                modifier = Modifier.weight(1f)
+            )
+            Spacer(modifier = Modifier.width(30.dp))
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier
+                    .size(192.dp)
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data("android.resource://${context.packageName}/${sticker.stickerPath}")
+                        .crossfade(true)
+                        .build(),
+                    imageLoader = gifImageLoader,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                StickerMineTime(
+                    time = sticker.timestamp,
+                    status = sticker.status,
+                    modifier = Modifier.padding(top = 12.dp, end = 6.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PenpalStickerReplyMessage(
+    sticker: Message.Sticker,
+    context: Context,
+    gifImageLoader: ImageLoader,
+    replyName: String,
+    onReply: (Message.Sticker) -> Unit,
+) {
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(sticker)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.TopStart
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.Start,
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                .fillMaxWidth()
+        ) {
+            Box(
+                contentAlignment = Alignment.BottomEnd,
+                modifier = Modifier
+                    .size(192.dp)
+            ) {
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data("android.resource://${context.packageName}/${sticker.stickerPath}")
+                        .crossfade(true)
+                        .build(),
+                    imageLoader = gifImageLoader,
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                StickerMineTime(
+                    time = sticker.timestamp,
+                    status = sticker.status,
+                    modifier = Modifier.padding(top = 12.dp, end = 6.dp),
+                )
+            }
+            Spacer(modifier = Modifier.width(30.dp))
+            MineReplyMessageHelper(
+                replyName = replyName,
+                replyData = sticker.replyData,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun MineReplyMessageHelper(
+    replyName: String,
+    replyData: ReplyData?,
+    modifier: Modifier,
+) {
+    Box(
+        modifier = modifier
+            .height(41.dp)
+            .clip(
+                shape = RoundedCornerShape(4.dp)
+            )
+            .background(
+                color = Color(0xFFE2F7CA)
+            )
+            .padding(end = 5.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(3.dp)
+                    .background(
+                        color = Color(0xFF9EDB4E),
+                    )
+            )
+            Spacer(modifier = Modifier.width(7.dp))
+            if (replyData?.type == "sticker") {
+                Column(
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = replyName,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        letterSpacing = -(0.23).sp,
+                        color = Color(0xFF9EDB4E),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = "Стикер",
+                        fontFamily = SfProText,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 15.sp,
+                        letterSpacing = -(0.23).sp,
+                        color = Color.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            } else if (replyData?.type == "text") {
+                replyData?.content.let {
+                    if (it != null) {
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = replyName,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFF9EDB4E),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = it,
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+            } else {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val replyContent = replyData?.content
+                    val isBase64 = remember(replyContent) {
+                        !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
+                    }
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                    ) {
+                        if (isBase64) {
+                            val bitmap = remember(replyContent) {
+                                decodeBase64Image(replyContent)
+                            }
+
+                            if (bitmap != null) {
+                                Image(
+                                    bitmap = bitmap.asImageBitmap(),
+                                    contentDescription = "Превью изображения в ответе",
+                                    contentScale = ContentScale.Crop,
+                                )
+                            } else {
+                                PlaceholderContent()
+                            }
+                        } else {
+                            AsyncImage(
+                                model = replyContent,
+                                contentDescription = "Превью изображения в ответе",
+                                contentScale = ContentScale.Crop,
+                                placeholder = painterResource(R.drawable.ic_avatar),
+                                error = painterResource(R.drawable.ic_avatar),
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(5.dp))
+                    Column(
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = replyName,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFF9EDB4E),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = "Фотография",
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFF8FC748),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
         }
     }
 }

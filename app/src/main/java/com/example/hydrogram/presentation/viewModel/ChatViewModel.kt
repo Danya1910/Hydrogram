@@ -83,6 +83,7 @@ class ChatViewModel @Inject constructor(
         senderId: String,
         chatId: String,
         stickerPath: String,
+        replyData: ReplyData? = null,
     ) {
         if(stickerPath.isBlank()) {
             _errorMessage.value = "Пустой Стикер"
@@ -91,6 +92,7 @@ class ChatViewModel @Inject constructor(
         if(_isSending.value) {
             return
         }
+        Log.d("ChatVM", "relay data : $replyData")
         Log.d("ChatVM", "sent sticker message called")
         viewModelScope.launch {
             _isSending.value = true
@@ -99,6 +101,7 @@ class ChatViewModel @Inject constructor(
                 chatId = chatId,
                 content = stickerPath,
                 messageType = "sticker",
+                replyData = replyData,
             )
             _isSending.value = false
             Log.d("ChatVM", "sent sticker message result: $result")
