@@ -70,15 +70,15 @@ fun BottomBar(
 
     val glassBrush = Brush.linearGradient(
         colors = listOf(
-            Color.White.copy(alpha = 0.55f),
-            Color.White.copy(alpha = 0.25f),
+            Color.White.copy(alpha = 0.75f),
+            Color.White.copy(alpha = 0.45f),
         )
     )
 
     val borderBrush = Brush.linearGradient(
         colors = listOf(
             Color.White.copy(alpha = 0.65f),
-            Color.White.copy(alpha = 0.10f),
+            Color.White.copy(alpha = 0.25f),
         )
     )
 
