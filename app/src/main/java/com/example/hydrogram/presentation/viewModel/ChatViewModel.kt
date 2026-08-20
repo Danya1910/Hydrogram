@@ -115,6 +115,7 @@ class ChatViewModel @Inject constructor(
         senderId: String,
         chatId: String,
         imageUri: Uri,
+        replyData: ReplyData? = null,
     ) {
         if(_isSending.value) {
             return
@@ -127,6 +128,7 @@ class ChatViewModel @Inject constructor(
                 chatId = chatId,
                 messageType = "image",
                 imageUri = imageUri,
+                replyData = replyData,
             )
             _isSending.value = false
             Log.d("ChatVM", "sent image message result: $result")

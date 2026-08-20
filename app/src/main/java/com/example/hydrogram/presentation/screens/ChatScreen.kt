@@ -430,11 +430,39 @@ private fun Content(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
-            chatViewModel.sendImage(
-                senderId = mineId,
-                chatId = chatId,
-                imageUri = uri,
-            )
+            if (currentMessageAnswer == null) {
+                chatViewModel.sendImage(
+                    senderId = mineId,
+                    chatId = chatId,
+                    imageUri = uri,
+                )
+            } else {
+                val content = when (currentMessageAnswer) {
+                    is Message.Text -> (currentMessageAnswer as Message.Text).text
+                        ?: ""
+
+                    is Message.Image -> (currentMessageAnswer as Message.Image).image
+                        ?: ""
+
+                    is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
+                        ?: ""
+
+                    else -> {
+                        ""
+                    }
+                }
+                chatViewModel.sendImage(
+                    senderId = mineId,
+                    chatId = chatId,
+                    imageUri = uri,
+                    replyData = ReplyData(
+                        messageId = currentMessageAnswer!!.messageId,
+                        senderId = currentMessageAnswer!!.senderId,
+                        type = currentMessageAnswer!!.type,
+                        content = content,
+                    )
+                )
+            }
         }
     }
 
@@ -542,12 +570,22 @@ private fun Content(
                                 )
                             }
                         } else {
+                            if(message.replyData == null) {
                             MineImageMessage(
                                 message = message as Message.Image,
                                 onReply = {
                                     currentMessageAnswer = it
                                 }
                             )
+                            } else {
+                                MineReplyImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    },
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                )
+                            }
                         }
                     } else {
                         if (message.type == "text") {
@@ -588,12 +626,22 @@ private fun Content(
                                 )
                             }
                         } else {
-                            PenpalImageMessage(
-                                message = message as Message.Image,
-                                onReply = {
-                                    currentMessageAnswer = it
-                                }
-                            )
+                            if(message.replyData == null) {
+                                PenpalImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
+                                )
+                            } else {
+                                PenpalReplyImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    },
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                )
+                            }
                         }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
