@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
@@ -32,13 +33,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -170,6 +175,94 @@ private fun Content(
                 MenuRow(
                     items = profileList
                 )
+                Spacer(modifier = Modifier.height(24.dp))
+                FakeMenuRow(
+                    items = listOf(
+                        MenuRowItem(
+                            title = "Мой профиль",
+                            icon = R.drawable.ic_profile,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFFF2D55).copy(alpha = 0.7f),
+                                    Color(0xFFF2234B).copy(alpha = 0.9f),
+                                    Color(0xFFD2042C).copy(alpha = 1f),
+                                )
+                            )
+                        )
+                    )
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                FakeMenuRow(
+                    items = listOf(
+                        MenuRowItem(
+                            title = "Кошелёк",
+                            icon = R.drawable.ic_wallet,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF189CFF).copy(alpha = 0.7f),
+                                    Color(0xFF0D7FF4).copy(alpha = 0.9f),
+                                    Color(0xFF025DD1).copy(alpha = 1f),
+                                )
+                            )
+                        )
+                    )
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                FakeMenuRow(
+                    items = listOf(
+                        MenuRowItem(
+                            title = "Избранное",
+                            icon = R.drawable.ic_saved_messages,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF189CFF).copy(alpha = 0.7f),
+                                    Color(0xFF0D7FF4).copy(alpha = 0.9f),
+                                    Color(0xFF025DD1).copy(alpha = 1f),
+                                )
+                            )
+                        ),
+                        MenuRowItem(
+                            title = "Недавние звонки",
+                            icon = R.drawable.ic_recent_calls,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF48DB6D).copy(alpha = 0.7f),
+                                    Color(0xFF2BBE50).copy(alpha = 0.9f),
+                                    Color(0xFF06992B).copy(alpha = 1f),
+                                )
+                            )
+                        ),
+                        MenuRowItem(
+                            title = "Устройства",
+                            icon = R.drawable.ic_devices,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFFFA33E).copy(alpha = 0.7f),
+                                    Color(0xFFFF9C37).copy(alpha = 0.9f),
+                                    Color(0xFFFF902B).copy(alpha = 1f),
+                                )
+                            )
+                        ),
+                        MenuRowItem(
+                            title = "Папки с чатами",
+                            icon = R.drawable.ic_chat_folders,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF17D4FC).copy(alpha = 0.7f),
+                                    Color(0xFF0CB5DD).copy(alpha = 0.9f),
+                                    Color(0xFF0295BD).copy(alpha = 1f),
+                                )
+                            )
+                        )
+                    )
+                )
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }
@@ -319,7 +412,35 @@ private fun MenuRow(
             )
     ) {
         items.forEachIndexed { index, item ->
-            MenuRowItem(item = item)
+            MenuRowItem(
+                item = item,
+            )
+            if (index != items.size - 1) {
+                SeparatorLine(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FakeMenuRow(
+    items: List<MenuRowItem>,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(
+                shape = RoundedCornerShape(26.dp)
+            )
+    ) {
+        items.forEachIndexed { index, item ->
+            FakeItem(
+                item = item,
+            )
             if (index != items.size - 1) {
                 SeparatorLine(
                     modifier = Modifier
@@ -345,10 +466,11 @@ private fun MenuRowItem(
             )
             .padding(horizontal = 20.dp)
     ) {
+
         Icon(
             painter = painterResource(item.icon),
             contentDescription = null,
-            tint = Color.Unspecified,
+            tint = Blue,
         )
         Spacer(modifier = Modifier.width(16.dp))
         Text(
@@ -367,6 +489,67 @@ private fun MenuRowItem(
         )
     }
 }
+
+@Composable
+private fun FakeItem(
+    item: MenuRowItem,
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .height(52.dp)
+            .fillMaxWidth()
+            .background(
+                color = Color.White,
+            )
+            .padding(horizontal = 20.dp)
+    ) {
+        item.gradient?.let {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .size(30.dp)
+                    .clip(
+                        shape = RoundedCornerShape(8.dp)
+                    )
+                    .background(
+                        brush = it
+                    )
+            ) {
+                Icon(
+                    painter = painterResource(item.icon),
+                    contentDescription = null,
+                    tint = Color.White,
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(17.dp))
+        Text(
+            text = item.title,
+            fontFamily = SfProText,
+            fontWeight = FontWeight.Medium,
+            fontSize = 17.sp,
+            color = Color.Black,
+            letterSpacing = (-0.43).sp
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_right),
+            contentDescription = null,
+            tint = Color.Unspecified,
+        )
+    }
+}
+
+fun Modifier.gradientTint(brush: Brush): Modifier = this
+    .graphicsLayer(alpha = 0.99f)
+    .drawWithContent {
+        drawContent()
+        drawRect(
+            brush = brush,
+            blendMode = BlendMode.SrcIn
+        )
+    }
 
 @Composable
 private fun TopBar(
