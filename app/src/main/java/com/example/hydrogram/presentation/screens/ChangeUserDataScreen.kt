@@ -16,6 +16,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -47,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -292,7 +295,7 @@ private fun Content(
     LaunchedEffect(
         isCurrentUserIdInCache
     ) {
-        if(!isCurrentUserIdInCache) {
+        if (!isCurrentUserIdInCache) {
             navController.navigate("auth_graph") {
                 popUpTo(navController.graph.startDestinationId) {
                     inclusive = true
@@ -432,7 +435,7 @@ private fun ChangeAvatar(
             fontSize = 15.sp,
             color = Blue,
             modifier = Modifier
-                .clickable{
+                .clickable {
                     photoPickerLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
@@ -518,11 +521,31 @@ private fun BirthdayInput(
             )
             .padding(horizontal = 10.dp)
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_avatar),
-            contentDescription = null,
-            tint = Color.Unspecified,
-        )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(30.dp)
+                .clip(
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFF189CFF).copy(alpha = 0.7f),
+                            Color(0xFF0D7FF4).copy(alpha = 0.9f),
+                            Color(0xFF025DD1).copy(alpha = 1f),
+                        )
+                    )
+                )
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_birthday_cake),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier
+                    .size(24.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Text(
             text = "День рождения",
@@ -578,7 +601,14 @@ private fun ConnectionData(
             )
     ) {
         ConnectionItem(
-            icon = R.drawable.ic_green_phone,
+            icon = R.drawable.ic_phone,
+            gradient = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF48DB6D).copy(alpha = 0.7f),
+                    Color(0xFF2BBE50).copy(alpha = 0.9f),
+                    Color(0xFF06992B).copy(alpha = 1f),
+                )
+            ),
             text = "Номер",
             hint = phoneNumber,
             onClick = {},
@@ -589,7 +619,14 @@ private fun ConnectionData(
                 .padding(start = 62.dp, end = 10.dp)
         )
         ConnectionItem(
-            icon = R.drawable.ic_green_phone,
+            icon = R.drawable.ic_dog_symbol,
+            gradient = Brush.verticalGradient(
+                colors = listOf(
+                    Color(0xFF471FA4).copy(alpha = 0.7f),
+                    Color(0xFF40189E).copy(alpha = 0.9f),
+                    Color(0xFF320F85).copy(alpha = 1f),
+                )
+            ),
             text = "Имя пользователя",
             hint = user?.userName ?: "",
             onClick = onUserNameClick,
@@ -599,12 +636,6 @@ private fun ConnectionData(
                 .fillMaxWidth()
                 .padding(start = 62.dp, end = 10.dp)
         )
-        ConnectionItem(
-            icon = R.drawable.ic_green_phone,
-            text = "Персональные цвета",
-            hint = "",
-            onClick = {},
-        )
     }
 
 }
@@ -612,6 +643,7 @@ private fun ConnectionData(
 @Composable
 private fun ConnectionItem(
     icon: Int,
+    gradient: Brush,
     text: String,
     hint: String,
     onClick: () -> Unit,
@@ -629,11 +661,24 @@ private fun ConnectionItem(
             }
             .padding(horizontal = 10.dp),
     ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = Color.Unspecified,
-        )
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(30.dp)
+                .clip(
+                    shape = RoundedCornerShape(8.dp)
+                )
+                .background(
+                    brush = gradient
+                )
+        ) {
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.size(20.dp)
+            )
+        }
         Spacer(modifier = Modifier.width(10.dp))
         Text(
             text = text,

@@ -12,17 +12,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.add
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFromBaseline
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -43,7 +48,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -73,6 +77,7 @@ fun SettingsScreen(
 ) {
     Scaffold(
         containerColor = LightGrayBackground,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
         topBar = {
             TopBar(
                 navController = navController,
@@ -112,18 +117,13 @@ private fun Content(
 
     val profileList = listOf(
         MenuRowItem(
-            title = "Set Emoji Status",
-            icon = R.drawable.ic_bottom_search,
+            title = "Поставить эмодзи статус",
+            icon = R.drawable.ic_outline_emoji,
             onClick = {},
         ),
         MenuRowItem(
-            title = "Set Emoji Status",
-            icon = R.drawable.ic_settings,
-            onClick = {},
-        ),
-        MenuRowItem(
-            title = "Set Emoji Status",
-            icon = R.drawable.ic_contacts,
+            title = "Изменить фотографию",
+            icon = R.drawable.ic_outline_camera,
             onClick = {},
         ),
     )
@@ -168,8 +168,13 @@ private fun Content(
         ) {
             Column(
                 modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
                     .padding(
-                        all = 16.dp
+                        horizontal = 16.dp
+                    )
+                    .padding(
+                        top = 16.dp
                     )
             ) {
                 MenuRow(
@@ -263,6 +268,63 @@ private fun Content(
                     )
                 )
                 Spacer(modifier = Modifier.height(24.dp))
+                FakeMenuRow(
+                    items = listOf(
+                        MenuRowItem(
+                            title = "Избранное",
+                            icon = R.drawable.ic_saved_messages,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF189CFF).copy(alpha = 0.7f),
+                                    Color(0xFF0D7FF4).copy(alpha = 0.9f),
+                                    Color(0xFF025DD1).copy(alpha = 1f),
+                                )
+                            )
+                        ),
+                        MenuRowItem(
+                            title = "Недавние звонки",
+                            icon = R.drawable.ic_recent_calls,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF48DB6D).copy(alpha = 0.7f),
+                                    Color(0xFF2BBE50).copy(alpha = 0.9f),
+                                    Color(0xFF06992B).copy(alpha = 1f),
+                                )
+                            )
+                        ),
+                        MenuRowItem(
+                            title = "Устройства",
+                            icon = R.drawable.ic_devices,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFFFFA33E).copy(alpha = 0.7f),
+                                    Color(0xFFFF9C37).copy(alpha = 0.9f),
+                                    Color(0xFFFF902B).copy(alpha = 1f),
+                                )
+                            )
+                        ),
+                        MenuRowItem(
+                            title = "Папки с чатами",
+                            icon = R.drawable.ic_chat_folders,
+                            onClick = {},
+                            gradient = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF17D4FC).copy(alpha = 0.7f),
+                                    Color(0xFF0CB5DD).copy(alpha = 0.9f),
+                                    Color(0xFF0295BD).copy(alpha = 1f),
+                                )
+                            )
+                        )
+                    )
+                )
+                Spacer(
+                    modifier = Modifier.windowInsetsBottomHeight(
+                        WindowInsets.navigationBars.add(WindowInsets(bottom = 74.dp))
+                    )
+                )
             }
         }
     }
@@ -477,7 +539,7 @@ private fun MenuRowItem(
             text = item.title,
             fontFamily = SfProText,
             fontWeight = FontWeight.Medium,
-            fontSize = 22.sp,
+            fontSize = 17.sp,
             color = Color.Black,
             letterSpacing = (-0.43).sp
         )
