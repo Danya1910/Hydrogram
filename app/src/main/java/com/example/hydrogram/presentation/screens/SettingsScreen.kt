@@ -188,7 +188,11 @@ private fun Content(
                         MenuRowItem(
                             title = "Мой профиль",
                             icon = R.drawable.ic_profile,
-                            onClick = {},
+                            onClick = {
+                                navController.navigate(
+                                    Screen.UserProfile.createRoute(id = mineId)
+                                )
+                            },
                             gradient = Brush.verticalGradient(
                                 colors = listOf(
                                     Color(0xFFFF2D55).copy(alpha = 0.7f),
