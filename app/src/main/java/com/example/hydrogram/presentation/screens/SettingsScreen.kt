@@ -570,6 +570,9 @@ private fun FakeItem(
             .background(
                 color = Color.White,
             )
+            .clickable{
+                item.onClick()
+            }
             .padding(horizontal = 20.dp)
     ) {
         item.gradient?.let {
