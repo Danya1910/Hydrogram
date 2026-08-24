@@ -356,46 +356,53 @@ private fun Content(
     val coroutineScope = rememberCoroutineScope()
 
     val scrollToMessage = { targetReplyId: String ->
-        var foundIndex = -1
+        var finalUIIndex = -1
+        var currentUIIndex = 0
 
-        var currentGlobalIndex = 0
+        // Идем строго по порядку отрисовки вашего LazyColumn (СВЕРХУ ВНИЗ)
+        for ((dayTimestamp, dayMessages) in groupedMessages) {
 
-        val reversedGroups = groupedMessages.entries.reversed()
+            // 1. Учитываем заголовок даты (item key = "date_$dayTimestamp")
+            if (finalUIIndex == -1) {
+                // Если мы еще не нашли сообщение, этот заголовок занимает +1 позицию в UI
+                currentUIIndex++
+            }
 
-        for ((_, dayMessages) in reversedGroups) {
-            val messagesOrder = dayMessages.reversed()
-
-            val indexInDay = messagesOrder.indexOfFirst { it.messageId.toString() == targetReplyId.toString() }
+            // 2. Ищем сообщение среди сообщений этого дня
+            val indexInDay = dayMessages.indexOfFirst { it.messageId.toString() == targetReplyId }
 
             if (indexInDay != -1) {
-                foundIndex = currentGlobalIndex + 1 + indexInDay
+                // Нашли! Фиксируем итоговый индекс элемента в LazyColumn
+                finalUIIndex = currentUIIndex + indexInDay
                 break
             }
 
-            currentGlobalIndex += 1 + dayMessages.size
+            // 3. Если в этом дне сообщения нет, добавляем количество сообщений дня к счетчику
+            currentUIIndex += dayMessages.size
         }
 
-        Log.d("ChatScroll", "ПЕРЕВЕРНУТЫЙ ЧАТ | Ищем ID: $targetReplyId. Реальный индекс для скролла: $foundIndex")
+        Log.d("ChatScroll", "ПРЯМОЙ ЧАТ | Ищем ID: $targetReplyId. Рассчитанный индекс UI: $finalUIIndex")
 
-        if (foundIndex != -1) {
+        if (finalUIIndex != -1) {
             coroutineScope.launch {
                 try {
-                    listState.scrollToItem(
-                        index = foundIndex,
-                        scrollOffset = -150
+                    // Добавляем задержку в 50-100 мс, чтобы дать закрыться клавиатуре/стейтам
+                    // и не дать первому LaunchedEffect перебить наш скролл
+                    kotlinx.coroutines.delay(100)
+
+                    listState.animateScrollToItem(
+                        index = finalUIIndex,
+                        scrollOffset = -150 // Оставляем аккуратный отступ сверху
                     )
+                    Log.d("ChatScroll", "Скролл на индекс $finalUIIndex выполнен")
                 } catch (e: Exception) {
-                    listState.scrollToItem(index = foundIndex, scrollOffset = -150)
+                    listState.scrollToItem(index = finalUIIndex, scrollOffset = -150)
                 }
             }
         } else {
             android.widget.Toast.makeText(context, "Сообщение не найдено", android.widget.Toast.LENGTH_SHORT).show()
         }
     }
-
-
-
-
 
     val hazeState = remember { HazeState() }
 
@@ -1282,7 +1289,7 @@ private fun MineReplyTextMessage(
                         )
                         .clickable{
                             onReplyMessageClick(
-                                message.messageId
+                                message.replyData?.messageId ?: ""
                             )
                         }
                         .padding(
