@@ -16,17 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -38,12 +34,10 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.hydrogram.R
 import com.example.hydrogram.presentation.navigation.NavigationData
-import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.BottomNavItem
 import com.example.hydrogram.ui.theme.SelectedItem
 import com.example.hydrogram.ui.theme.SfProText
-import com.google.android.material.shape.EdgeTreatment
 
 
 @Composable
