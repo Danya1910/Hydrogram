@@ -76,6 +76,7 @@ fun ChatInputField(
     isExpanded: Boolean,
     replyData: ReplyData,
     onCancelClick: () -> Unit,
+    replyName: String,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -103,6 +104,7 @@ fun ChatInputField(
             modifier = Modifier.weight(1f),
             isExpanded = isExpanded,
             replyData = replyData,
+            replyName = replyName,
             onCancelClick = {
                 onCancelClick()
             }
@@ -218,6 +220,7 @@ private fun MessageInputField(
     modifier: Modifier,
     isExpanded: Boolean,
     replyData: ReplyData,
+    replyName: String,
     onCancelClick: () -> Unit,
 ) {
 
@@ -272,7 +275,7 @@ private fun MessageInputField(
             ) {
                 ReplyMessageData(
                     replyData = replyData,
-                    replyName = "Debil",
+                    replyName = replyName,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .padding(bottom = 6.dp),
@@ -477,6 +480,7 @@ private fun ChatInputFieldPreview() {
         },
         isExpanded = false,
         replyData = ReplyData(),
+        replyName = "Debil",
         onCancelClick = {},
     )
 
