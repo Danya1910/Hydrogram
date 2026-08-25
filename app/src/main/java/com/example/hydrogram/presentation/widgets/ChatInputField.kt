@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.widgets
 
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -273,6 +274,7 @@ private fun MessageInputField(
                     animationSpec = tween(200)
                 )
             ) {
+                Log.d("ChatInput", "replyData: $replyData")
                 ReplyMessageData(
                     replyData = replyData,
                     replyName = replyName,

@@ -607,7 +607,22 @@ private fun Content(
                                     gifImageLoader = gifImageLoader,
                                     replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "sticker",
+                                            senderId = it.senderId,
+                                            content = it.stickerPath ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.senderId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            stickerPath = it.stickerPath,
+                                        )
                                     },
                                     onReplyMessageClick = { messageId ->
                                         scrollToMessage(messageId)
