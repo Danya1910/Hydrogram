@@ -844,6 +844,7 @@ private fun Content(
                                     replyData = currentMessageAnswer?.replyData,
                                 )
                             }
+                            currentMessageAnswer = null
                         }
                     },
                     onAttachClick = {
@@ -912,6 +913,7 @@ private fun Content(
                                 replyData = currentMessageAnswer?.replyData,
                             )
                         }
+                        currentMessageAnswer = null
                     },
                 )
             }
