@@ -75,7 +75,7 @@ fun ChatInputField(
     onAttachClick: () -> Unit,
     onStickerClick: () -> Unit,
     isExpanded: Boolean,
-    replyData: ReplyData,
+    replyData: ReplyData?,
     onCancelClick: () -> Unit,
     replyName: String,
 ) {
@@ -220,7 +220,7 @@ private fun MessageInputField(
     onStickerClick: () -> Unit,
     modifier: Modifier,
     isExpanded: Boolean,
-    replyData: ReplyData,
+    replyData: ReplyData?,
     replyName: String,
     onCancelClick: () -> Unit,
 ) {
@@ -332,7 +332,7 @@ private fun MessageInputField(
 
 @Composable
 private fun ReplyMessageData(
-    replyData: ReplyData,
+    replyData: ReplyData?,
     replyName: String,
     modifier: Modifier = Modifier,
     onCancelClick: () -> Unit,
@@ -363,8 +363,8 @@ private fun ReplyMessageData(
                 )
         )
         Spacer(modifier = Modifier.width(7.dp))
-        when (replyData.type) {
-            "sticker" -> {
+        when (replyData?.type) {
+            "image" -> {
                 Column(
                     verticalArrangement = Arrangement.Center,
                 ) {
@@ -378,7 +378,7 @@ private fun ReplyMessageData(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = "Стикер",
+                        text = "Фотография",
                         fontFamily = SfProText,
                         fontWeight = FontWeight.Normal,
                         fontSize = 15.sp,
@@ -428,7 +428,7 @@ private fun ReplyMessageData(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = "Фотография",
+                        text = "Стикер",
                         fontFamily = SfProText,
                         fontWeight = FontWeight.Normal,
                         fontSize = 15.sp,

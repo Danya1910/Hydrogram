@@ -489,12 +489,7 @@ private fun Content(
                     senderId = mineId,
                     chatId = chatId,
                     imageUri = uri,
-                    replyData = ReplyData(
-                        messageId = currentMessageAnswer!!.messageId,
-                        senderId = currentMessageAnswer!!.senderId,
-                        type = currentMessageAnswer!!.type,
-                        content = content,
-                    )
+                    replyData = currentMessageAnswer?.replyData,
                 )
             }
         }
@@ -597,7 +592,14 @@ private fun Content(
                                     context = context,
                                     gifImageLoader = gifImageLoader,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "sticker",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            stickerPath = it.stickerPath,
+                                        )
                                     }
                                 )
                             } else {
@@ -615,7 +617,7 @@ private fun Content(
                                         )
 
                                         currentMessageAnswer = Message.Sticker(
-                                            messageId = it.replyData?.senderId ?: "",
+                                            messageId = it.replyData?.messageId ?: "",
                                             senderId = it.replyData?.senderId ?: "",
                                             type = it.type,
                                             status = "sent",
@@ -634,14 +636,36 @@ private fun Content(
                                 MineImageMessage(
                                     message = message as Message.Image,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "image",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            image = it.image,
+                                        )
                                     }
                                 )
                             } else {
                                 MineReplyImageMessage(
                                     message = message as Message.Image,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "image",
+                                            senderId = it.senderId,
+                                            content = it.image ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            image = it.image,
+                                        )
                                     },
                                     replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                     onReplyMessageClick = { messageId ->
@@ -677,7 +701,14 @@ private fun Content(
                                     context = context,
                                     gifImageLoader = gifImageLoader,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "sticker",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            stickerPath = it.stickerPath,
+                                        )
                                     }
                                 )
                             } else {
@@ -687,7 +718,22 @@ private fun Content(
                                     gifImageLoader = gifImageLoader,
                                     replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "sticker",
+                                            senderId = it.senderId,
+                                            content = it.stickerPath ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            stickerPath = it.stickerPath,
+                                        )
                                     },
                                     onReplyMessageClick = { messageId ->
                                         scrollToMessage(messageId)
@@ -699,14 +745,36 @@ private fun Content(
                                 PenpalImageMessage(
                                     message = message as Message.Image,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "sticker",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            image = it.image,
+                                        )
                                     }
                                 )
                             } else {
                                 PenpalReplyImageMessage(
                                     message = message as Message.Image,
                                     onReply = {
-                                        currentMessageAnswer = it
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "image",
+                                            senderId = it.senderId,
+                                            content = it.image ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            image = it.image,
+                                        )
                                     },
                                     replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                     onReplyMessageClick = { messageId ->
@@ -780,12 +848,7 @@ private fun Content(
                                     senderId = mineId,
                                     chatId = chatId,
                                     text = messageText,
-                                    replyData = ReplyData(
-                                        messageId = currentMessageAnswer!!.messageId,
-                                        senderId = currentMessageAnswer!!.senderId,
-                                        type = currentMessageAnswer!!.type,
-                                        content = content,
-                                    )
+                                    replyData = currentMessageAnswer?.replyData,
                                 )
                             }
                         }
@@ -799,7 +862,7 @@ private fun Content(
                         isStickerWidgetVisible = !isStickerWidgetVisible
                     },
                     isExpanded = isExpanded,
-                    replyData = currentMessageAnswer?.replyData ?: ReplyData(),
+                    replyData = currentMessageAnswer?.replyData,
                     replyName = if (currentMessageAnswer?.replyData?.senderId == mineId) mineName else penpalName,
                     onCancelClick = {
                         currentMessageAnswer = null
@@ -853,12 +916,7 @@ private fun Content(
                                 senderId = mineId,
                                 chatId = chatId,
                                 stickerPath = stickerString,
-                                replyData = ReplyData(
-                                    messageId = currentMessageAnswer!!.messageId,
-                                    senderId = currentMessageAnswer!!.senderId,
-                                    type = currentMessageAnswer!!.type,
-                                    content = content,
-                                )
+                                replyData = currentMessageAnswer?.replyData,
                             )
                         }
                     },
