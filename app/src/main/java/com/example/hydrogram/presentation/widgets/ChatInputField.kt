@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
+import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
@@ -75,7 +76,7 @@ fun ChatInputField(
     onAttachClick: () -> Unit,
     onStickerClick: () -> Unit,
     isExpanded: Boolean,
-    replyData: ReplyData?,
+    replyMessage: Message?,
     onCancelClick: () -> Unit,
     replyName: String,
 ) {
@@ -104,7 +105,7 @@ fun ChatInputField(
             onStickerClick = onStickerClick,
             modifier = Modifier.weight(1f),
             isExpanded = isExpanded,
-            replyData = replyData,
+            replyMessage = replyMessage,
             replyName = replyName,
             onCancelClick = {
                 onCancelClick()
@@ -220,7 +221,7 @@ private fun MessageInputField(
     onStickerClick: () -> Unit,
     modifier: Modifier,
     isExpanded: Boolean,
-    replyData: ReplyData?,
+    replyMessage: Message?,
     replyName: String,
     onCancelClick: () -> Unit,
 ) {
@@ -274,9 +275,9 @@ private fun MessageInputField(
                     animationSpec = tween(200)
                 )
             ) {
-                Log.d("ChatInput", "replyData: $replyData")
+                Log.d("ChatInput", "replyMessage: $replyMessage")
                 ReplyMessageData(
-                    replyData = replyData,
+                    replyMessage = replyMessage,
                     replyName = replyName,
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
@@ -332,7 +333,7 @@ private fun MessageInputField(
 
 @Composable
 private fun ReplyMessageData(
-    replyData: ReplyData?,
+    replyMessage: Message?,
     replyName: String,
     modifier: Modifier = Modifier,
     onCancelClick: () -> Unit,
@@ -363,7 +364,7 @@ private fun ReplyMessageData(
                 )
         )
         Spacer(modifier = Modifier.width(7.dp))
-        when (replyData?.type) {
+        when (replyMessage?.type) {
             "image" -> {
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -402,16 +403,18 @@ private fun ReplyMessageData(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
-                        text = replyData.content,
-                        fontFamily = SfProText,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 15.sp,
-                        letterSpacing = -(0.23).sp,
-                        color = Color.Black,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    (replyMessage as Message.Text).text?.let {
+                        Text(
+                            text = it,
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
             }
             else -> {
@@ -465,25 +468,25 @@ private fun ChatInputFieldPreview() {
 
     var textState by remember { mutableStateOf("") }
 
-    ChatInputField(
-        inputText = textState,
-        onValueChange = { newValue ->
-            textState = newValue
-        },
-        onSendClick = {
-            println("Отправлено: $textState")
-            textState = ""
-        },
-        onAttachClick = {
-            println("Нажата скрепка")
-        },
-        onStickerClick = {
-
-        },
-        isExpanded = false,
-        replyData = ReplyData(),
-        replyName = "Debil",
-        onCancelClick = {},
-    )
+//    ChatInputField(
+//        inputText = textState,
+//        onValueChange = { newValue ->
+//            textState = newValue
+//        },
+//        onSendClick = {
+//            println("Отправлено: $textState")
+//            textState = ""
+//        },
+//        onAttachClick = {
+//            println("Нажата скрепка")
+//        },
+//        onStickerClick = {
+//
+//        },
+//        isExpanded = false,
+//        replyMessage = Message(),
+//        replyName = "Debil",
+//        onCancelClick = {},
+//    )
 
 }

@@ -496,7 +496,7 @@ private fun Content(
     }
 
     LaunchedEffect(currentMessageAnswer) {
-        Log.d("ChatScreen", currentMessageAnswer.toString())
+        Log.d("ChatScreen", "selected message: ${currentMessageAnswer.toString()}")
         if (currentMessageAnswer != null) {
             isExpanded = true
         } else {
@@ -592,14 +592,7 @@ private fun Content(
                                     context = context,
                                     gifImageLoader = gifImageLoader,
                                     onReply = {
-                                        currentMessageAnswer = Message.Sticker(
-                                            messageId = it.replyData?.messageId ?: "",
-                                            senderId = it.replyData?.senderId ?: "",
-                                            type = "sticker",
-                                            status = "sent",
-                                            timestamp = System.currentTimeMillis(),
-                                            stickerPath = it.stickerPath,
-                                        )
+                                        currentMessageAnswer = it
                                     }
                                 )
                             } else {
@@ -612,13 +605,13 @@ private fun Content(
                                         val newReplyData = ReplyData(
                                             messageId = it.messageId,
                                             type = "sticker",
-                                            senderId = it.senderId,
+                                            senderId = it.replyData?.senderId ?: "",
                                             content = it.stickerPath ?: "",
                                         )
 
                                         currentMessageAnswer = Message.Sticker(
                                             messageId = it.replyData?.messageId ?: "",
-                                            senderId = it.replyData?.senderId ?: "",
+                                            senderId = it.senderId,
                                             type = it.type,
                                             status = "sent",
                                             timestamp = System.currentTimeMillis(),
@@ -653,13 +646,13 @@ private fun Content(
                                         val newReplyData = ReplyData(
                                             messageId = it.messageId,
                                             type = "image",
-                                            senderId = it.senderId,
+                                            senderId = it.replyData?.senderId ?: "",
                                             content = it.image ?: "",
                                         )
 
                                         currentMessageAnswer = Message.Image(
                                             messageId = it.replyData?.messageId ?: "",
-                                            senderId = it.replyData?.senderId ?: "",
+                                            senderId = it.senderId,
                                             type = it.type,
                                             status = "sent",
                                             timestamp = System.currentTimeMillis(),
@@ -721,13 +714,13 @@ private fun Content(
                                         val newReplyData = ReplyData(
                                             messageId = it.messageId,
                                             type = "sticker",
-                                            senderId = it.senderId,
+                                            senderId = it.replyData?.senderId ?: "",
                                             content = it.stickerPath ?: "",
                                         )
 
                                         currentMessageAnswer = Message.Sticker(
                                             messageId = it.replyData?.messageId ?: "",
-                                            senderId = it.replyData?.senderId ?: "",
+                                            senderId = it.senderId,
                                             type = it.type,
                                             status = "sent",
                                             timestamp = System.currentTimeMillis(),
@@ -862,8 +855,8 @@ private fun Content(
                         isStickerWidgetVisible = !isStickerWidgetVisible
                     },
                     isExpanded = isExpanded,
-                    replyData = currentMessageAnswer?.replyData,
-                    replyName = if (currentMessageAnswer?.replyData?.senderId == mineId) mineName else penpalName,
+                    replyMessage = currentMessageAnswer,
+                    replyName = if (currentMessageAnswer?.senderId == mineId) mineName else penpalName,
                     onCancelClick = {
                         currentMessageAnswer = null
                         isExpanded = false
