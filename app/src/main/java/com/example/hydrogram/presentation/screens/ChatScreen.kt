@@ -793,7 +793,7 @@ private fun Content(
                     },
                     isExpanded = isExpanded,
                     replyData = currentMessageAnswer?.replyData ?: ReplyData(),
-                    replyName = if (currentMessageAnswer.replyData?.senderId == mineId) mineName else penpalName,
+                    replyName = if (currentMessageAnswer?.replyData?.senderId == mineId) mineName else penpalName,
                     onCancelClick = {
                         currentMessageAnswer = null
                         isExpanded = false
