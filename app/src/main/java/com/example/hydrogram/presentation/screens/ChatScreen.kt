@@ -400,6 +400,8 @@ private fun Content(
 
     var currentMessageAnswer by remember { mutableStateOf<Message?>(null) }
 
+    var isExpanded by remember { mutableStateOf(false) }
+
 
     if (!hasInitializedUnreadId && messages.isNotEmpty()) {
         val firstUnread = messages
@@ -508,6 +510,11 @@ private fun Content(
 
     LaunchedEffect(currentMessageAnswer) {
         Log.d("ChatScreen", currentMessageAnswer.toString())
+        if (currentMessageAnswer != null) {
+            isExpanded = true
+        } else {
+            isExpanded = false
+        }
     }
 
     Box(
@@ -783,6 +790,12 @@ private fun Content(
                     },
                     onStickerClick = {
                         isStickerWidgetVisible = !isStickerWidgetVisible
+                    },
+                    isExpanded = isExpanded,
+                    replyData = currentMessageAnswer?.replyData ?: ReplyData(),
+                    onCancelClick = {
+                        currentMessageAnswer = null
+                        isExpanded = false
                     }
                 )
             }
@@ -1018,6 +1031,7 @@ private fun MineReplyTextMessagePreview() {
         }
     }
 }
+
 fun decodeBase64Image(imageData: String?): Bitmap? {
     if (imageData.isNullOrBlank() || !imageData.startsWith("data:image/jpeg;base64,")) {
         return null
