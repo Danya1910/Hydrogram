@@ -339,25 +339,19 @@ private fun Content(
         var finalUIIndex = -1
         var currentUIIndex = 0
 
-        // Идем строго по порядку отрисовки вашего LazyColumn (СВЕРХУ ВНИЗ)
         for ((dayTimestamp, dayMessages) in groupedMessages) {
 
-            // 1. Учитываем заголовок даты (item key = "date_$dayTimestamp")
             if (finalUIIndex == -1) {
-                // Если мы еще не нашли сообщение, этот заголовок занимает +1 позицию в UI
                 currentUIIndex++
             }
 
-            // 2. Ищем сообщение среди сообщений этого дня
             val indexInDay = dayMessages.indexOfFirst { it.messageId.toString() == targetReplyId }
 
             if (indexInDay != -1) {
-                // Нашли! Фиксируем итоговый индекс элемента в LazyColumn
                 finalUIIndex = currentUIIndex + indexInDay
                 break
             }
 
-            // 3. Если в этом дне сообщения нет, добавляем количество сообщений дня к счетчику
             currentUIIndex += dayMessages.size
         }
 
@@ -369,13 +363,11 @@ private fun Content(
         if (finalUIIndex != -1) {
             coroutineScope.launch {
                 try {
-                    // Добавляем задержку в 50-100 мс, чтобы дать закрыться клавиатуре/стейтам
-                    // и не дать первому LaunchedEffect перебить наш скролл
                     kotlinx.coroutines.delay(100)
 
                     listState.animateScrollToItem(
                         index = finalUIIndex,
-                        scrollOffset = -150 // Оставляем аккуратный отступ сверху
+                        scrollOffset = -150
                     )
                     Log.d("ChatScroll", "Скролл на индекс $finalUIIndex выполнен")
                 } catch (e: Exception) {
