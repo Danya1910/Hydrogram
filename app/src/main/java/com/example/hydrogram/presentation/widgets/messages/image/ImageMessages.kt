@@ -200,8 +200,8 @@ fun PenpalImageMessage(
 
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomStart)
-                        .padding(start = 7.dp, bottom = 7.dp)
+                        .align(Alignment.BottomEnd)
+                        .padding(end = 7.dp, bottom = 7.dp)
                         .background(
                             color = Color.Black.copy(alpha = 0.5f),
                             shape = RoundedCornerShape(10.dp)
@@ -475,7 +475,7 @@ fun PenpalReplyImageMessage(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(finalHeight) // Высота картинки
+                        .height(finalHeight)
                         .clickable { /* Открыть в полном размере */ }
                 ) {
                     if (isBase64) {
@@ -501,11 +501,10 @@ fun PenpalReplyImageMessage(
                         )
                     }
 
-                    // Округлая плашка времени поверх фотографии (в левом нижнем углу)
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .padding(start = 8.dp, bottom = 8.dp)
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 8.dp, bottom = 8.dp)
                             .background(
                                 color = Color.Black.copy(alpha = 0.45f),
                                 shape = RoundedCornerShape(10.dp)
@@ -1006,21 +1005,42 @@ fun MineReplyImageMessage(
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(bottom = 8.dp, end = 8.dp)
+                            .padding(end = 7.dp, bottom = 7.dp)
                             .background(
-                                color = Color.Black.copy(alpha = 0.45f),
+                                color = Color.Black.copy(alpha = 0.5f),
                                 shape = RoundedCornerShape(10.dp)
                             )
                             .padding(horizontal = 8.dp, vertical = 3.dp)
                     ) {
-                        Text(
-                            text = formattedTime,
-                            fontFamily = SfProText,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 11.sp,
-                            color = Color.White,
-                            letterSpacing = (-0.08).sp
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.End,
+                        ) {
+                            Text(
+                                text = formattedTime,
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 11.sp,
+                                color = Color.White,
+                                letterSpacing = (-0.08).sp,
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            if (message.status == "read") {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_read_status),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            } else {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_sent_status),
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }

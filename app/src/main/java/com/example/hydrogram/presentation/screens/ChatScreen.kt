@@ -507,6 +507,23 @@ private fun Content(
         }
     }
 
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty()) {
+            val lastMessage = messages.lastOrNull()
+            if (lastMessage?.senderId == mineId) {
+                kotlinx.coroutines.delay(50)
+
+                val totalItems = listState.layoutInfo.totalItemsCount
+                if (totalItems > 0) {
+                    listState.animateScrollToItem(
+                        index = totalItems - 1,
+                        scrollOffset = 0
+                    )
+                }
+            }
+        }
+    }
+
     val animatedBottomPadding  by animateDpAsState(
         targetValue = if (isExpanded) 54.dp else 0.dp,
         animationSpec = tween(durationMillis = 300),
