@@ -51,6 +51,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -505,10 +507,41 @@ private fun Content(
         }
     }
 
-    val bottomPadding by animateDpAsState(
+    val animatedBottomPadding  by animateDpAsState(
         targetValue = if (isExpanded) 54.dp else 0.dp,
         animationSpec = tween(durationMillis = 300),
     )
+
+    val isAtBottom by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleItems = layoutInfo.visibleItemsInfo
+            val totalItemsCount = layoutInfo.totalItemsCount
+
+            if (totalItemsCount == 0) true
+            else {
+                val lastVisibleItem = visibleItems.lastOrNull()
+                lastVisibleItem != null && lastVisibleItem.index >= totalItemsCount - 2
+            }
+        }
+    }
+
+    val density = LocalDensity.current
+
+    LaunchedEffect(isExpanded, messages.size) {
+        if (isAtBottom && messages.isNotEmpty()) {
+            kotlinx.coroutines.delay(100)
+
+            val totalItems = listState.layoutInfo.totalItemsCount
+            if (totalItems > 0) {
+                val offsetInPx = with(density) { 5.dp.roundToPx() }
+                listState.animateScrollToItem(
+                    index = totalItems - 1,
+                    scrollOffset = -offsetInPx
+                )
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -529,168 +562,57 @@ private fun Content(
             }
         }
 
-        Box(
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(
+                top = 86.dp,
+                bottom = 75.dp + animatedBottomPadding,
+            ),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(
-                    bottom = bottomPadding
-                )
+                .haze(hazeState)
+                .clickable(
+                    enabled = isStickerWidgetVisible,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null
+                ) {
+                    if (isStickerWidgetVisible) {
+                        isStickerWidgetVisible = false
+                    }
+                },
         ) {
-            LazyColumn(
-                state = listState,
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = PaddingValues(
-                    top = 86.dp,
-                    bottom = 75.dp,
-//                bottom = dynamicBottomPadding,
-                ),
-                modifier = Modifier
-                    .fillMaxSize()
-                    .haze(hazeState)
-                    .clickable(
-                        enabled = isStickerWidgetVisible,
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null
-                    ) {
-                        if (isStickerWidgetVisible) {
-                            isStickerWidgetVisible = false
-                        }
-                    },
-            ) {
-                groupedMessages.forEach { (dayTimestamp, dayMessages) ->
+            groupedMessages.forEach { (dayTimestamp, dayMessages) ->
 
 
-                    item(key = "date_$dayTimestamp") {
-                        DateSeparator(text = formatHeaderDate(dayTimestamp))
+                item(key = "date_$dayTimestamp") {
+                    DateSeparator(text = formatHeaderDate(dayTimestamp))
+                }
+
+                items(
+                    items = dayMessages,
+                    key = { message -> message.messageId }
+                ) { message ->
+
+                    if (message.messageId == firstUnreadMessageId) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        UnreadMessageSeparator()
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
 
-                    items(
-                        items = dayMessages,
-                        key = { message -> message.messageId }
-                    ) { message ->
-
-                        if (message.messageId == firstUnreadMessageId) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            UnreadMessageSeparator()
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-
-                        if (message.senderId == mineId) {
-                            if (message.type == "text") {
-                                if (message.replyData == null) {
-                                    MineTextMessage(
-                                        message = message as Message.Text,
-                                        onReply = {
-                                            currentMessageAnswer = it
-                                            Log.d("ChatScreen", it.toString())
-                                        }
-                                    )
-                                } else {
-                                    MineReplyTextMessage(
-                                        message = message as Message.Text,
-                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                        onReply = {
-                                            currentMessageAnswer = it
-                                        },
-                                        onReplyMessageClick = { messageId ->
-                                            scrollToMessage(messageId)
-                                        }
-                                    )
-                                }
-                            } else if (message.type == "sticker") {
-                                if (message.replyData == null) {
-                                    MineStickerMessage(
-                                        sticker = message as Message.Sticker,
-                                        context = context,
-                                        gifImageLoader = gifImageLoader,
-                                        onReply = {
-                                            currentMessageAnswer = it
-                                        }
-                                    )
-                                } else {
-                                    MineStickerReplyMessage(
-                                        sticker = message as Message.Sticker,
-                                        context = context,
-                                        gifImageLoader = gifImageLoader,
-                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                        onReply = {
-                                            val newReplyData = ReplyData(
-                                                messageId = it.messageId,
-                                                type = "sticker",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                content = it.stickerPath ?: "",
-                                            )
-
-                                            currentMessageAnswer = Message.Sticker(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.senderId,
-                                                type = it.type,
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                replyData = newReplyData,
-                                                stickerPath = it.stickerPath,
-                                            )
-                                        },
-                                        onReplyMessageClick = { messageId ->
-                                            scrollToMessage(messageId)
-                                        }
-                                    )
-                                }
+                    if (message.senderId == mineId) {
+                        if (message.type == "text") {
+                            if (message.replyData == null) {
+                                MineTextMessage(
+                                    message = message as Message.Text,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                        Log.d("ChatScreen", it.toString())
+                                    }
+                                )
                             } else {
-                                if (message.replyData == null) {
-                                    MineImageMessage(
-                                        message = message as Message.Image,
-                                        onReply = {
-                                            currentMessageAnswer = Message.Image(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                type = "image",
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                image = it.image,
-                                            )
-                                        }
-                                    )
-                                } else {
-                                    MineReplyImageMessage(
-                                        message = message as Message.Image,
-                                        onReply = {
-                                            val newReplyData = ReplyData(
-                                                messageId = it.messageId,
-                                                type = "image",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                content = it.image ?: "",
-                                            )
-
-                                            currentMessageAnswer = Message.Image(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.senderId,
-                                                type = it.type,
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                replyData = newReplyData,
-                                                image = it.image,
-                                            )
-                                        },
-                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                        onReplyMessageClick = { messageId ->
-                                            scrollToMessage(messageId)
-                                        }
-                                    )
-                                }
-                            }
-                        } else {
-                            if (message.type == "text") {
-                                if (message.replyData == null) {
-                                    PenpalTextMessage(
-                                        message = message as Message.Text,
-                                        onReply = {
-                                            currentMessageAnswer = message
-                                            Log.d("ChatScreen", message.toString())
-                                        }
-                                    )
-                                } else PenpalReplyTextMessage(
+                                MineReplyTextMessage(
                                     message = message as Message.Text,
                                     replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                     onReply = {
@@ -700,119 +622,200 @@ private fun Content(
                                         scrollToMessage(messageId)
                                     }
                                 )
-                            } else if (message.type == "sticker") {
-                                if (message.replyData == null) {
-                                    PenpalStickerMessage(
-                                        sticker = message as Message.Sticker,
-                                        context = context,
-                                        gifImageLoader = gifImageLoader,
-                                        onReply = {
-                                            currentMessageAnswer = Message.Sticker(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                type = "sticker",
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                stickerPath = it.stickerPath,
-                                            )
-                                        }
-                                    )
-                                } else {
-                                    PenpalStickerReplyMessage(
-                                        sticker = message as Message.Sticker,
-                                        context = context,
-                                        gifImageLoader = gifImageLoader,
-                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                        onReply = {
-                                            val newReplyData = ReplyData(
-                                                messageId = it.messageId,
-                                                type = "sticker",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                content = it.stickerPath ?: "",
-                                            )
-
-                                            currentMessageAnswer = Message.Sticker(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.senderId,
-                                                type = it.type,
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                replyData = newReplyData,
-                                                stickerPath = it.stickerPath,
-                                            )
-                                        },
-                                        onReplyMessageClick = { messageId ->
-                                            scrollToMessage(messageId)
-                                        }
-                                    )
-                                }
+                            }
+                        } else if (message.type == "sticker") {
+                            if (message.replyData == null) {
+                                MineStickerMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    onReply = {
+                                        currentMessageAnswer = it
+                                    }
+                                )
                             } else {
-                                if (message.replyData == null) {
-                                    PenpalImageMessage(
-                                        message = message as Message.Image,
-                                        onReply = {
-                                            currentMessageAnswer = Message.Image(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                type = "sticker",
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                image = it.image,
-                                            )
-                                        }
-                                    )
-                                } else {
-                                    PenpalReplyImageMessage(
-                                        message = message as Message.Image,
-                                        onReply = {
-                                            val newReplyData = ReplyData(
-                                                messageId = it.messageId,
-                                                type = "image",
-                                                senderId = it.senderId,
-                                                content = it.image ?: "",
-                                            )
+                                MineStickerReplyMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReply = {
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "sticker",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            content = it.stickerPath ?: "",
+                                        )
 
-                                            currentMessageAnswer = Message.Image(
-                                                messageId = it.replyData?.messageId ?: "",
-                                                senderId = it.replyData?.senderId ?: "",
-                                                type = it.type,
-                                                status = "sent",
-                                                timestamp = System.currentTimeMillis(),
-                                                replyData = newReplyData,
-                                                image = it.image,
-                                            )
-                                        },
-                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                        onReplyMessageClick = { messageId ->
-                                            scrollToMessage(messageId)
-                                        }
-                                    )
-                                }
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.senderId,
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            stickerPath = it.stickerPath,
+                                        )
+                                    },
+                                    onReplyMessageClick = { messageId ->
+                                        scrollToMessage(messageId)
+                                    }
+                                )
+                            }
+                        } else {
+                            if (message.replyData == null) {
+                                MineImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "image",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            image = it.image,
+                                        )
+                                    }
+                                )
+                            } else {
+                                MineReplyImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "image",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            content = it.image ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.senderId,
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            image = it.image,
+                                        )
+                                    },
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReplyMessageClick = { messageId ->
+                                        scrollToMessage(messageId)
+                                    }
+                                )
                             }
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
-                        AnimatedVisibility(
-                            visible = isExpanded,
-                            enter = fadeIn(
-                                animationSpec = tween(300, delayMillis = 50)
-                            ) + slideInVertically(
-                                initialOffsetY = { it },
-                                animationSpec = tween(300, delayMillis = 50)
-                            ),
-                            exit = fadeOut(
-                                animationSpec = tween(300)
-                            ) + slideOutVertically(
-                                targetOffsetY = { it },
-                                animationSpec = tween(300)
-                            ),
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(54.dp)
+                    } else {
+                        if (message.type == "text") {
+                            if (message.replyData == null) {
+                                PenpalTextMessage(
+                                    message = message as Message.Text,
+                                    onReply = {
+                                        currentMessageAnswer = message
+                                        Log.d("ChatScreen", message.toString())
+                                    }
+                                )
+                            } else PenpalReplyTextMessage(
+                                message = message as Message.Text,
+                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                onReply = {
+                                    currentMessageAnswer = it
+                                },
+                                onReplyMessageClick = { messageId ->
+                                    scrollToMessage(messageId)
+                                }
                             )
+                        } else if (message.type == "sticker") {
+                            if (message.replyData == null) {
+                                PenpalStickerMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    onReply = {
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "sticker",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            stickerPath = it.stickerPath,
+                                        )
+                                    }
+                                )
+                            } else {
+                                PenpalStickerReplyMessage(
+                                    sticker = message as Message.Sticker,
+                                    context = context,
+                                    gifImageLoader = gifImageLoader,
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReply = {
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "sticker",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            content = it.stickerPath ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Sticker(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.senderId,
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            stickerPath = it.stickerPath,
+                                        )
+                                    },
+                                    onReplyMessageClick = { messageId ->
+                                        scrollToMessage(messageId)
+                                    }
+                                )
+                            }
+                        } else {
+                            if (message.replyData == null) {
+                                PenpalImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = "sticker",
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            image = it.image,
+                                        )
+                                    }
+                                )
+                            } else {
+                                PenpalReplyImageMessage(
+                                    message = message as Message.Image,
+                                    onReply = {
+                                        val newReplyData = ReplyData(
+                                            messageId = it.messageId,
+                                            type = "image",
+                                            senderId = it.senderId,
+                                            content = it.image ?: "",
+                                        )
+
+                                        currentMessageAnswer = Message.Image(
+                                            messageId = it.replyData?.messageId ?: "",
+                                            senderId = it.replyData?.senderId ?: "",
+                                            type = it.type,
+                                            status = "sent",
+                                            timestamp = System.currentTimeMillis(),
+                                            replyData = newReplyData,
+                                            image = it.image,
+                                        )
+                                    },
+                                    replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                    onReplyMessageClick = { messageId ->
+                                        scrollToMessage(messageId)
+                                    }
+                                )
+                            }
                         }
                     }
+                    Spacer(modifier = Modifier.height(4.dp))
                 }
             }
         }
