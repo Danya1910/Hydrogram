@@ -79,6 +79,7 @@ fun ChatInputField(
     replyMessage: Message?,
     onCancelClick: () -> Unit,
     replyName: String,
+    onReplyMessageClick: (String) -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -109,6 +110,9 @@ fun ChatInputField(
             replyName = replyName,
             onCancelClick = {
                 onCancelClick()
+            },
+            onReplyMessageClick = { messageId ->
+                onReplyMessageClick(messageId)
             }
         )
         Spacer(modifier = Modifier.width(6.dp))
@@ -224,6 +228,7 @@ private fun MessageInputField(
     replyMessage: Message?,
     replyName: String,
     onCancelClick: () -> Unit,
+    onReplyMessageClick: (String) -> Unit,
 ) {
 
     val inputHeight by animateDpAsState(
@@ -283,6 +288,9 @@ private fun MessageInputField(
                         .padding(horizontal = 8.dp)
                         .padding(bottom = 6.dp),
                     onCancelClick = { onCancelClick() },
+                    onReplyMessageClick = { messageId ->
+                        onReplyMessageClick(messageId)
+                    }
                 )
             }
             BasicTextField(
@@ -337,6 +345,7 @@ private fun ReplyMessageData(
     replyName: String,
     modifier: Modifier = Modifier,
     onCancelClick: () -> Unit,
+    onReplyMessageClick: (String) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -350,6 +359,7 @@ private fun ReplyMessageData(
                 shape = RoundedCornerShape(4.dp)
             )
             .clickable {
+                onReplyMessageClick(replyMessage?.messageId ?: "")
             }
             .padding(
                 end = 8.dp
@@ -390,6 +400,7 @@ private fun ReplyMessageData(
                     )
                 }
             }
+
             "text" -> {
                 Column(
                     verticalArrangement = Arrangement.Center
@@ -417,6 +428,7 @@ private fun ReplyMessageData(
                     }
                 }
             }
+
             else -> {
                 Column(
                     verticalArrangement = Arrangement.Center

@@ -899,6 +899,9 @@ private fun Content(
                     onCancelClick = {
                         currentMessageAnswer = null
                         isExpanded = false
+                    },
+                    onReplyMessageClick = { messageId ->
+                        scrollToMessage(messageId)
                     }
                 )
             }
