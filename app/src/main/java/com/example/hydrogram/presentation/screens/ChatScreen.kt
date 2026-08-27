@@ -488,11 +488,19 @@ private fun Content(
                         ""
                     }
                 }
+
+                val replyData = currentMessageAnswer?.replyData ?: ReplyData(
+                    messageId = currentMessageAnswer!!.messageId,
+                    senderId = currentMessageAnswer!!.senderId,
+                    type = currentMessageAnswer!!.type,
+                    content = content,
+                )
+
                 chatViewModel.sendImage(
                     senderId = mineId,
                     chatId = chatId,
                     imageUri = uri,
-                    replyData = currentMessageAnswer?.replyData,
+                    replyData = replyData,
                 )
             }
         }
@@ -524,7 +532,7 @@ private fun Content(
         }
     }
 
-    val animatedBottomPadding  by animateDpAsState(
+    val animatedBottomPadding by animateDpAsState(
         targetValue = if (isExpanded) 54.dp else 0.dp,
         animationSpec = tween(durationMillis = 300),
     )
@@ -892,11 +900,17 @@ private fun Content(
                                         ""
                                     }
                                 }
+                                val replyData = ReplyData(
+                                    messageId = currentMessageAnswer!!.messageId,
+                                    senderId = currentMessageAnswer!!.senderId,
+                                    type = currentMessageAnswer!!.type,
+                                    content = content,
+                                )
                                 chatViewModel.sendText(
                                     senderId = mineId,
                                     chatId = chatId,
                                     text = messageText,
-                                    replyData = currentMessageAnswer?.replyData,
+                                    replyData = replyData,
                                 )
                             }
                             currentMessageAnswer = null
@@ -964,11 +978,19 @@ private fun Content(
                                     ""
                                 }
                             }
+
+                            val replyData = currentMessageAnswer?.replyData ?: ReplyData(
+                                messageId = currentMessageAnswer!!.messageId,
+                                senderId = currentMessageAnswer!!.senderId,
+                                type = currentMessageAnswer!!.type,
+                                content = content,
+                            )
+
                             chatViewModel.sendSticker(
                                 senderId = mineId,
                                 chatId = chatId,
                                 stickerPath = stickerString,
-                                replyData = currentMessageAnswer?.replyData,
+                                replyData = replyData,
                             )
                         }
                         currentMessageAnswer = null
