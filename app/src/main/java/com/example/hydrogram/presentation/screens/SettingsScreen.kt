@@ -272,58 +272,6 @@ private fun Content(
                     )
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                FakeMenuRow(
-                    items = listOf(
-                        MenuRowItem(
-                            title = "Избранное",
-                            icon = R.drawable.ic_saved_messages,
-                            onClick = {},
-                            gradient = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF189CFF).copy(alpha = 0.7f),
-                                    Color(0xFF0D7FF4).copy(alpha = 0.9f),
-                                    Color(0xFF025DD1).copy(alpha = 1f),
-                                )
-                            )
-                        ),
-                        MenuRowItem(
-                            title = "Недавние звонки",
-                            icon = R.drawable.ic_recent_calls,
-                            onClick = {},
-                            gradient = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF48DB6D).copy(alpha = 0.7f),
-                                    Color(0xFF2BBE50).copy(alpha = 0.9f),
-                                    Color(0xFF06992B).copy(alpha = 1f),
-                                )
-                            )
-                        ),
-                        MenuRowItem(
-                            title = "Устройства",
-                            icon = R.drawable.ic_devices,
-                            onClick = {},
-                            gradient = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFFFFA33E).copy(alpha = 0.7f),
-                                    Color(0xFFFF9C37).copy(alpha = 0.9f),
-                                    Color(0xFFFF902B).copy(alpha = 1f),
-                                )
-                            )
-                        ),
-                        MenuRowItem(
-                            title = "Папки с чатами",
-                            icon = R.drawable.ic_chat_folders,
-                            onClick = {},
-                            gradient = Brush.verticalGradient(
-                                colors = listOf(
-                                    Color(0xFF17D4FC).copy(alpha = 0.7f),
-                                    Color(0xFF0CB5DD).copy(alpha = 0.9f),
-                                    Color(0xFF0295BD).copy(alpha = 1f),
-                                )
-                            )
-                        )
-                    )
-                )
                 Spacer(
                     modifier = Modifier.windowInsetsBottomHeight(
                         WindowInsets.navigationBars.add(WindowInsets(bottom = 74.dp))
