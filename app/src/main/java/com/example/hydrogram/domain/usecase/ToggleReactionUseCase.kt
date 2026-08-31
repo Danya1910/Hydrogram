@@ -9,8 +9,14 @@ class ToggleReactionUseCase @Inject constructor(
 
     suspend operator fun invoke(
         reaction: String?,
-    ) : Result<Unit> {
-        return chatRepository.toggleReaction(reaction)
+        chatId: String,
+        messageId: String,
+    ): Result<Unit> {
+        return chatRepository.toggleReaction(
+            reaction = reaction,
+            chatId = chatId,
+            messageId = messageId,
+        )
     }
 
 }

@@ -20,7 +20,9 @@ interface ChatRepository {
     ) : Result<Unit>
 
     suspend fun toggleReaction(
-        reaction: String?
+        reaction: String?,
+        chatId: String,
+        messageId: String,
     ) : Result<Unit>
 
 
