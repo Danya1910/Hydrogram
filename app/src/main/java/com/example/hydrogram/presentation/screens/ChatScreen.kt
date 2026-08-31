@@ -650,6 +650,13 @@ private fun Content(
                                             messageId = message.messageId,
                                         )
                                     },
+                                    onReactionClick = {
+                                        chatViewModel.toggleReaction(
+                                            reaction = null,
+                                            chatId = chatId,
+                                            messageId = message.messageId,
+                                        )
+                                    },
                                     mineId = mineId,
                                 )
                             } else {

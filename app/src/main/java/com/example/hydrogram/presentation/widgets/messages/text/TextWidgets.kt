@@ -58,6 +58,7 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
+import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
@@ -71,6 +72,7 @@ fun MineTextMessage(
     message: Message.Text,
     onReply: (Message.Text) -> Unit,
     onDoubleClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
     mineId: String,
 ) {
 
@@ -158,49 +160,35 @@ fun MineTextMessage(
         ) {
             message.text?.length?.let {
                 if (it <= 20) {
-                    Column {
+                    Column(
+                            modifier = Modifier
+                                .padding(
+                                    top = 5.dp,
+                                    start = 10.dp,
+                                    end = 68.dp,
+                                    bottom = 5.dp
+                                )
+                    ) {
                         Text(
                             text = message.text,
                             fontFamily = SfProText,
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Black,
-                            modifier = Modifier
-                                .padding(
-                                    top = 5.dp,
-                                    start = 10.dp,
-                                    end = 62.dp,
-                                    bottom = 5.dp
-                                )
+
                         )
                         AnimatedVisibility(
                             visible = haveReaction,
                             enter = fadeIn() + expandVertically(),
                             exit = fadeOut() + shrinkVertically(),
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .height(32.dp)
-                                    .clip(
-                                        shape = CircleShape
-                                    )
-                                    .background(
-                                        color = Green
-                                    )
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_plus),
-                                        contentDescription = null,
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(25.dp)
-                                    )
+                            ReactionWidget(
+                                reaction = "123",
+                                color = Green,
+                                onReactionClick = {
+                                    onReactionClick()
                                 }
-                            }
+                            )
                         }
                     }
                     Row(
@@ -257,29 +245,7 @@ fun MineTextMessage(
                             enter = fadeIn() + expandVertically(),
                             exit = fadeOut() + shrinkVertically(),
                         ) {
-                            Box(
-                                modifier = Modifier
-                                    .height(32.dp)
-                                    .clip(
-                                        shape = CircleShape
-                                    )
-                                    .background(
-                                        color = Green
-                                    )
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .padding(horizontal = 8.dp)
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_clip),
-                                        contentDescription = null,
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(25.dp)
-                                    )
-                                }
-                            }
+
                         }
                     }
                     Row(
