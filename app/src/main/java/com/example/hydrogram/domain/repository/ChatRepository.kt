@@ -19,5 +19,9 @@ interface ChatRepository {
         status: String,
     ) : Result<Unit>
 
+    suspend fun toggleReaction(
+        reaction: String?
+    ) : Result<Unit>
+
 
 }
