@@ -636,13 +636,21 @@ private fun Content(
                                         Log.d("ChatScreen", it.toString())
                                     },
                                     onDoubleClick = {
-                                        Log.d("ChatScreen", "chatId: $chatId, messageId: ${message.messageId}")
+                                        Log.d(
+                                            "ChatScreen",
+                                            "chatId: $chatId, messageId: ${message.messageId}"
+                                        )
+                                        Log.d(
+                                            "ChatScreen",
+                                            "have mine Id: $it"
+                                        )
                                         chatViewModel.toggleReaction(
-                                            reaction = "123",
+                                            reaction = if (it) null else "123",
                                             chatId = chatId,
                                             messageId = message.messageId,
                                         )
-                                    }
+                                    },
+                                    mineId = mineId,
                                 )
                             } else {
                                 MineReplyTextMessage(

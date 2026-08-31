@@ -70,7 +70,8 @@ import kotlin.math.roundToInt
 fun MineTextMessage(
     message: Message.Text,
     onReply: (Message.Text) -> Unit,
-    onDoubleClick: () -> Unit
+    onDoubleClick: (Boolean) -> Unit,
+    mineId: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -86,7 +87,12 @@ fun MineTextMessage(
         label = "SwipeOffset"
     )
 
-    val haveReaction = message.reactions != null
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
 
 
     BoxWithConstraints(
@@ -144,7 +150,9 @@ fun MineTextMessage(
                 .combinedClickable(
                     onClick = {},
                     onDoubleClick = {
-                        onDoubleClick()
+                        onDoubleClick(
+                            message.reactions?.get(mineId) != null
+                        )
                     }
                 )
         ) {
@@ -265,7 +273,7 @@ fun MineTextMessage(
                                         .padding(horizontal = 8.dp)
                                 ) {
                                     Icon(
-                                        painter = painterResource(R.drawable.ic_plus),
+                                        painter = painterResource(R.drawable.ic_clip),
                                         contentDescription = null,
                                         tint = Color.Black,
                                         modifier = Modifier.size(25.dp)

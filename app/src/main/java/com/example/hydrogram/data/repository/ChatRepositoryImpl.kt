@@ -56,6 +56,7 @@ class ChatRepositoryImpl @Inject constructor(
                         timestamp = message.timestamp,
                         status = message.status,
                         type = "sticker",
+                        reactions = null,
                         replyData = message.replyData,
                         stickerPath = message.stickerPath,
                     )
@@ -68,6 +69,7 @@ class ChatRepositoryImpl @Inject constructor(
                         timestamp = message.timestamp,
                         status = message.status,
                         type = "text",
+                        reactions = null,
                         replyData = message.replyData,
                         text = message.text,
                     )
@@ -80,6 +82,7 @@ class ChatRepositoryImpl @Inject constructor(
                         timestamp = message.timestamp,
                         status = message.status,
                         type = "image",
+                        reactions = null,
                         replyData = message.replyData,
                         image = message.image,
                     )
