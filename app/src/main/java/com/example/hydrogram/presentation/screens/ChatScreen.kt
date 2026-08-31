@@ -114,6 +114,7 @@ import coil3.request.crossfade
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.widgets.MessageActionMenu
 import com.example.hydrogram.presentation.widgets.messages.image.MineImageMessage
 import com.example.hydrogram.presentation.widgets.messages.image.MineReplyImageMessage
 import com.example.hydrogram.presentation.widgets.messages.image.PenpalImageMessage
@@ -912,18 +913,14 @@ private fun Content(
             Popup(
                 alignment = Alignment.TopStart,
                 offset = IntOffset(
-                    state.position.x + state.size.width / 2,
-                    state.position.y - 20,
+                    x = state.position.x + state.size.width / 2,
+                    y = state.position.y - 52,
                 ),
                 onDismissRequest = {
                     contextMenuState = null
                 }
             ) {
-                Text(
-                    text = "Context menu added",
-                    fontSize = 18.sp,
-                    color = Blue,
-                )
+                MessageActionMenu()
             }
         }
 
