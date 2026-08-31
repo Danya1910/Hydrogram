@@ -11,6 +11,7 @@ import com.example.hydrogram.domain.usecase.ChangeMessageStatusUseCase
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.SendMessageUseCase
+import com.example.hydrogram.domain.usecase.ToggleReactionUseCase
 import com.example.hydrogram.presentation.states.ChatUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,6 +28,7 @@ class ChatViewModel @Inject constructor(
     private val getChatHistoryUseCase: GetChatHistoryUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val changeMessageStatusUseCase: ChangeMessageStatusUseCase,
+    private val toggleReactionUseCase: ToggleReactionUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
@@ -135,6 +137,40 @@ class ChatViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+        }
+    }
+
+    fun toggleReaction(
+        reaction: String?,
+        chatId: String,
+        messageId: String,
+    ) {
+
+        if(chatId.isEmpty() || messageId.isEmpty()) {
+            return
+        }
+
+        if(_isSending.value) {
+            return
+        }
+
+        viewModelScope.launch {
+            _isSending.value = true
+
+            val result = toggleReactionUseCase(
+                reaction = reaction,
+                chatId = chatId,
+                messageId = messageId,
+            )
+
+            _isSending.value = false
+
+            Log.d("ChatVM", "toggle reaction result: $result")
+
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка изменения реакции" }
+
         }
     }
 
