@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.dto
 
+import com.example.hydrogram.domain.model.Reactions
 import com.example.hydrogram.domain.model.ReplyData
 
 data class MessageDto(
@@ -8,6 +9,7 @@ data class MessageDto(
     val timestamp: Long = 0L,
     val status: String = "",
     val type: String = "",
+    val reactions: Reactions? = null,
     val replyData: ReplyData? = null,
     val text: String? = null,
     val stickerPath: String? = null,
