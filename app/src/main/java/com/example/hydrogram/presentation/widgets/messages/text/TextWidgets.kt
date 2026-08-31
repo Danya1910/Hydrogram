@@ -72,6 +72,7 @@ fun MineTextMessage(
     message: Message.Text,
     onReply: (Message.Text) -> Unit,
     onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
     onReactionClick: () -> Unit,
     mineId: String,
 ) {
@@ -154,6 +155,11 @@ fun MineTextMessage(
                     onDoubleClick = {
                         onDoubleClick(
                             message.reactions?.get(mineId) != null
+                        )
+                    },
+                    onLongClick = {
+                        onLongClick(
+                            false
                         )
                     }
                 )
