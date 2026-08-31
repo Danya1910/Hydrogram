@@ -33,20 +33,22 @@ class ChatRepositoryImpl @Inject constructor(
 
             val targetUserId = chatId.split("_").firstOrNull() { it != senderId } ?: ""
 
-            val (lastMessagePreview, lastMessageType) = when(message) {
+            val (lastMessagePreview, lastMessageType) = when (message) {
                 is Message.Text -> {
                     message.text to "text"
                 }
+
                 is Message.Sticker -> {
                     "Стикер" to "sticker"
                 }
+
                 is Message.Image -> {
                     "Фото" to "image"
                 }
             }
 
-            val messageDto = when(message) {
-                is Message.Sticker ->{
+            val messageDto = when (message) {
+                is Message.Sticker -> {
                     MessageDto(
                         messageId = messageRef.id,
                         senderId = message.senderId,
@@ -57,7 +59,8 @@ class ChatRepositoryImpl @Inject constructor(
                         stickerPath = message.stickerPath,
                     )
                 }
-                is Message.Text ->  {
+
+                is Message.Text -> {
                     MessageDto(
                         messageId = messageRef.id,
                         senderId = message.senderId,
@@ -68,7 +71,8 @@ class ChatRepositoryImpl @Inject constructor(
                         text = message.text,
                     )
                 }
-                is Message.Image ->  {
+
+                is Message.Image -> {
                     MessageDto(
                         messageId = messageRef.id,
                         senderId = message.senderId,
@@ -101,6 +105,7 @@ class ChatRepositoryImpl @Inject constructor(
             Result.failure(e)
         }
     }
+
 
     override fun getChatHistory(chatId: String): Flow<List<Message>> = callbackFlow {
         val listener = firestore.collection("chats")
@@ -136,6 +141,25 @@ class ChatRepositoryImpl @Inject constructor(
                 .collection("messages")
                 .document(messageId)
                 .update("status", status)
+                .await()
+
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun toggleReaction(
+        reaction: String?,
+        messageId: String,
+        chatId: String,
+    ): Result<Unit> {
+        return try {
+            firestore.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .document(messageId)
+                .update("reactions", reaction)
                 .await()
 
             Result.success(Unit)
