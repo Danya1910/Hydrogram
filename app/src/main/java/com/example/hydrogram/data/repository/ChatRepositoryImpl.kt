@@ -5,6 +5,7 @@ import com.example.hydrogram.data.dto.MessageDto
 import com.example.hydrogram.data.wrapper.toDomain
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.repository.ChatRepository
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
@@ -155,11 +156,15 @@ class ChatRepositoryImpl @Inject constructor(
         chatId: String,
     ): Result<Unit> {
         return try {
+
+            val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+                ?: return Result.failure(Exception("User not authenticated"))
+
             firestore.collection("chats")
                 .document(chatId)
                 .collection("messages")
                 .document(messageId)
-                .update("reactions", reaction)
+                .update("reactions.$currentUserId", reaction)
                 .await()
 
             Result.success(Unit)
