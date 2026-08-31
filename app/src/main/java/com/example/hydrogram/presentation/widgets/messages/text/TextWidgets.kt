@@ -1,10 +1,17 @@
 package com.example.hydrogram.presentation.widgets.messages.text
 
 import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -50,6 +58,7 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
+import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
@@ -61,6 +70,7 @@ import kotlin.math.roundToInt
 fun MineTextMessage(
     message: Message.Text,
     onReply: (Message.Text) -> Unit,
+    onDoubleClick: () -> Unit
 ) {
 
     val formattedTime = DateFormat.format(
@@ -75,6 +85,9 @@ fun MineTextMessage(
         targetValue = if (dragAmount == 0f) 0f else dragAmount,
         label = "SwipeOffset"
     )
+
+    val haveReaction = message.reactions != null
+
 
     BoxWithConstraints(
         contentAlignment = Alignment.CenterEnd,
@@ -128,23 +141,60 @@ fun MineTextMessage(
                 .background(
                     color = LightGreen,
                 )
+                .combinedClickable(
+                    onClick = {},
+                    onDoubleClick = {
+                        onDoubleClick()
+                    }
+                )
         ) {
             message.text?.length?.let {
                 if (it <= 20) {
-                    Text(
-                        text = message.text,
-                        fontFamily = SfProText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
-                        modifier = Modifier
-                            .padding(
-                                top = 5.dp,
-                                start = 10.dp,
-                                end = 62.dp,
-                                bottom = 5.dp
-                            )
-                    )
+                    Column {
+                        Text(
+                            text = message.text,
+                            fontFamily = SfProText,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .padding(
+                                    top = 5.dp,
+                                    start = 10.dp,
+                                    end = 62.dp,
+                                    bottom = 5.dp
+                                )
+                        )
+                        AnimatedVisibility(
+                            visible = haveReaction,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .height(32.dp)
+                                    .clip(
+                                        shape = CircleShape
+                                    )
+                                    .background(
+                                        color = Green
+                                    )
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_plus),
+                                        contentDescription = null,
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(25.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -178,21 +228,52 @@ fun MineTextMessage(
                         }
                     }
                 } else {
-                    Text(
-                        text = message.text,
-                        fontFamily = SfProText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
-                        letterSpacing = (-0.43).sp,
-                        modifier = Modifier
-                            .padding(
-                                top = 5.dp,
-                                start = 10.dp,
-                                end = 16.dp,
-                                bottom = 16.dp
-                            )
-                    )
+                    Column {
+                        Text(
+                            text = message.text,
+                            fontFamily = SfProText,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            letterSpacing = (-0.43).sp,
+                            modifier = Modifier
+                                .padding(
+                                    top = 5.dp,
+                                    start = 10.dp,
+                                    end = 16.dp,
+                                    bottom = 16.dp
+                                )
+                        )
+                        AnimatedVisibility(
+                            visible = haveReaction,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .height(32.dp)
+                                    .clip(
+                                        shape = CircleShape
+                                    )
+                                    .background(
+                                        color = Green
+                                    )
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .padding(horizontal = 8.dp)
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_plus),
+                                        contentDescription = null,
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(25.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier

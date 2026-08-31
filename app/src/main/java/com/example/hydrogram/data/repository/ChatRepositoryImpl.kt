@@ -152,8 +152,8 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun toggleReaction(
         reaction: String?,
-        messageId: String,
         chatId: String,
+        messageId: String,
     ): Result<Unit> {
         return try {
 

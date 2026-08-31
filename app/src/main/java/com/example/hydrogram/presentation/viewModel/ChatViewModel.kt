@@ -157,6 +157,8 @@ class ChatViewModel @Inject constructor(
         viewModelScope.launch {
             _isSending.value = true
 
+            Log.d("ChatVM", "chatId: $chatId, messageId: $messageId")
+
             val result = toggleReactionUseCase(
                 reaction = reaction,
                 chatId = chatId,

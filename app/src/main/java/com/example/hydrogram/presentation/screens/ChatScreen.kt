@@ -634,6 +634,14 @@ private fun Content(
                                     onReply = {
                                         currentMessageAnswer = it
                                         Log.d("ChatScreen", it.toString())
+                                    },
+                                    onDoubleClick = {
+                                        Log.d("ChatScreen", "chatId: $chatId, messageId: ${message.messageId}")
+                                        chatViewModel.toggleReaction(
+                                            reaction = "123",
+                                            chatId = chatId,
+                                            messageId = message.messageId,
+                                        )
                                     }
                                 )
                             } else {
