@@ -304,6 +304,7 @@ fun ChatScreen(
                                 penpalName = (penpalData as UserState.Success).user?.name ?: "",
                                 mineName = (mineData as MineState.Success).user?.name ?: "",
                                 mineData = (mineData as MineState.Success).user,
+                                penpalData = (penpalData as UserState.Success).user,
                             )
                         }
                     }
@@ -325,6 +326,7 @@ private fun Content(
     penpalName: String,
     mineName: String,
     mineData: User?,
+    penpalData: User?,
 ) {
 
     val context = LocalContext.current
@@ -703,7 +705,7 @@ private fun Content(
                                         },
                                         mineId = mineId,
                                         mineAvatar = mineData?.avatarUrl ?: "",
-                                        penpalAvatar = "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 } else {
                                     MineReplyTextMessage(
@@ -807,7 +809,50 @@ private fun Content(
                                         onReply = {
                                             currentMessageAnswer = message
                                             Log.d("ChatScreen", message.toString())
-                                        }
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot = coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessageId = message.messageId
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 } else PenpalReplyTextMessage(
                                     message = message as Message.Text,

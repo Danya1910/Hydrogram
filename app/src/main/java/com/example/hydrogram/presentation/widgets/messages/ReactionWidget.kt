@@ -23,7 +23,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -81,7 +80,7 @@ fun ReactionWidget(
                 .padding(horizontal = 8.dp)
         ) {
             Text(
-                text = reactions?.mineReaction ?: "",
+                text = reactions?.mineReaction ?: reactions?.penpalReaction ?: "",
                 fontSize = 18.sp,
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
