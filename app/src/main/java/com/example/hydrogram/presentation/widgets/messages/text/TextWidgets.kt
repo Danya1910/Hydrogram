@@ -1175,13 +1175,6 @@ fun PenpalTextMessage(
                             fontWeight = FontWeight.Medium,
                             color = Color.Black,
                             letterSpacing = (-0.43).sp,
-                            modifier = Modifier
-                                .padding(
-                                    top = 5.dp,
-                                    start = 10.dp,
-                                    end = 16.dp,
-                                    bottom = 16.dp
-                                )
                         )
                         AnimatedVisibility(
                             visible = haveReaction,
