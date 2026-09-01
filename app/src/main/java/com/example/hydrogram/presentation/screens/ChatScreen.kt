@@ -129,6 +129,7 @@ import com.example.hydrogram.presentation.widgets.messages.text.PenpalReplyTextM
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessage
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightGrayBackground
+import com.google.firebase.firestore.core.UserData
 import kotlinx.coroutines.launch
 import kotlin.text.startsWith
 import kotlin.text.substringAfter
@@ -302,6 +303,7 @@ fun ChatScreen(
                                 chatId = chatId,
                                 penpalName = (penpalData as UserState.Success).user?.name ?: "",
                                 mineName = (mineData as MineState.Success).user?.name ?: "",
+                                mineData = (mineData as MineState.Success).user,
                             )
                         }
                     }
@@ -322,6 +324,7 @@ private fun Content(
     chatId: String,
     penpalName: String,
     mineName: String,
+    mineData: User?,
 ) {
 
     val context = LocalContext.current
@@ -699,6 +702,8 @@ private fun Content(
                                             )
                                         },
                                         mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = "",
                                     )
                                 } else {
                                     MineReplyTextMessage(

@@ -74,6 +74,8 @@ fun MineTextMessage(
     onLongClick: (Boolean) -> Unit,
     onReactionClick: () -> Unit,
     mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -212,12 +214,14 @@ fun MineTextMessage(
                             enter = fadeIn() + expandVertically(),
                             exit = fadeOut() + shrinkVertically(),
                         ) {
+                            Log.d("MineTextMessage", "mineAvatar: $mineAvatar")
                             ReactionWidget(
                                 reactions = reactions,
                                 color = Green,
                                 onReactionClick = {
                                     onReactionClick()
-                                }
+                                },
+                                mineAvatar = mineAvatar,
                             )
                         }
                     }
