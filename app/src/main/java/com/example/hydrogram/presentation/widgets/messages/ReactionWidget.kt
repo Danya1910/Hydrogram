@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
+import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
 
 @Composable
@@ -69,7 +70,7 @@ fun ReactionWidget(
             .background(
                 color = color
             )
-            .clickable{
+            .clickable {
                 onReactionClick()
             }
     ) {
@@ -85,18 +86,61 @@ fun ReactionWidget(
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
             )
-            Spacer(modifier = Modifier.width(5.dp))
-            if(mineAvatarBitmap != null) {
-                Image(
-                    bitmap = mineAvatarBitmap.asImageBitmap(),
-                    contentDescription = null,
+            if (mineAvatarBitmap != null || penpalAvatarBitmap != null) {
+                Spacer(modifier = Modifier.width(5.dp))
+                Box(
                     modifier = Modifier
-                        .size(25.dp)
-                        .clip(
-                            shape = CircleShape
-                        ),
-                    contentScale = ContentScale.Crop
-                )
+                        .height(25.dp)
+                        .width(
+                            when {
+                                mineAvatarBitmap != null && penpalAvatarBitmap != null -> 40.dp
+                                else -> 25.dp
+                            }
+                        )
+                ) {
+                    if (penpalAvatarBitmap != null) {
+                        Image(
+                            bitmap = penpalAvatarBitmap.asImageBitmap(),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .size(25.dp)
+                                .clip(CircleShape),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    if (mineAvatarBitmap != null) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(
+                                    shape = CircleShape
+                                )
+                                .background(
+                                    color = Green
+                                )
+                        ) {
+                            Image(
+                                bitmap = mineAvatarBitmap.asImageBitmap(),
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .align(Alignment.CenterStart)
+                                    .size(25.dp)
+                                    .clip(CircleShape)
+                                    .let {
+                                        if (penpalAvatarBitmap != null) {
+                                            it.background(Color.White, CircleShape)
+                                                .padding(1.dp)
+                                                .clip(CircleShape)
+                                        } else it
+                                    },
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    }
+                }
             }
         }
     }
