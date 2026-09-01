@@ -676,11 +676,8 @@ private fun Content(
                                         onLongClick = {
                                             val coordinates = messageCoordinates.value
                                             if (coordinates != null) {
-                                                // Получаем позицию в окне
                                                 val positionInRoot = coordinates.positionInRoot()
-                                                // Или на экране
-                                                val positionInWindow =
-                                                    coordinates.positionInWindow()
+
 
                                                 contextMenuState = ContextMenuState(
                                                     message = message,
