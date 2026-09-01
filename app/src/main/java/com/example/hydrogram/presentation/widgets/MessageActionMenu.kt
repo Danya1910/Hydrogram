@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,7 +23,9 @@ import com.example.hydrogram.ui.theme.SfProText
 
 
 @Composable
-fun MessageActionMenu() {
+fun MessageActionMenu(
+    onReactionClick: (String) -> Unit,
+) {
 
     val rowGradient = Brush.horizontalGradient(
         colors = listOf(
@@ -66,7 +67,7 @@ fun MessageActionMenu() {
                     fontSize = 22.sp,
                     modifier = Modifier
                         .clickable {
-
+                            onReactionClick(reaction)
                         }
                 )
             }
