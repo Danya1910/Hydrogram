@@ -668,7 +668,7 @@ private fun Content(
                                                 "have mine Id: $it"
                                             )
                                             chatViewModel.toggleReaction(
-                                                reaction = if (it) null else "123",
+                                                reaction = if (it) null else "\u2764\uFE0F",
                                                 chatId = chatId,
                                                 messageId = message.messageId,
                                             )

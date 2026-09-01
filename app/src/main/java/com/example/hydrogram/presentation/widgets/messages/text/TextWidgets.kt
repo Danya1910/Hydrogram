@@ -1,13 +1,13 @@
 package com.example.hydrogram.presentation.widgets.messages.text
 
 import android.text.format.DateFormat
+import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.animation.slideIn
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -95,6 +94,31 @@ fun MineTextMessage(
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+
+    message.reactions?.entries?.forEach { entry ->
+        if(entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        }else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
+        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
+    }
 
 
 
@@ -189,7 +213,7 @@ fun MineTextMessage(
                             exit = fadeOut() + shrinkVertically(),
                         ) {
                             ReactionWidget(
-                                reaction = "123",
+                                reactions = reactions,
                                 color = Green,
                                 onReactionClick = {
                                     onReactionClick()
@@ -985,3 +1009,9 @@ fun PenpalTextMessage(
         }
     }
 }
+
+
+data class MessageReactions(
+    val mineReaction: String?,
+    val penpalReaction: String?,
+)

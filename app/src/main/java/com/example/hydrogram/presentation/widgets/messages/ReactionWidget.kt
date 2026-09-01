@@ -18,12 +18,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
 
 @Composable
 fun ReactionWidget(
-    reaction: String,
+    reactions: MessageReactions?,
     color: Color,
     onReactionClick: () -> Unit,
 ) {
@@ -47,21 +48,11 @@ fun ReactionWidget(
                 .padding(horizontal = 8.dp)
         ) {
             Text(
-                text = "\u2764\uFE0F",
+                text = reactions?.mineReaction ?: "",
                 fontSize = 18.sp,
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
             )
         }
     }
-}
-
-@Composable
-@Preview(showBackground = true)
-private fun ReactWidgetPreview() {
-    ReactionWidget(
-        reaction = "1",
-        color = Green,
-        onReactionClick = {}
-    )
 }
