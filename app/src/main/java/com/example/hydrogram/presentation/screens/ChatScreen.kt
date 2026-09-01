@@ -580,6 +580,8 @@ private fun Content(
         }
     }
 
+    var currentReactingMessageId by remember { mutableStateOf<String?>(null) }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -677,7 +679,8 @@ private fun Content(
                                                 // Получаем позицию в окне
                                                 val positionInRoot = coordinates.positionInRoot()
                                                 // Или на экране
-                                                val positionInWindow = coordinates.positionInWindow()
+                                                val positionInWindow =
+                                                    coordinates.positionInWindow()
 
                                                 contextMenuState = ContextMenuState(
                                                     message = message,
@@ -688,6 +691,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
+                                                currentReactingMessageId = message.messageId
                                             }
                                         },
                                         onReactionClick = {
@@ -909,7 +913,7 @@ private fun Content(
             }
         }
 
-        contextMenuState?.let { state->
+        contextMenuState?.let { state ->
             Popup(
                 alignment = Alignment.TopStart,
                 offset = IntOffset(
@@ -918,9 +922,20 @@ private fun Content(
                 ),
                 onDismissRequest = {
                     contextMenuState = null
+                    currentReactingMessageId = null
                 }
             ) {
-                MessageActionMenu()
+                MessageActionMenu(
+                    onReactionClick = { reaction ->
+                        chatViewModel.toggleReaction(
+                            reaction = reaction,
+                            chatId = chatId,
+                            messageId = currentReactingMessageId ?: "",
+                        )
+                        contextMenuState = null
+                        currentReactingMessageId = null
+                    }
+                )
             }
         }
 
