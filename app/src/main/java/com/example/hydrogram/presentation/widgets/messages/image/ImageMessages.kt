@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -850,11 +851,12 @@ fun MineImageMessage(
         contentAlignment = Alignment.CenterEnd
     ) {
         Column(
-            horizontalAlignment = Alignment.End
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
         ) {
             Card(
-                modifier = containerModifier
-                    .offset { IntOffset(animatedOffset.roundToInt(), 0) },
+                modifier = containerModifier,
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
