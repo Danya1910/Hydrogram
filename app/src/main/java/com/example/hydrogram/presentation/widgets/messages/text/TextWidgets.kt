@@ -59,6 +59,7 @@ import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
+import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
@@ -1101,7 +1102,7 @@ fun PenpalReplyTextMessage(
                                             mineReaction = reactions.mineReaction,
                                             penpalReaction = null
                                         ),
-                                        color = Color(0xFF40C13B),
+                                        color = Blue,
                                         onReactionClick = {
                                             onReactionClick()
                                         },
@@ -1113,7 +1114,7 @@ fun PenpalReplyTextMessage(
                                             mineReaction = null,
                                             penpalReaction = reactions.penpalReaction
                                         ),
-                                        color = Green,
+                                        color = Color(0xFFE1F1FF),
                                         onReactionClick = {
                                             onReactionClick()
                                         },
@@ -1123,7 +1124,7 @@ fun PenpalReplyTextMessage(
                             } else {
                                 ReactionWidget(
                                     reactions = reactions,
-                                    color = Color(0xFF40C13B),
+                                    color = Blue,
                                     onReactionClick = {
                                         onReactionClick()
                                     },
@@ -1318,7 +1319,7 @@ fun PenpalTextMessage(
                                             mineReaction = reactions.mineReaction,
                                             penpalReaction = null
                                         ),
-                                        color = Color(0xFF40C13B),
+                                        color = Blue,
                                         onReactionClick = {
                                             onReactionClick()
                                         },
@@ -1330,7 +1331,7 @@ fun PenpalTextMessage(
                                             mineReaction = null,
                                             penpalReaction = reactions.penpalReaction
                                         ),
-                                        color = Green,
+                                        color = Color(0xFFE1F1FF),
                                         onReactionClick = {
                                             onReactionClick()
                                         },
@@ -1340,7 +1341,7 @@ fun PenpalTextMessage(
                             } else {
                                 ReactionWidget(
                                     reactions = reactions,
-                                    color = Color(0xFF40C13B),
+                                    color = Blue,
                                     onReactionClick = {
                                         onReactionClick()
                                     },
@@ -1404,7 +1405,7 @@ fun PenpalTextMessage(
                                             mineReaction = reactions.mineReaction,
                                             penpalReaction = null
                                         ),
-                                        color = Color(0xFF40C13B),
+                                        color = Blue,
                                         onReactionClick = {
                                             onReactionClick()
                                         },
@@ -1416,7 +1417,7 @@ fun PenpalTextMessage(
                                             mineReaction = null,
                                             penpalReaction = reactions.penpalReaction
                                         ),
-                                        color = Green,
+                                        color = Color(0xFFE1F1FF),
                                         onReactionClick = {
                                             onReactionClick()
                                         },
@@ -1426,7 +1427,7 @@ fun PenpalTextMessage(
                             } else {
                                 ReactionWidget(
                                     reactions = reactions,
-                                    color = Color(0xFF40C13B),
+                                    color = Blue,
                                     onReactionClick = {
                                         onReactionClick()
                                     },
