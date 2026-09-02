@@ -1,10 +1,18 @@
 package com.example.hydrogram.presentation.widgets.messages.image
 
+import android.graphics.Bitmap
 import android.text.format.DateFormat
+import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +35,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,11 +44,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -53,7 +64,12 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
+import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
+import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
+import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.Date
 import kotlin.math.roundToInt
 import kotlin.text.startsWith
@@ -62,6 +78,12 @@ import kotlin.text.startsWith
 fun PenpalImageMessage(
     message: Message.Image,
     onReply: (Message.Image) -> Unit,
+    onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
+    mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -81,21 +103,56 @@ fun PenpalImageMessage(
         !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
     }
 
-    val imageSize = remember(message.image) {
+    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
+
+    LaunchedEffect(message.image) {
         if (isBase64) {
-            val bitmap = decodeBase64Image(message.image)
-            if (bitmap != null) {
+            val bitmap = withContext(Dispatchers.IO) {
+                decodeBase64Image(message.image)
+            }
+            imageSize = if (bitmap != null) {
                 bitmap.width to bitmap.height
             } else {
                 null to null
             }
         } else {
-            null to null
+            imageSize = null to null
         }
     }
 
 
-    val (imageWidth, imageHeight) = imageSize
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+    }
+
+
+    val (imageWidth, imageHeight) = imageSize ?: (null to null)
+
     val maxWidth = 300.dp
     val maxHeight = 400.dp
 
@@ -160,61 +217,127 @@ fun PenpalImageMessage(
             },
         contentAlignment = Alignment.CenterStart
     ) {
-        Card(
-            modifier = containerModifier
-                .offset { IntOffset(animatedOffset.roundToInt(), 0) },
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { /* Открыть в полном размере */ }
+        Column {
+            Card(
+                modifier = containerModifier
+                    .offset { IntOffset(animatedOffset.roundToInt(), 0) },
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-                if (isBase64) {
-                    val bitmap = remember(message.image) {
-                        decodeBase64Image(message.image)
-                    }
-
-                    if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "Изображение в чате",
-                            contentScale = ContentScale.FillBounds,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        PlaceholderContent()
-                    }
-                } else {
-                    AsyncImage(
-                        model = message.image,
-                        contentDescription = "Изображение в чате",
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier.fillMaxSize(),
-                        placeholder = painterResource(R.drawable.ic_avatar),
-                        error = painterResource(R.drawable.ic_avatar),
-                    )
-                }
-
                 Box(
                     modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 7.dp, bottom = 7.dp)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(10.dp)
+                        .fillMaxSize()
+                        .combinedClickable(
+                            onClick = {},
+                            onDoubleClick = {
+                                onDoubleClick(
+                                    message.reactions?.get(mineId) != null
+                                )
+                            },
+                            onLongClick = {
+                                onLongClick(
+                                    false
+                                )
+                            }
                         )
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
                 ) {
-                    Text(
-                        text = formattedTime,
-                        fontFamily = SfProText,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 11.sp,
-                        color = Color.White,
-                        letterSpacing = (-0.08).sp
+                    if (isBase64) {
+                        val bitmap = remember(message.image) {
+                            decodeBase64Image(message.image)
+                        }
+
+                        if (bitmap != null) {
+                            Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = "Изображение в чате",
+                                contentScale = ContentScale.FillBounds,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        } else {
+                            PlaceholderContent()
+                        }
+                    } else {
+                        AsyncImage(
+                            model = message.image,
+                            contentDescription = "Изображение в чате",
+                            contentScale = ContentScale.FillBounds,
+                            modifier = Modifier.fillMaxSize(),
+                            placeholder = painterResource(R.drawable.ic_avatar),
+                            error = painterResource(R.drawable.ic_avatar),
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(end = 7.dp, bottom = 7.dp)
+                            .background(
+                                color = Color.Black.copy(alpha = 0.5f),
+                                shape = RoundedCornerShape(10.dp)
+                            )
+                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                    ) {
+                        Text(
+                            text = formattedTime,
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 11.sp,
+                            color = Color.White,
+                            letterSpacing = (-0.08).sp
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(5.dp))
+            AnimatedVisibility(
+                visible = haveReaction,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                        reactions.penpalReaction != null &&
+                        reactions.mineReaction != reactions.penpalReaction
+                Box(
+                    modifier = Modifier.padding(start = 10.dp)
+                )
+                if (hasBothDifferentReactions) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ReactionWidget(
+                            reactions = MessageReactions(
+                                mineReaction = reactions.mineReaction,
+                                penpalReaction = null
+                            ),
+                            color = Color(0xFF40C13B),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        ReactionWidget(
+                            reactions = MessageReactions(
+                                mineReaction = null,
+                                penpalReaction = reactions.penpalReaction
+                            ),
+                            color = Green,
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
+                } else {
+                    ReactionWidget(
+                        reactions = reactions,
+                        color = Color(0xFF40C13B),
+                        onReactionClick = {
+                            onReactionClick()
+                        },
+                        mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                        penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
                     )
                 }
             }
@@ -228,6 +351,12 @@ fun PenpalReplyImageMessage(
     onReply: (Message.Image) -> Unit,
     replyName: String,
     onReplyMessageClick: (String) -> Unit,
+    onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
+    mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -247,16 +376,24 @@ fun PenpalReplyImageMessage(
         !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
     }
 
-    val imageSize = remember(message.image) {
+    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
+
+    LaunchedEffect(message.image) {
         if (isBase64) {
-            val bitmap = decodeBase64Image(message.image)
-            if (bitmap != null) bitmap.width to bitmap.height else null to null
+            val bitmap = withContext(Dispatchers.IO) {
+                decodeBase64Image(message.image)
+            }
+            imageSize = if (bitmap != null) {
+                bitmap.width to bitmap.height
+            } else {
+                null to null
+            }
         } else {
-            null to null
+            imageSize = null to null
         }
     }
 
-    val (imageWidth, imageHeight) = imageSize
+    val (imageWidth, imageHeight) = imageSize ?: (null to null)
     val maxWidth = 250.dp
     val maxHeight = 330.dp
 
@@ -276,6 +413,32 @@ fun PenpalReplyImageMessage(
         }
     }
 
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+    }
 
     Box(
         modifier = Modifier
@@ -311,137 +474,61 @@ fun PenpalReplyImageMessage(
             },
         contentAlignment = Alignment.CenterStart
     ) {
-
-        Card(
-            modifier = Modifier
-                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                .width(finalWidth)
-                .clip(
-                    shape = RoundedCornerShape(12.dp)
-                ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-
-            Column(
-                modifier = Modifier.fillMaxWidth()
+        Column {
+            Card(
+                modifier = Modifier
+                    .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                    .width(finalWidth)
+                    .clip(
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
 
-                message.replyData?.let { reply ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
-                            .fillMaxWidth()
-                            .height(41.dp)
-                            .clip(shape = RoundedCornerShape(4.dp))
-                            .background(color = Color(0xFFFFEBD6))
-                            .clickable {
-                                onReplyMessageClick(message.replyData.messageId ?: "")
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = {},
+                            onDoubleClick = {
+                                onDoubleClick(
+                                    message.reactions?.get(mineId) != null
+                                )
+                            },
+                            onLongClick = {
+                                onLongClick(false)
                             }
-                            .padding(end = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(3.dp)
-                                .height(41.dp)
-                                .background(color = Color(0xFFFDB86F))
                         )
-                        Spacer(modifier = Modifier.width(7.dp))
+                ) {
 
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f)
+                    message.replyData?.let { reply ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
+                                .fillMaxWidth()
+                                .height(41.dp)
+                                .clip(shape = RoundedCornerShape(4.dp))
+                                .background(color = Color(0xFFFFEBD6))
+                                .clickable {
+                                    onReplyMessageClick(message.replyData.messageId ?: "")
+                                }
+                                .padding(end = 8.dp)
                         ) {
-                            if (message.replyData?.type == "sticker") {
-                                Column(
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = replyName,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                        letterSpacing = -(0.23).sp,
-                                        color = Color(0xFFFDB86F),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        text = "Стикер",
-                                        fontFamily = SfProText,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 15.sp,
-                                        letterSpacing = -(0.23).sp,
-                                        color = Color.Black,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            } else if (message.replyData?.type == "text") {
-                                message.replyData?.content.let {
-                                    if (it != null) {
-                                        Column(
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = replyName,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 15.sp,
-                                                letterSpacing = -(0.23).sp,
-                                                color = Color(0xFFFDB86F),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Text(
-                                                text = it,
-                                                fontFamily = SfProText,
-                                                fontWeight = FontWeight.Normal,
-                                                fontSize = 15.sp,
-                                                letterSpacing = -(0.23).sp,
-                                                color = Color.Black,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                        }
-                                    }
-                                }
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val replyContent = message.replyData?.content
-                                    val isBase64 = remember(replyContent) {
-                                        !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                    ) {
-                                        if (isBase64) {
-                                            val bitmap = remember(replyContent) {
-                                                decodeBase64Image(replyContent)
-                                            }
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(41.dp)
+                                    .background(color = Color(0xFFFDB86F))
+                            )
+                            Spacer(modifier = Modifier.width(7.dp))
 
-                                            if (bitmap != null) {
-                                                Image(
-                                                    bitmap = bitmap.asImageBitmap(),
-                                                    contentDescription = "Превью изображения в ответе",
-                                                    contentScale = ContentScale.Crop,
-                                                )
-                                            } else {
-                                                PlaceholderContent()
-                                            }
-                                        } else {
-                                            AsyncImage(
-                                                model = replyContent,
-                                                contentDescription = "Превью изображения в ответе",
-                                                contentScale = ContentScale.Crop,
-                                                placeholder = painterResource(R.drawable.ic_avatar),
-                                                error = painterResource(R.drawable.ic_avatar),
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.width(5.dp))
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                if (message.replyData?.type == "sticker") {
                                     Column(
                                         verticalArrangement = Arrangement.Center
                                     ) {
@@ -455,69 +542,164 @@ fun PenpalReplyImageMessage(
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                         Text(
-                                            text = "Фотография",
+                                            text = "Стикер",
                                             fontFamily = SfProText,
                                             fontWeight = FontWeight.Normal,
                                             fontSize = 15.sp,
                                             letterSpacing = -(0.23).sp,
-                                            color = Color(0xFFEFB578),
+                                            color = Color.Black,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                     }
-
+                                } else if (message.replyData?.type == "text") {
+                                    message.replyData?.content.let {
+                                        if (it != null) {
+                                            Column(
+                                                verticalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(
+                                                    text = replyName,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 15.sp,
+                                                    letterSpacing = -(0.23).sp,
+                                                    color = Color(0xFFFDB86F),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    text = it,
+                                                    fontFamily = SfProText,
+                                                    fontWeight = FontWeight.Normal,
+                                                    fontSize = 15.sp,
+                                                    letterSpacing = -(0.23).sp,
+                                                    color = Color.Black,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        ReplyImagePreview(
+                                            content = message.replyData?.content
+                                        )
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFFFDB86F),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = "Фотография",
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFFEFB578),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-                }
-
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(finalHeight)
-                        .clickable { /* Открыть в полном размере */ }
-                ) {
-                    if (isBase64) {
-                        val bitmap = remember(message.image) { decodeBase64Image(message.image) }
-                        if (bitmap != null) {
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            PlaceholderContent()
-                        }
-                    } else {
-                        AsyncImage(
-                            model = message.image,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(R.drawable.ic_avatar),
-                            error = painterResource(R.drawable.ic_avatar),
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
 
                     Box(
                         modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(end = 8.dp, bottom = 8.dp)
-                            .background(
-                                color = Color.Black.copy(alpha = 0.45f),
-                                shape = RoundedCornerShape(10.dp)
-                            )
-                            .padding(horizontal = 8.dp, vertical = 3.dp)
+                            .fillMaxWidth()
+                            .height(finalHeight)
                     ) {
-                        Text(
-                            text = formattedTime,
-                            fontFamily = SfProText,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 11.sp,
-                            color = Color.White,
-                            letterSpacing = (-0.08).sp
+                        Base64Image(
+                            imageData = message.image,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 8.dp, bottom = 8.dp)
+                                .background(
+                                    color = Color.Black.copy(alpha = 0.45f),
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = formattedTime,
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 11.sp,
+                                color = Color.White,
+                                letterSpacing = (-0.08).sp
+                            )
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(5.dp))
+            AnimatedVisibility(
+                visible = haveReaction,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                        reactions.penpalReaction != null &&
+                        reactions.mineReaction != reactions.penpalReaction
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
+                ) {
+                    if (hasBothDifferentReactions) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = reactions.mineReaction,
+                                    penpalReaction = null
+                                ),
+                                color = Color(0xFF40C13B),
+                                onReactionClick = {
+                                    onReactionClick()
+                                },
+                                mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = null,
+                                    penpalReaction = reactions.penpalReaction
+                                ),
+                                color = Green,
+                                onReactionClick = {
+                                    onReactionClick()
+                                },
+                                mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                            )
+                        }
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFF40C13B),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
                         )
                     }
                 }
@@ -530,6 +712,12 @@ fun PenpalReplyImageMessage(
 fun MineImageMessage(
     message: Message.Image,
     onReply: (Message.Image) -> Unit,
+    onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
+    mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -549,30 +737,58 @@ fun MineImageMessage(
         !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
     }
 
-    val imageSize = remember(message.image) {
+    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
+
+    LaunchedEffect(message.image) {
         if (isBase64) {
-            val bitmap = decodeBase64Image(message.image)
-            if (bitmap != null) {
+            val bitmap = withContext(Dispatchers.IO) {
+                decodeBase64Image(message.image)
+            }
+            imageSize = if (bitmap != null) {
                 bitmap.width to bitmap.height
             } else {
                 null to null
             }
         } else {
-            null to null
+            imageSize = null to null
         }
     }
 
-    val (imageWidth, imageHeight) = imageSize
+    val (imageWidth, imageHeight) = imageSize ?: (null to null)
 
-    // Получаем ширину экрана
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
 
-    // Максимальная ширина - 70% от экрана, но не больше 300dp
     val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(300.dp)
     val maxHeight = 400.dp
 
-    // Вычисляем размеры изображения
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+    }
+
     val containerModifier =
         if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
             val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
@@ -598,183 +814,6 @@ fun MineImageMessage(
                 .clip(RoundedCornerShape(12.dp))
                 .clickable { /* Открыть в полном размере */ }
         }
-
-    // Выравнивание по правому краю
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = 12.dp
-            )
-            .pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragEnd = {
-                        if (dragAmount < -150f) {
-                            onReply(message)
-                        }
-                        dragAmount = 0f
-                        isHapticTriggered = false
-                    },
-                    onDragCancel = {
-                        dragAmount = 0f
-                        isHapticTriggered = false
-                    },
-                    onHorizontalDrag = { change, dragAmountPx ->
-                        change.consume()
-
-                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
-                        dragAmount = newOffset
-
-                        if (newOffset < -150f && !isHapticTriggered) {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            isHapticTriggered = true
-                        } else if (newOffset > -150f && isHapticTriggered) {
-                            isHapticTriggered = false
-                        }
-                    }
-                )
-            },
-        contentAlignment = Alignment.CenterEnd
-    ) {
-        Card(
-            modifier = containerModifier
-                .offset { IntOffset(animatedOffset.roundToInt(), 0) },
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clickable { /* Открыть в полном размере */ }
-            ) {
-                if (isBase64) {
-                    val bitmap = remember(message.image) {
-                        decodeBase64Image(message.image)
-                    }
-
-                    if (bitmap != null) {
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "Изображение в чате",
-                            contentScale = ContentScale.FillBounds,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    } else {
-                        PlaceholderContent()
-                    }
-                } else {
-                    AsyncImage(
-                        model = message.image,
-                        contentDescription = "Изображение в чате",
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier.fillMaxSize(),
-                        placeholder = painterResource(R.drawable.ic_avatar),
-                        error = painterResource(R.drawable.ic_avatar),
-                    )
-                }
-
-                // Время и статус - поверх изображения, справа внизу
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 7.dp, bottom = 7.dp)
-                        .background(
-                            color = Color.Black.copy(alpha = 0.5f),
-                            shape = RoundedCornerShape(10.dp)
-                        )
-                        .padding(horizontal = 8.dp, vertical = 3.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        Text(
-                            text = formattedTime,
-                            fontFamily = SfProText,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 11.sp,
-                            color = Color.White,
-                            letterSpacing = (-0.08).sp,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        if (message.status == "read") {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_read_status),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        } else {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sent_status),
-                                contentDescription = null,
-                                tint = Color.White,
-                                modifier = Modifier.size(14.dp)
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun MineReplyImageMessage(
-    message: Message.Image,
-    onReply: (Message.Image) -> Unit,
-    replyName: String,
-    onReplyMessageClick: (String) -> Unit,
-) {
-
-    val formattedTime = DateFormat.format(
-        "HH:mm", Date(message.timestamp)
-    ).toString()
-
-    var dragAmount by remember { mutableFloatStateOf(0f) }
-    val haptic = LocalHapticFeedback.current
-    var isHapticTriggered by remember { mutableStateOf(false) }
-
-    val animatedOffset by animateFloatAsState(
-        targetValue = if (dragAmount == 0f) 0f else dragAmount,
-        label = "SwipeOffset"
-    )
-
-    val isBase64 = remember(message.image) {
-        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
-    }
-
-    val imageSize = remember(message.image) {
-        if (isBase64) {
-            val bitmap = decodeBase64Image(message.image)
-            if (bitmap != null) bitmap.width to bitmap.height else null to null
-        } else {
-            null to null
-        }
-    }
-
-    val (imageWidth, imageHeight) = imageSize
-    val maxWidth = 250.dp // Оптимальная ширина для сообщений с картинками в чате
-    val maxHeight = 330.dp
-
-    // 1. ВЫЧИСЛЯЕМ ТОЧНЫЕ РАЗМЕРЫ НА ОСНОВЕ КАРТИНКИ
-    val (finalWidth, finalHeight) = remember(imageWidth, imageHeight) {
-        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
-            var w = maxWidth.value
-            var h = maxWidth.value / aspectRatio
-
-            if (h > maxHeight.value) {
-                h = maxHeight.value
-                w = maxHeight.value * aspectRatio
-            }
-            w.dp to h.dp
-        } else {
-            maxWidth to maxWidth // Дефолтный квадратный размер, если габариты еще не загрузились
-        }
-    }
-
 
     Box(
         modifier = Modifier
@@ -810,197 +849,36 @@ fun MineReplyImageMessage(
             },
         contentAlignment = Alignment.CenterEnd
     ) {
-
-        Card(
-            modifier = Modifier
-                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                .width(finalWidth)
-                .clip(
-                    shape = RoundedCornerShape(12.dp)
-                ),
-            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-            colors = CardDefaults.cardColors(containerColor = Color.White)
+        Column(
+            horizontalAlignment = Alignment.End
         ) {
-
-            Column(
-                modifier = Modifier.fillMaxWidth()
+            Card(
+                modifier = containerModifier
+                    .offset { IntOffset(animatedOffset.roundToInt(), 0) },
+                shape = RoundedCornerShape(12.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
-
-                // Блок ответа (показывается сверху, если есть replyData)
-                message.replyData?.let { reply ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
-                            // РЕШЕНИЕ: Плашка растягивается ровно по ширине фотографии, заданной у Card
-                            .fillMaxWidth()
-                            .height(41.dp)
-                            .clip(shape = RoundedCornerShape(4.dp))
-                            .background(color = Color(0xFFFFEBD6))
-                            .clickable {
-                                onReplyMessageClick(message.replyData.messageId)
-                            }
-                            .padding(end = 8.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .width(3.dp)
-                                .height(41.dp)
-                                .background(color = Color(0xFFFDB86F))
-                        )
-                        Spacer(modifier = Modifier.width(7.dp))
-
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            if (message.replyData?.type == "sticker") {
-                                Column(
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Text(
-                                        text = replyName,
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 15.sp,
-                                        letterSpacing = -(0.23).sp,
-                                        color = Color(0xFFFDB86F),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                    Text(
-                                        text = "Стикер",
-                                        fontFamily = SfProText,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 15.sp,
-                                        letterSpacing = -(0.23).sp,
-                                        color = Color.Black,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                            } else if (message.replyData?.type == "text") {
-                                message.replyData?.content.let {
-                                    if (it != null) {
-                                        Column(
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = replyName,
-                                                fontWeight = FontWeight.SemiBold,
-                                                fontSize = 15.sp,
-                                                letterSpacing = -(0.23).sp,
-                                                color = Color(0xFFFDB86F),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                            Text(
-                                                text = it,
-                                                fontFamily = SfProText,
-                                                fontWeight = FontWeight.Normal,
-                                                fontSize = 15.sp,
-                                                letterSpacing = -(0.23).sp,
-                                                color = Color.Black,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
-                                        }
-                                    }
-                                }
-                            } else {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val replyContent = message.replyData?.content
-                                    val isBase64 = remember(replyContent) {
-                                        !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
-                                    }
-                                    Box(
-                                        modifier = Modifier
-                                            .size(36.dp)
-                                    ) {
-                                        if (isBase64) {
-                                            val bitmap = remember(replyContent) {
-                                                decodeBase64Image(replyContent)
-                                            }
-
-                                            if (bitmap != null) {
-                                                Image(
-                                                    bitmap = bitmap.asImageBitmap(),
-                                                    contentDescription = "Превью изображения в ответе",
-                                                    contentScale = ContentScale.Crop,
-                                                )
-                                            } else {
-                                                PlaceholderContent()
-                                            }
-                                        } else {
-                                            AsyncImage(
-                                                model = replyContent,
-                                                contentDescription = "Превью изображения в ответе",
-                                                contentScale = ContentScale.Crop,
-                                                placeholder = painterResource(R.drawable.ic_avatar),
-                                                error = painterResource(R.drawable.ic_avatar),
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    Column(
-                                        verticalArrangement = Arrangement.Center
-                                    ) {
-                                        Text(
-                                            text = replyName,
-                                            fontWeight = FontWeight.SemiBold,
-                                            fontSize = 15.sp,
-                                            letterSpacing = -(0.23).sp,
-                                            color = Color(0xFFFDB86F),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Text(
-                                            text = "Фотография",
-                                            fontFamily = SfProText,
-                                            fontWeight = FontWeight.Normal,
-                                            fontSize = 15.sp,
-                                            letterSpacing = -(0.23).sp,
-                                            color = Color(0xFFEFB578),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                    }
-
-                                }
-                            }
-                        }
-                    }
-                }
-
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(finalHeight) // Высота картинки
-                        .clickable { /* Открыть в полном размере */ }
-                ) {
-                    if (isBase64) {
-                        val bitmap = remember(message.image) { decodeBase64Image(message.image) }
-                        if (bitmap != null) {
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        } else {
-                            PlaceholderContent()
-                        }
-                    } else {
-                        AsyncImage(
-                            model = message.image,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            placeholder = painterResource(R.drawable.ic_avatar),
-                            error = painterResource(R.drawable.ic_avatar),
-                            modifier = Modifier.fillMaxSize()
+                        .fillMaxSize()
+                        .combinedClickable(
+                            onClick = {},
+                            onDoubleClick = {
+                                onDoubleClick(
+                                    message.reactions?.get(mineId) != null
+                                )
+                            },
+                            onLongClick = {
+                                onLongClick(false)
+                            }
                         )
-                    }
+                ) {
+                    Base64Image(
+                        imageData = message.image,
+                        contentScale = ContentScale.FillBounds,
+                        modifier = Modifier.fillMaxSize()
+                    )
 
                     Box(
                         modifier = Modifier
@@ -1044,6 +922,554 @@ fun MineReplyImageMessage(
                     }
                 }
             }
+            Spacer(modifier = Modifier.height(5.dp))
+            AnimatedVisibility(
+                visible = haveReaction,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                        reactions.penpalReaction != null &&
+                        reactions.mineReaction != reactions.penpalReaction
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
+                ) {
+                    if (hasBothDifferentReactions) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = reactions.mineReaction,
+                                    penpalReaction = null
+                                ),
+                                color = Color(0xFF40C13B),
+                                onReactionClick = {
+                                    onReactionClick()
+                                },
+                                mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = null,
+                                    penpalReaction = reactions.penpalReaction
+                                ),
+                                color = Green,
+                                onReactionClick = {
+                                    onReactionClick()
+                                },
+                                mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                            )
+                        }
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFF40C13B),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun MineReplyImageMessage(
+    message: Message.Image,
+    onReply: (Message.Image) -> Unit,
+    replyName: String,
+    onReplyMessageClick: (String) -> Unit,
+    onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
+    mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
+) {
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
+    val isBase64 = remember(message.image) {
+        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
+    }
+
+    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
+
+    LaunchedEffect(message.image) {
+        if (isBase64) {
+            val bitmap = withContext(Dispatchers.IO) {
+                decodeBase64Image(message.image)
+            }
+            imageSize = if (bitmap != null) {
+                bitmap.width to bitmap.height
+            } else {
+                null to null
+            }
+        } else {
+            imageSize = null to null
+        }
+    }
+
+    val (imageWidth, imageHeight) = imageSize ?: (null to null)
+    val maxWidth = 250.dp
+    val maxHeight = 330.dp
+
+    val (finalWidth, finalHeight) = remember(imageWidth, imageHeight) {
+        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
+            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
+            var w = maxWidth.value
+            var h = maxWidth.value / aspectRatio
+
+            if (h > maxHeight.value) {
+                h = maxHeight.value
+                w = maxHeight.value * aspectRatio
+            }
+            w.dp to h.dp
+        } else {
+            maxWidth to maxWidth
+        }
+    }
+
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp)
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
+        contentAlignment = Alignment.CenterEnd
+    ) {
+        Column(
+            horizontalAlignment = Alignment.End
+        ) {
+            Card(
+                modifier = Modifier
+                    .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                    .width(finalWidth)
+                    .clip(
+                        shape = RoundedCornerShape(12.dp)
+                    ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.White)
+            ) {
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .combinedClickable(
+                            onClick = {},
+                            onDoubleClick = {
+                                onDoubleClick(
+                                    message.reactions?.get(mineId) != null
+                                )
+                            },
+                            onLongClick = {
+                                onLongClick(false)
+                            }
+                        )
+                ) {
+
+                    message.replyData?.let { reply ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
+                                .fillMaxWidth()
+                                .height(41.dp)
+                                .clip(shape = RoundedCornerShape(4.dp))
+                                .background(color = Color(0xFFFFEBD6))
+                                .clickable {
+                                    onReplyMessageClick(message.replyData.messageId)
+                                }
+                                .padding(end = 8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .width(3.dp)
+                                    .height(41.dp)
+                                    .background(color = Color(0xFFFDB86F))
+                            )
+                            Spacer(modifier = Modifier.width(7.dp))
+
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                if (message.replyData?.type == "sticker") {
+                                    Column(
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = replyName,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp,
+                                            letterSpacing = -(0.23).sp,
+                                            color = Color(0xFFFDB86F),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = "Стикер",
+                                            fontFamily = SfProText,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 15.sp,
+                                            letterSpacing = -(0.23).sp,
+                                            color = Color.Black,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                } else if (message.replyData?.type == "text") {
+                                    message.replyData?.content.let {
+                                        if (it != null) {
+                                            Column(
+                                                verticalArrangement = Arrangement.Center
+                                            ) {
+                                                Text(
+                                                    text = replyName,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                    fontSize = 15.sp,
+                                                    letterSpacing = -(0.23).sp,
+                                                    color = Color(0xFFFDB86F),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    text = it,
+                                                    fontFamily = SfProText,
+                                                    fontWeight = FontWeight.Normal,
+                                                    fontSize = 15.sp,
+                                                    letterSpacing = -(0.23).sp,
+                                                    color = Color.Black,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        ReplyImagePreview(
+                                            content = message.replyData?.content
+                                        )
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFFFDB86F),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = "Фотография",
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFFEFB578),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(finalHeight)
+                    ) {
+                        Base64Image(
+                            imageData = message.image,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 7.dp, bottom = 7.dp)
+                                .background(
+                                    color = Color.Black.copy(alpha = 0.5f),
+                                    shape = RoundedCornerShape(10.dp)
+                                )
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.End,
+                            ) {
+                                Text(
+                                    text = formattedTime,
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 11.sp,
+                                    color = Color.White,
+                                    letterSpacing = (-0.08).sp,
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                if (message.status == "read") {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_read_status),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                } else {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_sent_status),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(5.dp))
+            AnimatedVisibility(
+                visible = haveReaction,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                        reactions.penpalReaction != null &&
+                        reactions.mineReaction != reactions.penpalReaction
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 10.dp)
+                ) {
+                    if (hasBothDifferentReactions) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = reactions.mineReaction,
+                                    penpalReaction = null
+                                ),
+                                color = Color(0xFF40C13B),
+                                onReactionClick = {
+                                    onReactionClick()
+                                },
+                                mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = null,
+                                    penpalReaction = reactions.penpalReaction
+                                ),
+                                color = Green,
+                                onReactionClick = {
+                                    onReactionClick()
+                                },
+                                mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                            )
+                        }
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFF40C13B),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ReplyImagePreview(content: String?) {
+    val isBase64 = remember(content) {
+        !content.isNullOrBlank() && content.startsWith("data:image/jpeg;base64,")
+    }
+
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(content) {
+        isLoading = true
+        if (isBase64) {
+            bitmap = withContext(Dispatchers.IO) {
+                decodeBase64Image(content)
+            }
+        } else {
+            bitmap = null
+        }
+        isLoading = false
+    }
+
+    Box(
+        modifier = Modifier.size(36.dp)
+    ) {
+        if (isBase64) {
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap!!.asImageBitmap(),
+                    contentDescription = "Превью изображения в ответе",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else if (isLoading) {
+                // Показываем плейсхолдер загрузки
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.LightGray)
+                )
+            } else {
+                PlaceholderContent()
+            }
+        } else {
+            AsyncImage(
+                model = content,
+                contentDescription = "Превью изображения в ответе",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize(),
+                placeholder = painterResource(R.drawable.ic_avatar),
+                error = painterResource(R.drawable.ic_avatar),
+            )
+        }
+    }
+}
+
+@Composable
+fun Base64Image(
+    imageData: String?,
+    contentScale: ContentScale = ContentScale.FillBounds,
+    modifier: Modifier = Modifier,
+    placeholder: @Composable (() -> Unit)? = null,
+) {
+    val isBase64 = remember(imageData) {
+        !imageData.isNullOrBlank() && imageData.startsWith("data:image/jpeg;base64,")
+    }
+
+    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(imageData) {
+        isLoading = true
+        if (isBase64) {
+            bitmap = withContext(Dispatchers.IO) {
+                decodeBase64Image(imageData)
+            }
+        } else {
+            bitmap = null
+        }
+        isLoading = false
+    }
+
+    if (isBase64) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap!!.asImageBitmap(),
+                contentDescription = null,
+                contentScale = contentScale,
+                modifier = modifier
+            )
+        } else if (isLoading && placeholder != null) {
+            placeholder()
+        } else if (placeholder != null) {
+            placeholder()
+        } else {
+            PlaceholderContent()
+        }
+    } else {
+        AsyncImage(
+            model = imageData,
+            contentDescription = null,
+            contentScale = contentScale,
+            modifier = modifier,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+        )
     }
 }

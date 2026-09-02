@@ -771,7 +771,50 @@ private fun Content(
                                                 timestamp = System.currentTimeMillis(),
                                                 image = it.image,
                                             )
-                                        }
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot = coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessageId = message.messageId
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 } else {
                                     MineReplyImageMessage(
@@ -797,7 +840,50 @@ private fun Content(
                                         replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                         onReplyMessageClick = { messageId ->
                                             scrollToMessage(messageId)
-                                        }
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot = coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessageId = message.messageId
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 }
                             }
@@ -926,12 +1012,55 @@ private fun Content(
                                             currentMessageAnswer = Message.Image(
                                                 messageId = it.replyData?.messageId ?: "",
                                                 senderId = it.replyData?.senderId ?: "",
-                                                type = "sticker",
+                                                type = "image",
                                                 status = "sent",
                                                 timestamp = System.currentTimeMillis(),
                                                 image = it.image,
                                             )
-                                        }
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot = coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessageId = message.messageId
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 } else {
                                     PenpalReplyImageMessage(
@@ -957,7 +1086,50 @@ private fun Content(
                                         replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
                                         onReplyMessageClick = { messageId ->
                                             scrollToMessage(messageId)
-                                        }
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot = coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessageId = message.messageId
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 }
                             }
@@ -1305,19 +1477,7 @@ private fun MineReplyTextMessagePreview() {
                 onReplyMessageClick = {},
             )
             Spacer(modifier = Modifier.height(5.dp))
-            PenpalReplyImageMessage(
-                message = replyImageMessage,
-                replyName = "Dmitry",
-                onReply = {},
-                onReplyMessageClick = {},
-            )
             Spacer(modifier = Modifier.height(5.dp))
-            MineReplyImageMessage(
-                message = replyImageMessage,
-                replyName = "Dmitry",
-                onReply = {},
-                onReplyMessageClick = {},
-            )
         }
     }
 }
