@@ -227,7 +227,7 @@ fun PenpalStickerMessage(
                                 mineReaction = null,
                                 penpalReaction = reactions.penpalReaction
                             ),
-                            color = Color(0xFFE1F1FF),
+                            color = Color(0xFFCCE3F8),
                             onReactionClick = {
                                 onReactionClick()
                             },
@@ -235,15 +235,27 @@ fun PenpalStickerMessage(
                         )
                     }
                 } else {
-                    ReactionWidget(
-                        reactions = reactions,
-                        color = Blue,
-                        onReactionClick = {
-                            onReactionClick()
-                        },
-                        mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
-                        penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
-                    )
+                    if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Blue,
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
                 }
             }
         }
@@ -624,7 +636,7 @@ fun MineStickerReplyMessage(
                                 mineReaction = reactions.mineReaction,
                                 penpalReaction = null
                             ),
-                            color = Color(0xFF40C13B),
+                            color = Blue,
                             onReactionClick = {
                                 onReactionClick()
                             },
@@ -636,7 +648,7 @@ fun MineStickerReplyMessage(
                                 mineReaction = null,
                                 penpalReaction = reactions.penpalReaction
                             ),
-                            color = Green,
+                            color = Color(0xFFCCE3F8),
                             onReactionClick = {
                                 onReactionClick()
                             },
@@ -644,15 +656,27 @@ fun MineStickerReplyMessage(
                         )
                     }
                 } else {
-                    ReactionWidget(
-                        reactions = reactions,
-                        color = Color(0xFF40C13B),
-                        onReactionClick = {
-                            onReactionClick()
-                        },
-                        mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
-                        penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
-                    )
+                    if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Blue,
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
                 }
             }
         }

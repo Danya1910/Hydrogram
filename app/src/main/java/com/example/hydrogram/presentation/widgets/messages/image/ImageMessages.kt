@@ -297,12 +297,10 @@ fun PenpalImageMessage(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
+                Log.d("MineTextMessage", "mineAvatar: $mineAvatar")
                 val hasBothDifferentReactions = reactions?.mineReaction != null &&
                         reactions.penpalReaction != null &&
                         reactions.mineReaction != reactions.penpalReaction
-                Box(
-                    modifier = Modifier.padding(start = 10.dp)
-                )
                 if (hasBothDifferentReactions) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -324,7 +322,7 @@ fun PenpalImageMessage(
                                 mineReaction = null,
                                 penpalReaction = reactions.penpalReaction
                             ),
-                            color = Color(0xFFE1F1FF),
+                            color = Color(0xFFCCE3F8),
                             onReactionClick = {
                                 onReactionClick()
                             },
@@ -332,15 +330,27 @@ fun PenpalImageMessage(
                         )
                     }
                 } else {
-                    ReactionWidget(
-                        reactions = reactions,
-                        color = Blue,
-                        onReactionClick = {
-                            onReactionClick()
-                        },
-                        mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
-                        penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
-                    )
+                    if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Blue,
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
                 }
             }
         }
@@ -658,41 +668,49 @@ fun PenpalReplyImageMessage(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
+                Log.d("MineTextMessage", "mineAvatar: $mineAvatar")
                 val hasBothDifferentReactions = reactions?.mineReaction != null &&
                         reactions.penpalReaction != null &&
                         reactions.mineReaction != reactions.penpalReaction
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 10.dp)
-                ) {
-                    if (hasBothDifferentReactions) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ReactionWidget(
-                                reactions = MessageReactions(
-                                    mineReaction = reactions.mineReaction,
-                                    penpalReaction = null
-                                ),
-                                color = Blue,
-                                onReactionClick = {
-                                    onReactionClick()
-                                },
-                                mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            ReactionWidget(
-                                reactions = MessageReactions(
-                                    mineReaction = null,
-                                    penpalReaction = reactions.penpalReaction
-                                ),
-                                color = Color(0xFFE1F1FF),
-                                onReactionClick = {
-                                    onReactionClick()
-                                },
-                                mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
-                            )
-                        }
+                if (hasBothDifferentReactions) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ReactionWidget(
+                            reactions = MessageReactions(
+                                mineReaction = reactions.mineReaction,
+                                penpalReaction = null
+                            ),
+                            color = Blue,
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        ReactionWidget(
+                            reactions = MessageReactions(
+                                mineReaction = null,
+                                penpalReaction = reactions.penpalReaction
+                            ),
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
+                    }
+                } else {
+                    if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                        )
                     } else {
                         ReactionWidget(
                             reactions = reactions,
