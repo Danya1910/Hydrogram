@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.usecase.ChangeMessageStatusUseCase
+import com.example.hydrogram.domain.usecase.DeleteMessageUseCase
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.SendMessageUseCase
@@ -29,6 +30,7 @@ class ChatViewModel @Inject constructor(
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val changeMessageStatusUseCase: ChangeMessageStatusUseCase,
     private val toggleReactionUseCase: ToggleReactionUseCase,
+    private val deleteMessageUseCase: DeleteMessageUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
@@ -137,6 +139,31 @@ class ChatViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+        }
+    }
+
+    fun deleteMessage(
+        chatId: String,
+        messageId: String,
+    ) {
+        if(_isSending.value) {
+            return
+        }
+        viewModelScope.launch {
+            viewModelScope.launch {
+                _isSending.value = true
+
+                val result = deleteMessageUseCase(
+                    chatId = chatId,
+                    messageId = messageId,
+                )
+
+                _isSending.value = false
+
+                result
+                    .onSuccess { _isSuccess.value = true }
+                    .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка удаления" }
+            }
         }
     }
 
