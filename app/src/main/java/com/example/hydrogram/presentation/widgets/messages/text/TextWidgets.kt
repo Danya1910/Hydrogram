@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.approachLayout
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -63,6 +64,7 @@ import com.example.hydrogram.ui.theme.LightGreen
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.PenpalMessageTimeColor
 import com.example.hydrogram.ui.theme.SfProText
+import java.nio.file.WatchEvent
 import java.util.Date
 import kotlin.math.roundToInt
 
@@ -403,6 +405,12 @@ fun MineReplyTextMessage(
     replyName: String,
     onReply: (Message.Text) -> Unit,
     onReplyMessageClick: (String) -> Unit,
+    onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
+    mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -417,6 +425,37 @@ fun MineReplyTextMessage(
         targetValue = if (dragAmount == 0f) 0f else dragAmount,
         label = "SwipeOffset"
     )
+
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
+        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
+    }
 
     BoxWithConstraints(
         contentAlignment = Alignment.CenterEnd,
@@ -469,6 +508,19 @@ fun MineReplyTextMessage(
                 )
                 .background(
                     color = LightGreen,
+                )
+                .combinedClickable(
+                    onClick = {},
+                    onDoubleClick = {
+                        onDoubleClick(
+                            message.reactions?.get(mineId) != null
+                        )
+                    },
+                    onLongClick = {
+                        onLongClick(
+                            false
+                        )
+                    }
                 )
         ) {
             Column(
@@ -628,16 +680,70 @@ fun MineReplyTextMessage(
                         .fillMaxWidth()
                         .padding(start = 10.dp)
                 ) {
-                    Text(
-                        text = message.text ?: "",
-                        fontFamily = SfProText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(end = 65.dp, bottom = 5.dp)
-                    )
+                    ) {
+                        Text(
+                            text = message.text ?: "",
+                            fontFamily = SfProText,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(end = 65.dp, bottom = 5.dp)
+                        )
+                        AnimatedVisibility(
+                            visible = haveReaction,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Log.d("MineTextMessage", "mineAvatar: $mineAvatar")
+                            val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                                    reactions.penpalReaction != null &&
+                                    reactions.mineReaction != reactions.penpalReaction
+                            if (hasBothDifferentReactions) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = reactions.mineReaction,
+                                            penpalReaction = null
+                                        ),
+                                        color = Color(0xFF40C13B),
+                                        onReactionClick = {
+                                            onReactionClick()
+                                        },
+                                        mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = null,
+                                            penpalReaction = reactions.penpalReaction
+                                        ),
+                                        color = Green,
+                                        onReactionClick = {
+                                            onReactionClick()
+                                        },
+                                        mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                                    )
+                                }
+                            } else {
+                                ReactionWidget(
+                                    reactions = reactions,
+                                    color = Color(0xFF40C13B),
+                                    onReactionClick = {
+                                        onReactionClick()
+                                    },
+                                    mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                                    penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                                )
+                            }
+                        }
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -683,6 +789,12 @@ fun PenpalReplyTextMessage(
     replyName: String,
     onReply: (Message.Text) -> Unit,
     onReplyMessageClick: (String) -> Unit,
+    onDoubleClick: (Boolean) -> Unit,
+    onLongClick: (Boolean) -> Unit,
+    onReactionClick: () -> Unit,
+    mineId: String,
+    mineAvatar: String,
+    penpalAvatar: String,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -697,6 +809,37 @@ fun PenpalReplyTextMessage(
         targetValue = if (dragAmount == 0f) 0f else dragAmount,
         label = "SwipeOffset"
     )
+
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
+        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
+    }
 
     BoxWithConstraints(
         contentAlignment = Alignment.CenterStart,
@@ -749,6 +892,19 @@ fun PenpalReplyTextMessage(
                 )
                 .background(
                     color = Color.White,
+                )
+                .combinedClickable(
+                    onClick = {},
+                    onDoubleClick = {
+                        onDoubleClick(
+                            message.reactions?.get(mineId) != null
+                        )
+                    },
+                    onLongClick = {
+                        onLongClick(
+                            false
+                        )
+                    }
                 )
         ) {
             Column(
@@ -913,16 +1069,70 @@ fun PenpalReplyTextMessage(
                         .fillMaxWidth()
                         .padding(start = 10.dp)
                 ) {
-                    Text(
-                        text = message.text ?: "",
-                        fontFamily = SfProText,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
                             .padding(end = 65.dp, bottom = 5.dp)
-                    )
+                    ) {
+                        Text(
+                            text = message.text ?: "",
+                            fontFamily = SfProText,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            modifier = Modifier
+                                .fillMaxWidth()
+
+                        )
+                        AnimatedVisibility(
+                            visible = haveReaction,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            Log.d("MineTextMessage", "mineAvatar: $mineAvatar")
+                            val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                                    reactions.penpalReaction != null &&
+                                    reactions.mineReaction != reactions.penpalReaction
+                            if (hasBothDifferentReactions) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = reactions.mineReaction,
+                                            penpalReaction = null
+                                        ),
+                                        color = Color(0xFF40C13B),
+                                        onReactionClick = {
+                                            onReactionClick()
+                                        },
+                                        mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = null,
+                                            penpalReaction = reactions.penpalReaction
+                                        ),
+                                        color = Green,
+                                        onReactionClick = {
+                                            onReactionClick()
+                                        },
+                                        mineAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                                    )
+                                }
+                            } else {
+                                ReactionWidget(
+                                    reactions = reactions,
+                                    color = Color(0xFF40C13B),
+                                    onReactionClick = {
+                                        onReactionClick()
+                                    },
+                                    mineAvatar = if (mineReactionEmoji != null) mineAvatar else null,
+                                    penpalAvatar = if (penpalReactionEmoji != null) penpalAvatar else null,
+                                )
+                            }
+                        }
+                    }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
