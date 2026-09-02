@@ -176,4 +176,18 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun deleteMessage(chatId: String, messageId: String): Result<Unit> {
+        return try {
+            firestore.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .document(messageId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

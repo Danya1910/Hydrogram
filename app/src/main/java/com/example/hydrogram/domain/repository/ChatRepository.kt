@@ -25,5 +25,10 @@ interface ChatRepository {
         messageId: String,
     ) : Result<Unit>
 
+    suspend fun deleteMessage(
+        chatId: String,
+        messageId: String,
+    ) : Result<Unit>
+
 
 }
