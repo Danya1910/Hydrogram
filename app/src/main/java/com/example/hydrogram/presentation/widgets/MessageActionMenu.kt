@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
 
@@ -38,6 +39,7 @@ import com.example.hydrogram.ui.theme.SfProText
 @Composable
 fun MessageActionMenu(
     onReactionClick: (String) -> Unit,
+    onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
 
@@ -111,10 +113,20 @@ fun MessageActionMenu(
                     item = RowMessageActionItem(
                         icon = R.drawable.ic_trashbox,
                         title = "Удалить",
-                        onDeleteClick = {
+                        onClick = {
                             onDeleteClick()
                         },
                         color = Red,
+                    )
+                )
+                RowMessageAction(
+                    item = RowMessageActionItem(
+                        icon = R.drawable.ic_edit,
+                        title = "Изменить",
+                        onClick = {
+                            onEditClick()
+                        },
+                        color = LightBlack,
                     )
                 )
             }
@@ -131,8 +143,7 @@ private fun RowMessageAction(
         modifier = Modifier
             .height(40.dp)
             .clickable{
-                item.onDeleteClick()
-                Log.d("MessaageActionMenu", "delete button clicked")
+                item.onClick()
             }
             .padding(horizontal = 27.dp)
 
@@ -161,6 +172,6 @@ private fun RowMessageAction(
 data class RowMessageActionItem(
     val icon: Int,
     val title: String,
-    val onDeleteClick: () -> Unit,
+    val onClick: () -> Unit,
     val color: Color,
 )

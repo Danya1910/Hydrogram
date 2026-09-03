@@ -197,12 +197,19 @@ class ChatRepositoryImpl @Inject constructor(
         currentMessageType: String,
         typeOfChange: String,
         change: String,
-        ): Result<Unit> {
+    ): Result<Unit> {
         return try {
+            Log.d("EditDebug", "Repository: Начало изменения")
             val docRef = firestore.collection("chats")
                 .document(chatId)
                 .collection("messages")
                 .document(messageId)
+
+            val snapshot = docRef.get().await()
+            if (!snapshot.exists()) {
+                Log.e("EditDebug", "❌ Сообщение не найдено: $messageId")
+                return Result.failure(Exception("Message not found"))
+            }
 
             val batch = firestore.batch()
 
@@ -210,24 +217,43 @@ class ChatRepositoryImpl @Inject constructor(
 
             updates["type"] = typeOfChange
 
-            when(typeOfChange) {
-                "text" -> updates["text"] = change
-                "sticker" -> updates["stickerPath"] = change
-                "image" -> updates["image"] = change
+            when (typeOfChange) {
+                "text" -> {
+                    updates["text"] = change
+                    Log.d("EditDebug", "Обновляем text на: $change")
+                }
+                "sticker" -> {
+                    updates["stickerPath"] = change
+                    Log.d("EditDebug", "Обновляем stickerPath на: $change")
+                }
+                "image" -> {
+                    updates["image"] = change
+                    Log.d("EditDebug", "Обновляем image на: $change")
+                }
             }
 
             updates["isEdited"] = true
 
             if (currentMessageType != typeOfChange) {
                 when (currentMessageType) {
-                    "text" -> updates["text"] = FieldValue.delete()
-                    "sticker" -> updates["stickerPath"] = FieldValue.delete()
-                    "image" -> updates["image"] = FieldValue.delete()
+                    "text" -> {
+                        updates["text"] = FieldValue.delete()
+                        Log.d("EditDebug", "Удаляем старое поле text")
+                    }
+                    "sticker" -> {
+                        updates["stickerPath"] = FieldValue.delete()
+                        Log.d("EditDebug", "Удаляем старое поле stickerPath")
+                    }
+                    "image" -> {
+                        updates["image"] = FieldValue.delete()
+                        Log.d("EditDebug", "Удаляем старое поле image")
+                    }
                 }
             }
 
-            batch.update(docRef, updates)
+            Log.d("EditDebug", "Обновления: $updates")
 
+            batch.update(docRef, updates)
             batch.commit().await()
 
             Result.success(Unit)

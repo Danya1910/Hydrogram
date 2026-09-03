@@ -587,6 +587,7 @@ private fun Content(
     }
 
     var currentReactingMessage by remember { mutableStateOf<Message?>(null) }
+    var currentEditingMessage by remember { mutableStateOf<Message?>(null) }
 
     Box(
         modifier = Modifier
@@ -1465,6 +1466,7 @@ private fun Content(
                 onDismissRequest = {
                     contextMenuState = null
                     currentReactingMessage = null
+                    currentEditingMessage = null
                 }
             ) {
                 MessageActionMenu(
@@ -1482,6 +1484,11 @@ private fun Content(
                             chatId = chatId,
                             messageId = currentReactingMessage?.messageId ?: "",
                         )
+                        contextMenuState = null
+                        currentReactingMessage = null
+                    },
+                    onEditClick = {
+                        currentEditingMessage = currentReactingMessage
                         contextMenuState = null
                         currentReactingMessage = null
                     }
@@ -1519,6 +1526,28 @@ private fun Content(
                     inputText = textState,
                     onValueChange = { newValue -> textState = newValue },
                     onSendClick = {
+                        if (currentEditingMessage != null) {
+
+                            Log.d("EditDebug", "=== НАЧАЛО РЕДАКТИРОВАНИЯ ===")
+                            Log.d("EditDebug", "messageId: ${currentEditingMessage?.messageId}")
+                            Log.d("EditDebug", "currentType: ${currentEditingMessage?.type}")
+                            Log.d("EditDebug", "newText: $textState")
+                            Log.d("EditDebug", "chatId: $chatId")
+
+                            val newText = textState.trim()
+
+                            chatViewModel.changeMessage(
+                                chatId = chatId,
+                                messageId = currentEditingMessage?.messageId ?: "",
+                                currentMessageType = currentEditingMessage?.type ?: "",
+                                typeOfChange = "text",
+                                change = newText
+                            )
+
+                            currentEditingMessage = null
+                            textState = ""
+
+                        }
                         if (textState.isNotBlank()) {
                             val messageText = textState
                             textState = ""

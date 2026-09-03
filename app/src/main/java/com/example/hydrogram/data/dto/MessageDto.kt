@@ -10,6 +10,7 @@ data class MessageDto(
     val type: String = "",
     val reactions: Map<String, String>? = null,
     val replyData: ReplyData? = null,
+    val isEdited: Boolean = false,
     val text: String? = null,
     val stickerPath: String? = null,
     val image: String? = null,

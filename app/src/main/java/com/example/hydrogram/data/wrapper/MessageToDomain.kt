@@ -10,9 +10,11 @@ fun MessageDto.toDomain(): Message {
             messageId = messageId,
             senderId = senderId,
             timestamp = timestamp,
+            type = type,
             status = status,
             reactions = reactions,
             replyData = replyData,
+            isEdited = isEdited,
             stickerPath = stickerPath,
         )
 
@@ -20,18 +22,22 @@ fun MessageDto.toDomain(): Message {
             messageId = messageId,
             senderId = senderId,
             timestamp = timestamp,
+            type = type,
             status = status,
             reactions = reactions,
             replyData = replyData,
+            isEdited = isEdited,
             text = text,
         )
         "image" -> Message.Image(
             messageId = messageId,
             senderId = senderId,
             timestamp = timestamp,
+            type = type,
             status = status,
             reactions = reactions,
             replyData = replyData,
+            isEdited = isEdited,
             image = image,
         )
 
@@ -44,6 +50,7 @@ fun MessageDto.toDomain(): Message {
                 timestamp = timestamp,
                 reactions = reactions,
                 replyData = replyData,
+                isEdited = isEdited,
                 text = "Unknown message type: $type"
             )
         }
