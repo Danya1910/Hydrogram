@@ -1664,6 +1664,25 @@ private fun Content(
                     context = context,
                     gifImageLoader = gifImageLoader,
                     onStickerClick = { stickerString ->
+                        if (currentEditingMessage != null) {
+
+                            Log.d("EditDebug", "=== НАЧАЛО РЕДАКТИРОВАНИЯ ===")
+                            Log.d("EditDebug", "messageId: ${currentEditingMessage?.messageId}")
+                            Log.d("EditDebug", "currentType: ${currentEditingMessage?.type}")
+                            Log.d("EditDebug", "newText: $textState")
+                            Log.d("EditDebug", "chatId: $chatId")
+
+                            chatViewModel.changeMessage(
+                                chatId = chatId,
+                                messageId = currentEditingMessage?.messageId ?: "",
+                                currentMessageType = currentEditingMessage?.type ?: "",
+                                typeOfChange = "sticker",
+                                change = stickerString
+                            )
+
+                            currentEditingMessage = null
+
+                        }
                         if (currentMessageAnswer == null) {
                             chatViewModel.sendSticker(
                                 senderId = mineId,
