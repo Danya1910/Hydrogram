@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.screens
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.annotation.RequiresApi
@@ -132,6 +133,7 @@ import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessag
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 import kotlin.text.startsWith
 import kotlin.text.substringAfter
 
@@ -481,10 +483,45 @@ private fun Content(
         }
     }
 
+
+    var currentReactingMessage by remember { mutableStateOf<Message?>(null) }
+    var currentEditingMessage by remember { mutableStateOf<Message?>(null) }
+
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
         if (uri != null) {
+            if (currentEditingMessage != null) {
+
+
+                Log.d("EditDebug", "=== НАЧАЛО РЕДАКТИРОВАНИЯ ===")
+                Log.d("EditDebug", "messageId: ${currentEditingMessage?.messageId}")
+                Log.d("EditDebug", "currentType: ${currentEditingMessage?.type}")
+                Log.d("EditDebug", "newText: $textState")
+                Log.d("EditDebug", "chatId: $chatId")
+
+
+                val imageData = try {
+                    convertImageToOptimizedBase64(context, uri)
+                } catch (e: Exception) {
+                    Log.e("EditDebug", "Ошибка конвертации изображения: ${e.message}")
+                    Toast.makeText(context, "Ошибка обработки изображения", Toast.LENGTH_SHORT).show()
+                    return@rememberLauncherForActivityResult
+                }
+
+                // ✅ Отправляем Base64 строку, а не URI
+                chatViewModel.changeMessage(
+                    chatId = chatId,
+                    messageId = currentEditingMessage?.messageId ?: "",
+                    currentMessageType = currentEditingMessage?.type ?: "",
+                    typeOfChange = "image",  // ✅ Меняем тип на "image"
+                    change = imageData       // ✅ Отправляем Base64 строку
+                )
+
+                currentEditingMessage = null
+
+                return@rememberLauncherForActivityResult
+            }
             if (currentMessageAnswer == null) {
                 chatViewModel.sendImage(
                     senderId = mineId,
@@ -585,9 +622,6 @@ private fun Content(
             }
         }
     }
-
-    var currentReactingMessage by remember { mutableStateOf<Message?>(null) }
-    var currentEditingMessage by remember { mutableStateOf<Message?>(null) }
 
     Box(
         modifier = Modifier
@@ -1945,6 +1979,64 @@ private fun StickerItem(
             contentDescription = null,
             modifier = Modifier.size(200.dp),
         )
+    }
+}
+
+
+private fun convertImageToOptimizedBase64(
+    context: Context,
+    imageUri: Uri
+): String {
+    val inputStream = context.contentResolver.openInputStream(imageUri)
+        ?: throw Exception("Не удалось открыть поток изображения")
+
+    val originalBitmap = BitmapFactory.decodeStream(inputStream)
+    inputStream.close()
+
+    if (originalBitmap == null) {
+        throw Exception("Не удалось декодировать изображение")
+    }
+
+    try {
+        val maxSideTarget = 800f
+        val width = originalBitmap.width
+        val height = originalBitmap.height
+
+        val scaleFactor = if (width > height) {
+            maxSideTarget / width
+        } else {
+            maxSideTarget / height
+        }
+
+        val bitmapToCompress = if (scaleFactor < 1f) {
+            val finalWidth = (width * scaleFactor).toInt()
+            val finalHeight = (height * scaleFactor).toInt()
+            Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
+        } else {
+            originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
+        }
+
+        originalBitmap.recycle()
+
+        if (bitmapToCompress == null || bitmapToCompress.isRecycled) {
+            throw Exception("Не удалось создать изображение для сжатия")
+        }
+
+        val outputStream = ByteArrayOutputStream()
+        bitmapToCompress.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
+        val byteArray = outputStream.toByteArray()
+        outputStream.close()
+
+        bitmapToCompress.recycle()
+
+        val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        return "data:image/jpeg;base64,$base64String"
+
+    } catch (e: Exception) {
+        if (!originalBitmap.isRecycled) {
+            originalBitmap.recycle()
+        }
+        throw e
     }
 }
 
