@@ -8,6 +8,7 @@ sealed interface Message {
     val status: String
     val reactions: Map<String, String>?
     val replyData: ReplyData?
+    val isEdited: Boolean
 
     data class Text(
         override val messageId: String = "",
@@ -17,6 +18,7 @@ sealed interface Message {
         override val timestamp: Long = 0L,
         override val reactions: Map<String, String>? = null,
         override val replyData: ReplyData? = null,
+        override val isEdited: Boolean = false,
         val text: String? = "",
     ) : Message
 
@@ -28,6 +30,7 @@ sealed interface Message {
         override val timestamp: Long = 0L,
         override val reactions: Map<String, String>? = null,
         override val replyData: ReplyData? = null,
+        override val isEdited: Boolean = false,
         val stickerPath: String? = "",
     ) : Message
 
@@ -39,6 +42,7 @@ sealed interface Message {
         override val timestamp: Long = 0L,
         override val reactions: Map<String, String>? = null,
         override val replyData: ReplyData? = null,
+        override val isEdited: Boolean = false,
         val image: String? = "",
     ) : Message
 

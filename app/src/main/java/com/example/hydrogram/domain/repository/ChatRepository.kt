@@ -9,26 +9,34 @@ interface ChatRepository {
         senderId: String,
         chatId: String,
         message: Message,
-    ) : Result<Unit>
+    ): Result<Unit>
 
-    fun getChatHistory(chatId: String) : Flow<List<Message>>
+    fun getChatHistory(chatId: String): Flow<List<Message>>
 
     suspend fun changeMessageStatus(
         chatId: String,
         messageId: String,
         status: String,
-    ) : Result<Unit>
+    ): Result<Unit>
 
     suspend fun toggleReaction(
         reaction: String?,
         chatId: String,
         messageId: String,
-    ) : Result<Unit>
+    ): Result<Unit>
 
     suspend fun deleteMessage(
         chatId: String,
         messageId: String,
-    ) : Result<Unit>
+    ): Result<Unit>
+
+    suspend fun changeMessage(
+        chatId: String,
+        messageId: String,
+        currentMessageType: String,
+        typeOfChange: String,
+        change: String,
+    ): Result<Unit>
 
 
 }

@@ -6,6 +6,7 @@ import com.example.hydrogram.data.wrapper.toDomain
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
@@ -184,6 +185,51 @@ class ChatRepositoryImpl @Inject constructor(
                 .document(messageId)
                 .delete()
                 .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun changeMessage(
+        chatId: String,
+        messageId: String,
+        currentMessageType: String,
+        typeOfChange: String,
+        change: String,
+        ): Result<Unit> {
+        return try {
+            val docRef = firestore.collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .document(messageId)
+
+            val batch = firestore.batch()
+
+            val updates = mutableMapOf<String, Any>()
+
+            updates["type"] = typeOfChange
+
+            when(typeOfChange) {
+                "text" -> updates["text"] = change
+                "sticker" -> updates["stickerPath"] = change
+                "image" -> updates["image"] = change
+            }
+
+            updates["isEdited"] = true
+
+            if (currentMessageType != typeOfChange) {
+                when (currentMessageType) {
+                    "text" -> updates["text"] = FieldValue.delete()
+                    "sticker" -> updates["stickerPath"] = FieldValue.delete()
+                    "image" -> updates["image"] = FieldValue.delete()
+                }
+            }
+
+            batch.update(docRef, updates)
+
+            batch.commit().await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
