@@ -83,6 +83,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.wear.compose.materialcore.currentTimeMillis
 import coil3.request.ImageRequest
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
@@ -585,7 +586,7 @@ private fun Content(
         }
     }
 
-    var currentReactingMessageId by remember { mutableStateOf<String?>(null) }
+    var currentReactingMessage by remember { mutableStateOf<Message?>(null) }
 
     Box(
         modifier = Modifier
@@ -695,7 +696,7 @@ private fun Content(
                                                         isMine = true,
                                                         size = coordinates.size
                                                     )
-                                                    currentReactingMessageId = message.messageId
+                                                    currentReactingMessage = message
                                                 }
                                             },
                                             onReactionClick = {
@@ -753,7 +754,7 @@ private fun Content(
                                                         isMine = true,
                                                         size = coordinates.size
                                                     )
-                                                    currentReactingMessageId = message.messageId
+                                                    currentReactingMessage = message
                                                 }
                                             },
                                             onReactionClick = {
@@ -814,7 +815,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -893,7 +894,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -960,7 +961,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1029,7 +1030,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1086,7 +1087,7 @@ private fun Content(
                                                         isMine = true,
                                                         size = coordinates.size
                                                     )
-                                                    currentReactingMessageId = message.messageId
+                                                    currentReactingMessage = message
                                                 }
                                             },
                                             onReactionClick = {
@@ -1152,7 +1153,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1216,7 +1217,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1295,7 +1296,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1362,7 +1363,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1431,7 +1432,7 @@ private fun Content(
                                                     isMine = true,
                                                     size = coordinates.size
                                                 )
-                                                currentReactingMessageId = message.messageId
+                                                currentReactingMessage = message
                                             }
                                         },
                                         onReactionClick = {
@@ -1463,7 +1464,7 @@ private fun Content(
                 ),
                 onDismissRequest = {
                     contextMenuState = null
-                    currentReactingMessageId = null
+                    currentReactingMessage = null
                 }
             ) {
                 MessageActionMenu(
@@ -1471,10 +1472,18 @@ private fun Content(
                         chatViewModel.toggleReaction(
                             reaction = reaction,
                             chatId = chatId,
-                            messageId = currentReactingMessageId ?: "",
+                            messageId = currentReactingMessage?.messageId ?: "",
                         )
                         contextMenuState = null
-                        currentReactingMessageId = null
+                        currentReactingMessage = null
+                    },
+                    onDeleteClick = {
+                        chatViewModel.deleteMessage(
+                            chatId = chatId,
+                            messageId = currentReactingMessage?.messageId ?: "",
+                        )
+                        contextMenuState = null
+                        currentReactingMessage = null
                     }
                 )
             }
