@@ -509,13 +509,12 @@ private fun Content(
                     return@rememberLauncherForActivityResult
                 }
 
-                // ✅ Отправляем Base64 строку, а не URI
                 chatViewModel.changeMessage(
                     chatId = chatId,
                     messageId = currentEditingMessage?.messageId ?: "",
                     currentMessageType = currentEditingMessage?.type ?: "",
-                    typeOfChange = "image",  // ✅ Меняем тип на "image"
-                    change = imageData       // ✅ Отправляем Base64 строку
+                    typeOfChange = "image",
+                    change = imageData
                 )
 
                 currentEditingMessage = null
@@ -1562,12 +1561,6 @@ private fun Content(
                     onSendClick = {
                         if (currentEditingMessage != null) {
 
-                            Log.d("EditDebug", "=== НАЧАЛО РЕДАКТИРОВАНИЯ ===")
-                            Log.d("EditDebug", "messageId: ${currentEditingMessage?.messageId}")
-                            Log.d("EditDebug", "currentType: ${currentEditingMessage?.type}")
-                            Log.d("EditDebug", "newText: $textState")
-                            Log.d("EditDebug", "chatId: $chatId")
-
                             val newText = textState.trim()
 
                             chatViewModel.changeMessage(
@@ -1665,12 +1658,6 @@ private fun Content(
                     gifImageLoader = gifImageLoader,
                     onStickerClick = { stickerString ->
                         if (currentEditingMessage != null) {
-
-                            Log.d("EditDebug", "=== НАЧАЛО РЕДАКТИРОВАНИЯ ===")
-                            Log.d("EditDebug", "messageId: ${currentEditingMessage?.messageId}")
-                            Log.d("EditDebug", "currentType: ${currentEditingMessage?.type}")
-                            Log.d("EditDebug", "newText: $textState")
-                            Log.d("EditDebug", "chatId: $chatId")
 
                             chatViewModel.changeMessage(
                                 chatId = chatId,
