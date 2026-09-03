@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
@@ -143,4 +144,17 @@ fun ReactionWidget(
             }
         }
     }
+}
+
+@Composable
+fun EditedText() {
+    Text(
+        text = "изменено",
+        fontFamily = SfProText,
+        fontWeight = FontWeight.Normal,
+        fontSize = 11.sp,
+        color = Color.Gray,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+    )
 }

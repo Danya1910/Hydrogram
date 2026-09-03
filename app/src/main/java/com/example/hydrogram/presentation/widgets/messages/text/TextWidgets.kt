@@ -59,6 +59,7 @@ import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
+import com.example.hydrogram.presentation.widgets.messages.EditedText
 import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Green
@@ -266,6 +267,10 @@ fun MineTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
+                        if(message.isEdited) {
+                            EditedText()
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
                         Text(
                             text = formattedTime,
                             fontSize = 12.sp,
@@ -366,6 +371,10 @@ fun MineTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
+                        if(message.isEdited) {
+                            EditedText()
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
                         Text(
                             text = formattedTime,
                             fontSize = 12.sp,
@@ -742,6 +751,10 @@ fun MineReplyTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
+                        if(message.isEdited) {
+                            EditedText()
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
                         Text(
                             text = formattedTime,
                             fontSize = 12.sp,
@@ -1136,6 +1149,10 @@ fun PenpalReplyTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
+                        if(message.isEdited) {
+                            EditedText()
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
                         Text(
                             text = formattedTime,
                             fontSize = 12.sp,
@@ -1360,6 +1377,10 @@ fun PenpalTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
+                        if(message.isEdited) {
+                            EditedText()
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
                         Text(
                             text = formattedTime,
                             fontSize = 11.sp,
@@ -1446,6 +1467,10 @@ fun PenpalTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
+                        if(message.isEdited) {
+                            EditedText()
+                            Spacer(modifier = Modifier.width(5.dp))
+                        }
                         Text(
                             text = formattedTime,
                             fontSize = 11.sp,
