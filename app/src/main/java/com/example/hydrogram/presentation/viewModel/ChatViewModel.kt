@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.usecase.ChangeMessageStatusUseCase
+import com.example.hydrogram.domain.usecase.ChangeMessageUseCase
 import com.example.hydrogram.domain.usecase.DeleteMessageUseCase
 import com.example.hydrogram.domain.usecase.GetChatHistoryUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
@@ -31,6 +32,7 @@ class ChatViewModel @Inject constructor(
     private val changeMessageStatusUseCase: ChangeMessageStatusUseCase,
     private val toggleReactionUseCase: ToggleReactionUseCase,
     private val deleteMessageUseCase: DeleteMessageUseCase,
+    private val changeMessageUseCase: ChangeMessageUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
@@ -164,6 +166,35 @@ class ChatViewModel @Inject constructor(
                     .onSuccess { _isSuccess.value = true }
                     .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка удаления" }
             }
+        }
+    }
+
+    fun changeMessage(
+        chatId: String,
+        messageId: String,
+        currentMessageType: String,
+        typeOfChange: String,
+        change: String,
+    ) {
+        if(_isSending.value) {
+            return
+        }
+        viewModelScope.launch {
+            _isSending.value = true
+
+            val result = changeMessageUseCase(
+                chatId = chatId,
+                messageId = messageId,
+                currentMessageType = currentMessageType,
+                typeOfChange = typeOfChange,
+                change = change,
+            )
+
+            _isSending.value = false
+
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка удаления" }
         }
     }
 
