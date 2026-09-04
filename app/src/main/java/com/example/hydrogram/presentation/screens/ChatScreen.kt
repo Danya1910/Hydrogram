@@ -564,6 +564,7 @@ private fun Content(
         Log.d("ChatScreen", "selected message: ${currentMessageAnswer.toString()}")
         if (currentMessageAnswer != null) {
             isExpanded = true
+            currentEditingMessage = null
         } else {
             isExpanded = false
         }
@@ -1512,6 +1513,10 @@ private fun Content(
                         contextMenuState = null
                         currentReactingMessage = null
                     },
+                    onAnswerClick = {
+                        currentMessageAnswer = currentReactingMessage
+                        contextMenuState = null
+                    },
                     onDeleteClick = {
                         chatViewModel.deleteMessage(
                             chatId = chatId,
@@ -1520,10 +1525,16 @@ private fun Content(
                         contextMenuState = null
                         currentReactingMessage = null
                     },
-                    onEditClick = {
-                        currentEditingMessage = currentReactingMessage
-                        contextMenuState = null
-                        currentReactingMessage = null
+                    onEditClick = if (currentReactingMessage?.type == "text") {
+                        {
+                            currentEditingMessage = currentReactingMessage
+                            contextMenuState = null
+                            currentReactingMessage = null
+                            currentMessageAnswer = null
+                            isExpanded = false
+                        }
+                    } else {
+                        null
                     }
                 )
             }
@@ -1625,6 +1636,7 @@ private fun Content(
                         isStickerWidgetVisible = !isStickerWidgetVisible
                     },
                     isExpanded = isExpanded,
+                    isEditing = currentEditingMessage != null,
                     replyMessage = currentMessageAnswer,
                     replyName = if (currentMessageAnswer?.senderId == mineId) mineName else penpalName,
                     onCancelClick = {
@@ -1633,7 +1645,11 @@ private fun Content(
                     },
                     onReplyMessageClick = { messageId ->
                         scrollToMessage(messageId)
-                    }
+                    },
+                    editingMessage = currentEditingMessage,
+                    onCancelEditClick = {
+                        currentEditingMessage = null
+                    },
                 )
             }
         }

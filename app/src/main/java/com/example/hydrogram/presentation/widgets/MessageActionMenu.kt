@@ -39,7 +39,8 @@ import com.example.hydrogram.ui.theme.SfProText
 @Composable
 fun MessageActionMenu(
     onReactionClick: (String) -> Unit,
-    onEditClick: () -> Unit,
+    onEditClick: (() -> Unit)? = null,
+    onAnswerClick: () -> Unit,
     onDeleteClick: () -> Unit,
 ) {
 
@@ -111,22 +112,34 @@ fun MessageActionMenu(
             ) {
                 RowMessageAction(
                     item = RowMessageActionItem(
+                        icon = R.drawable.ic_reply,
+                        title = "Ответить",
+                        onClick = {
+                            onAnswerClick()
+                        },
+                        color = LightBlack,
+                    )
+                )
+                onEditClick?.let {
+                    RowMessageAction(
+                        item = RowMessageActionItem(
+                            icon = R.drawable.ic_edit,
+                            title = "Изменить",
+                            onClick = {
+                                onEditClick()
+                            },
+                            color = LightBlack,
+                        )
+                    )
+                }
+                RowMessageAction(
+                    item = RowMessageActionItem(
                         icon = R.drawable.ic_trashbox,
                         title = "Удалить",
                         onClick = {
                             onDeleteClick()
                         },
                         color = Red,
-                    )
-                )
-                RowMessageAction(
-                    item = RowMessageActionItem(
-                        icon = R.drawable.ic_edit,
-                        title = "Изменить",
-                        onClick = {
-                            onEditClick()
-                        },
-                        color = LightBlack,
                     )
                 )
             }

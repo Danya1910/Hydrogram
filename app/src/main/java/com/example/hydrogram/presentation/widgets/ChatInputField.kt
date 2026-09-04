@@ -3,7 +3,6 @@ package com.example.hydrogram.presentation.widgets
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -11,11 +10,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.onConsumedWindowInsetsChanged
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -44,9 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -54,18 +47,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
-import com.example.hydrogram.domain.model.ReplyData
-import com.example.hydrogram.presentation.screens.PlaceholderContent
-import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.SfProText
-import kotlin.text.startsWith
 
 
 @Composable
@@ -76,13 +64,18 @@ fun ChatInputField(
     onAttachClick: () -> Unit,
     onStickerClick: () -> Unit,
     isExpanded: Boolean,
+    isEditing: Boolean,
     replyMessage: Message?,
     onCancelClick: () -> Unit,
     replyName: String,
     onReplyMessageClick: (String) -> Unit,
+    editingMessage: Message?,
+    onCancelEditClick: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
+
+    Log.d("ChatInput", "currentEditingMessage: $editingMessage, replyMessage: $replyMessage")
 
     Row(
         verticalAlignment = Alignment.Bottom,
@@ -106,6 +99,7 @@ fun ChatInputField(
             onStickerClick = onStickerClick,
             modifier = Modifier.weight(1f),
             isExpanded = isExpanded,
+            isEditing = isEditing,
             replyMessage = replyMessage,
             replyName = replyName,
             onCancelClick = {
@@ -113,7 +107,11 @@ fun ChatInputField(
             },
             onReplyMessageClick = { messageId ->
                 onReplyMessageClick(messageId)
-            }
+            },
+            editingMessage = editingMessage,
+            onCancelEditClick = {
+                onCancelEditClick()
+            },
         )
         Spacer(modifier = Modifier.width(6.dp))
         SendButton(
@@ -225,16 +223,31 @@ private fun MessageInputField(
     onStickerClick: () -> Unit,
     modifier: Modifier,
     isExpanded: Boolean,
+    isEditing: Boolean,
     replyMessage: Message?,
     replyName: String,
     onCancelClick: () -> Unit,
     onReplyMessageClick: (String) -> Unit,
+    editingMessage: Message?,
+    onCancelEditClick: () -> Unit,
 ) {
 
+
     val inputHeight by animateDpAsState(
-        targetValue = if (isExpanded) 96.dp else 42.dp,
+        targetValue = when {
+            isExpanded -> 96.dp
+            isEditing -> 96.dp
+            else -> 42.dp
+        },
         animationSpec = tween(durationMillis = 300),
     )
+
+
+    Log.d(
+        "ChatInput",
+        "currentEditingMessage: $editingMessage, replyMessage: $replyMessage, isEditing: $isEditing"
+    )
+
 
     Box(
         contentAlignment = Alignment.CenterStart,
@@ -258,6 +271,37 @@ private fun MessageInputField(
                     vertical = 4.dp
                 )
         ) {
+
+            AnimatedVisibility(
+                visible = isEditing && editingMessage is Message.Text,
+                enter = fadeIn(
+                    animationSpec = tween(300, delayMillis = 50)
+                ) + slideInVertically(
+                    initialOffsetY = { -it / 2 },
+                    animationSpec = tween(300, delayMillis = 50)
+                ) + scaleIn(
+                    initialScale = 0.9f,
+                    animationSpec = tween(300, delayMillis = 50)
+                ),
+                exit = fadeOut(
+                    animationSpec = tween(200)
+                ) + slideOutVertically(
+                    targetOffsetY = { -it / 2 },
+                    animationSpec = tween(200)
+                ) + scaleOut(
+                    targetScale = 0.9f,
+                    animationSpec = tween(200)
+                )
+            ) {
+                Log.d("ChatInput", "editingMessage: $editingMessage")
+                EditMessageData(
+                    editMessage = editingMessage,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .padding(bottom = 6.dp),
+                    onCancelEditClick = { onCancelEditClick() },
+                )
+            }
 
             AnimatedVisibility(
                 visible = isExpanded,
@@ -336,6 +380,86 @@ private fun MessageInputField(
                 }
             )
         }
+    }
+}
+
+@Composable
+private fun EditMessageData(
+    editMessage: Message?,
+    modifier: Modifier = Modifier,
+    onCancelEditClick: () -> Unit,
+) {
+
+    if (editMessage !is Message.Text) {
+        Log.e("EditMessageData", "editMessage is not Message.Text or null: $editMessage")
+        return
+    }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+            .padding(
+                horizontal = 9.dp,
+            )
+            .fillMaxWidth()
+            .height(41.dp)
+            .clip(
+                shape = RoundedCornerShape(4.dp)
+            )
+            .padding(
+                end = 8.dp
+            )
+    ) {
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .height(41.dp)
+                .background(
+                    color = Blue,
+                )
+        )
+        Spacer(modifier = Modifier.width(7.dp))
+        Column(
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                text = "Редактирование",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                letterSpacing = -(0.23).sp,
+                color = Blue,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            (editMessage as Message.Text).text?.let {
+                Text(
+                    text = it,
+                    fontFamily = SfProText,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 15.sp,
+                    letterSpacing = -(0.23).sp,
+                    color = Color.Black,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.padding(16.dp))
+        Icon(
+            painter = painterResource(R.drawable.ic_cross),
+            contentDescription = null,
+            tint = Color.Gray,
+            modifier = Modifier
+                .size(10.dp)
+                .clickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() }
+                ) {
+                    onCancelEditClick()
+                }
+        )
     }
 }
 
