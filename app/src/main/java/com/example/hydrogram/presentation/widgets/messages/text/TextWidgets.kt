@@ -3,10 +3,16 @@ package com.example.hydrogram.presentation.widgets.messages.text
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -56,6 +63,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.util.MessageCallbacks
@@ -197,7 +205,7 @@ fun MineTextMessage(
                             .padding(
                                 top = 5.dp,
                                 start = 10.dp,
-                                end = if(message.isEdited) 122.dp else 68.dp,
+                                end = if (message.isEdited) 122.dp else 68.dp,
                                 bottom = 5.dp
                             )
                     ) {
@@ -300,7 +308,7 @@ fun MineTextMessage(
                             .padding(
                                 top = 5.dp,
                                 start = 10.dp,
-                                end = if(message.isEdited) 70.dp else 16.dp,
+                                end = if (message.isEdited) 70.dp else 16.dp,
                                 bottom = 16.dp
                             )
                     ) {
@@ -420,22 +428,75 @@ private fun PreviewMessage() {
         text = "Привет, !"
     )
 
-    MineTextMessage(
-        message = textMessage,
-        messageCallbacks = MessageCallbacks(
-            onReply = {},
-            onReplyMessageClick = {},
-            onDoubleClick = {},
-            onLongClick = {},
-            onReactionClick = {},
+    val textReplyMessage = Message.Text(
+        messageId = "msg_123456",
+        senderId = "user_789",
+        type = "text",
+        status = "sent",
+        timestamp = System.currentTimeMillis(),
+        reactions = null,
+        replyData = ReplyData(
+            content = "4"
         ),
-        messageData = MessageData(
-            replyName = "",
-            mineId = "",
-            mineAvatar = "",
-            penpalAvatar = "",
-        ),
+        isEdited = true,
+        text = "1",
     )
+
+    Column {
+        MineTextMessage(
+            message = textMessage,
+            messageCallbacks = MessageCallbacks(
+                onReply = {},
+                onReplyMessageClick = {},
+                onDoubleClick = {},
+                onLongClick = {},
+                onReactionClick = {},
+            ),
+            messageData = MessageData(
+                replyName = "",
+                mineId = "",
+                mineAvatar = "",
+                penpalAvatar = "",
+            ),
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        MineReplyTextMessage(
+            message = textReplyMessage,
+            messageCallbacks = MessageCallbacks(
+                onReply = {},
+                onReplyMessageClick = {},
+                onDoubleClick = {},
+                onLongClick = {},
+                onReactionClick = {},
+            ),
+            messageData = MessageData(
+                replyName = "",
+                mineId = "",
+                mineAvatar = "",
+                penpalAvatar = "",
+            ),
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        PenpalReplyTextMessage(
+            message = textReplyMessage,
+            messageCallbacks = MessageCallbacks(
+                onReply = {},
+                onReplyMessageClick = {},
+                onDoubleClick = {},
+                onLongClick = {},
+                onReactionClick = {},
+            ),
+            messageData = MessageData(
+                replyName = "",
+                mineId = "",
+                mineAvatar = "",
+                penpalAvatar = "",
+            ),
+        )
+    }
 }
 
 @Composable
@@ -456,6 +517,13 @@ fun MineReplyTextMessage(
     val animatedOffset by animateFloatAsState(
         targetValue = if (dragAmount == 0f) 0f else dragAmount,
         label = "SwipeOffset"
+    )
+
+    val paddingAnimation by animateDpAsState(
+        targetValue = if (message.isEdited) 110.dp else 0.dp,
+        animationSpec = tween(
+            delayMillis = 300,
+        )
     )
 
     val validReactions = message.reactions
@@ -710,13 +778,16 @@ fun MineReplyTextMessage(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 10.dp)
+                        .padding(
+                            start = 10.dp,
+                        )
                 ) {
                     Column(
                         modifier = Modifier
                             .padding(
-                                end = 65.dp,
-                                bottom = 5.dp)
+                                end = 15.dp,
+                                bottom = 8.dp
+                            )
                     ) {
                         Text(
                             text = message.text ?: "",
@@ -730,51 +801,57 @@ fun MineReplyTextMessage(
                         )
                         AnimatedVisibility(
                             visible = haveReaction,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically(),
+                            enter = fadeIn() + expandVertically(
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ),
+                            exit = fadeOut() + shrinkVertically(
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            )
                         ) {
                             Log.d("MineTextMessage", "mineAvatar: $messageData.mineAvatar")
                             val hasBothDifferentReactions = reactions?.mineReaction != null &&
                                     reactions.penpalReaction != null &&
                                     reactions.mineReaction != reactions.penpalReaction
-                            if (hasBothDifferentReactions) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
+                            Box(modifier = Modifier.padding(end = paddingAnimation)) {
+                                if (hasBothDifferentReactions) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        ReactionWidget(
+                                            reactions = MessageReactions(
+                                                mineReaction = reactions.mineReaction,
+                                                penpalReaction = null
+                                            ),
+                                            color = Color(0xFF40C13B),
+                                            onReactionClick = {
+                                                messageCallbacks.onReactionClick()
+                                            },
+                                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        ReactionWidget(
+                                            reactions = MessageReactions(
+                                                mineReaction = null,
+                                                penpalReaction = reactions.penpalReaction
+                                            ),
+                                            color = Green,
+                                            onReactionClick = {
+                                                messageCallbacks.onReactionClick()
+                                            },
+                                            mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                        )
+                                    }
+                                } else {
                                     ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = reactions.mineReaction,
-                                            penpalReaction = null
-                                        ),
+                                        reactions = reactions,
                                         color = Color(0xFF40C13B),
                                         onReactionClick = {
                                             messageCallbacks.onReactionClick()
                                         },
                                         mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = null,
-                                            penpalReaction = reactions.penpalReaction
-                                        ),
-                                        color = Green,
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                        penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
                                     )
                                 }
-                            } else {
-                                ReactionWidget(
-                                    reactions = reactions,
-                                    color = Color(0xFF40C13B),
-                                    onReactionClick = {
-                                        messageCallbacks.onReactionClick()
-                                    },
-                                    mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                    penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                )
                             }
                         }
                     }
@@ -787,18 +864,27 @@ fun MineReplyTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if (message.isEdited) {
-                            EditedText()
-                            Spacer(modifier = Modifier.width(5.dp))
+                        AnimatedVisibility(
+                            visible = message.isEdited,
+                            enter = fadeIn() + expandHorizontally(
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ),
+                            exit = fadeOut() + shrinkHorizontally(
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            )
+                        ) {
+                            Row {
+                                EditedText()
+                                Spacer(modifier = Modifier.width(5.dp))
+                            }
                         }
                         Text(
                             text = formattedTime,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Normal,
                             fontFamily = SfProText,
-                            color = MineMessageTimeColor,
+                            color = PenpalMessageTimeColor,
                         )
-                        Spacer(modifier = Modifier.width(5.dp))
                         if (message.status == "read") {
                             Icon(
                                 painter = painterResource(R.drawable.ic_read_status),
@@ -839,6 +925,13 @@ fun PenpalReplyTextMessage(
     val animatedOffset by animateFloatAsState(
         targetValue = if (dragAmount == 0f) 0f else dragAmount,
         label = "SwipeOffset"
+    )
+
+    val paddingAnimation by animateDpAsState(
+        targetValue = if (message.isEdited) 35.dp else 0.dp,
+        animationSpec = tween(
+            delayMillis = 300,
+        )
     )
 
     val validReactions = message.reactions
@@ -1098,11 +1191,13 @@ fun PenpalReplyTextMessage(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 10.dp)
+                        .padding(
+                            start = 10.dp,
+                        )
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(end = 65.dp, bottom = 5.dp)
+                            .padding(end = 65.dp, bottom = 8.dp)
                     ) {
                         Text(
                             text = message.text ?: "",
@@ -1112,6 +1207,7 @@ fun PenpalReplyTextMessage(
                             color = Color.Black,
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .padding(bottom = 5.dp)
 
                         )
                         AnimatedVisibility(
@@ -1123,55 +1219,62 @@ fun PenpalReplyTextMessage(
                             val hasBothDifferentReactions = reactions?.mineReaction != null &&
                                     reactions.penpalReaction != null &&
                                     reactions.mineReaction != reactions.penpalReaction
-                            if (hasBothDifferentReactions) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = reactions.mineReaction,
-                                            penpalReaction = null
-                                        ),
-                                        color = Blue,
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                            Box(
+                                modifier = Modifier
+                                    .padding(
+                                        end = paddingAnimation
                                     )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = null,
-                                            penpalReaction = reactions.penpalReaction
-                                        ),
-                                        color = Color(0xFFCCE3F8),
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                    )
-                                }
-                            } else {
-                                if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
-                                    ReactionWidget(
-                                        reactions = reactions,
-                                        color = Color(0xFFCCE3F8),
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                        penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                    )
+                            ) {
+                                if (hasBothDifferentReactions) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        ReactionWidget(
+                                            reactions = MessageReactions(
+                                                mineReaction = reactions.mineReaction,
+                                                penpalReaction = null
+                                            ),
+                                            color = Blue,
+                                            onReactionClick = {
+                                                messageCallbacks.onReactionClick()
+                                            },
+                                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        ReactionWidget(
+                                            reactions = MessageReactions(
+                                                mineReaction = null,
+                                                penpalReaction = reactions.penpalReaction
+                                            ),
+                                            color = Color(0xFFCCE3F8),
+                                            onReactionClick = {
+                                                messageCallbacks.onReactionClick()
+                                            },
+                                            mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                        )
+                                    }
                                 } else {
-                                    ReactionWidget(
-                                        reactions = reactions,
-                                        color = Blue,
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                        penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                    )
+                                    if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                                        ReactionWidget(
+                                            reactions = reactions,
+                                            color = Color(0xFFCCE3F8),
+                                            onReactionClick = {
+                                                messageCallbacks.onReactionClick()
+                                            },
+                                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                        )
+                                    } else {
+                                        ReactionWidget(
+                                            reactions = reactions,
+                                            color = Blue,
+                                            onReactionClick = {
+                                                messageCallbacks.onReactionClick()
+                                            },
+                                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -1180,14 +1283,26 @@ fun PenpalReplyTextMessage(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .padding(horizontal = 10.dp)
-                            .padding(bottom = 3.dp)
+                            .padding(
+                                bottom = 3.dp,
+                            )
                             .align(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if (message.isEdited) {
-                            EditedText()
-                            Spacer(modifier = Modifier.width(5.dp))
+                        AnimatedVisibility(
+                            visible = message.isEdited,
+                            enter = fadeIn() + expandHorizontally(
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            ),
+                            exit = fadeOut() + shrinkHorizontally(
+                                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                            )
+                        ) {
+                            Row {
+                                EditedText()
+                                Spacer(modifier = Modifier.width(5.dp))
+                            }
                         }
                         Text(
                             text = formattedTime,
@@ -1331,7 +1446,7 @@ fun PenpalTextMessage(
                             .padding(
                                 top = 5.dp,
                                 start = 10.dp,
-                                end = 42.dp,
+                                end = if (message.isEdited) 98.dp else 42.dp,
                                 bottom = 5.dp
                             )
                     ) {
@@ -1432,7 +1547,7 @@ fun PenpalTextMessage(
                             .padding(
                                 top = 5.dp,
                                 start = 10.dp,
-                                end = 16.dp,
+                                end = if (message.isEdited) 70.dp else 16.dp,
                                 bottom = 16.dp
                             )
                     ) {
