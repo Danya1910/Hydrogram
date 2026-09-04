@@ -49,6 +49,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -196,7 +197,7 @@ fun MineTextMessage(
                             .padding(
                                 top = 5.dp,
                                 start = 10.dp,
-                                end = 68.dp,
+                                end = if(message.isEdited) 122.dp else 68.dp,
                                 bottom = 5.dp
                             )
                     ) {
@@ -206,8 +207,7 @@ fun MineTextMessage(
                             fontSize = 17.sp,
                             fontWeight = FontWeight.Medium,
                             color = Color.Black,
-
-                            )
+                        )
                         AnimatedVisibility(
                             visible = haveReaction,
                             enter = fadeIn() + expandVertically(),
@@ -267,7 +267,7 @@ fun MineTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if(message.isEdited) {
+                        if (message.isEdited) {
                             EditedText()
                             Spacer(modifier = Modifier.width(5.dp))
                         }
@@ -300,7 +300,7 @@ fun MineTextMessage(
                             .padding(
                                 top = 5.dp,
                                 start = 10.dp,
-                                end = 16.dp,
+                                end = if(message.isEdited) 70.dp else 16.dp,
                                 bottom = 16.dp
                             )
                     ) {
@@ -371,7 +371,7 @@ fun MineTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if(message.isEdited) {
+                        if (message.isEdited) {
                             EditedText()
                             Spacer(modifier = Modifier.width(5.dp))
                         }
@@ -402,6 +402,40 @@ fun MineTextMessage(
             }
         }
     }
+}
+
+@Composable
+@Preview(showBackground = true)
+private fun PreviewMessage() {
+
+    val textMessage = Message.Text(
+        messageId = "msg_123456",
+        senderId = "user_789",
+        type = "text",
+        status = "sent",
+        timestamp = System.currentTimeMillis(),
+        reactions = null,
+        replyData = null,
+        isEdited = true,
+        text = "Привет, !"
+    )
+
+    MineTextMessage(
+        message = textMessage,
+        messageCallbacks = MessageCallbacks(
+            onReply = {},
+            onReplyMessageClick = {},
+            onDoubleClick = {},
+            onLongClick = {},
+            onReactionClick = {},
+        ),
+        messageData = MessageData(
+            replyName = "",
+            mineId = "",
+            mineAvatar = "",
+            penpalAvatar = "",
+        ),
+    )
 }
 
 @Composable
@@ -680,7 +714,9 @@ fun MineReplyTextMessage(
                 ) {
                     Column(
                         modifier = Modifier
-                            .padding(end = 65.dp, bottom = 5.dp)
+                            .padding(
+                                end = 65.dp,
+                                bottom = 5.dp)
                     ) {
                         Text(
                             text = message.text ?: "",
@@ -751,7 +787,7 @@ fun MineReplyTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if(message.isEdited) {
+                        if (message.isEdited) {
                             EditedText()
                             Spacer(modifier = Modifier.width(5.dp))
                         }
@@ -1116,7 +1152,7 @@ fun PenpalReplyTextMessage(
                                     )
                                 }
                             } else {
-                                if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                                if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
                                     ReactionWidget(
                                         reactions = reactions,
                                         color = Color(0xFFCCE3F8),
@@ -1149,7 +1185,7 @@ fun PenpalReplyTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if(message.isEdited) {
+                        if (message.isEdited) {
                             EditedText()
                             Spacer(modifier = Modifier.width(5.dp))
                         }
@@ -1344,7 +1380,7 @@ fun PenpalTextMessage(
                                     )
                                 }
                             } else {
-                                if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                                if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
                                     ReactionWidget(
                                         reactions = reactions,
                                         color = Color(0xFFCCE3F8),
@@ -1377,7 +1413,7 @@ fun PenpalTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if(message.isEdited) {
+                        if (message.isEdited) {
                             EditedText()
                             Spacer(modifier = Modifier.width(5.dp))
                         }
@@ -1467,7 +1503,7 @@ fun PenpalTextMessage(
                                 Alignment.BottomEnd
                             ),
                     ) {
-                        if(message.isEdited) {
+                        if (message.isEdited) {
                             EditedText()
                             Spacer(modifier = Modifier.width(5.dp))
                         }
