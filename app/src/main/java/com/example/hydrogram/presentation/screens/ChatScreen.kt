@@ -1528,10 +1528,12 @@ private fun Content(
                     onEditClick = if (currentReactingMessage?.type == "text") {
                         {
                             currentEditingMessage = currentReactingMessage
+                            textState = (currentEditingMessage as Message.Text).text ?: ""
                             contextMenuState = null
                             currentReactingMessage = null
                             currentMessageAnswer = null
                             isExpanded = false
+                            Log.d("EditDebug", textState)
                         }
                     } else {
                         null
