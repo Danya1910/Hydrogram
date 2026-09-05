@@ -50,6 +50,8 @@ import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
+import com.example.hydrogram.ui.theme.Green
+import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
@@ -66,7 +68,6 @@ fun ChatItem(
 
     val penpalId = remember(chat.chatId, mineId) {
         val parts = chat.chatId.split("_")
-        // Ищем чужой ID, а если его нет — берем свой (чат с собой)
         parts.firstOrNull { it != mineId } ?: parts.firstOrNull() ?: ""
     }
 
@@ -148,7 +149,7 @@ fun ChatItem(
                         .weight(1f)
                 ) {
                     Text(
-                        text = user?.name ?: "неизвестно",
+                        text = user.name,
                         fontFamily = SfProDisplay,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium,
@@ -168,20 +169,40 @@ fun ChatItem(
                 }
                 Column(
                     verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally,
+                    horizontalAlignment = Alignment.End,
                     modifier = Modifier
                         .fillMaxHeight()
                         .padding(top = 3.dp, bottom = 5.dp)
-                        .weight(0.15f)
+                        .weight(0.3f)
                 ) {
-                    Text(
-                        text = formattedTime,
-                        fontFamily = SfProText,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Gray,
-                        maxLines = 1,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        if (chat.lastMessageStatus == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = Green,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        } else if(chat.lastMessageStatus == "sent") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = Green,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                        Text(
+                            text = formattedTime,
+                            fontFamily = SfProText,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Normal,
+                            color = Gray,
+                            maxLines = 1,
+                        )
+                    }
                     if (chat.unreadCount != 0) {
                         UnreadMessageWidget(
                             count = chat.unreadCount.toString()

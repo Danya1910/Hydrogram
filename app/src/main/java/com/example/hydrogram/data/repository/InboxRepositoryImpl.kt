@@ -68,6 +68,8 @@ class InboxRepositoryImpl @Inject constructor(
                                                 ""
                                             }
 
+                                            val unreadCount = chatDoc.getLong("unreadCount")?.toInt() ?: 0
+
                                             val chat = Chat(
                                                 senderId = lastMsgDoc?.getString("senderId") ?: "",
                                                 chatId = chatId,
@@ -75,7 +77,7 @@ class InboxRepositoryImpl @Inject constructor(
                                                 lastMessageType = messageType,
                                                 lastMessageSenderId = lastMsgDoc?.getString("senderId") ?: "",
                                                 lastMessageTimestamp = lastMsgDoc?.getLong("timestamp") ?: 0L,
-                                                unreadCount = chatDoc.getLong("unreadCount")?.toInt() ?: 0,
+                                                unreadCount = unreadCount,
                                                 members = members,
                                                 lastMessageStatus = lastMessageStatus,
                                             )
