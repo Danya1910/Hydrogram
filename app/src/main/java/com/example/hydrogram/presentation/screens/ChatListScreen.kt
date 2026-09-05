@@ -209,7 +209,6 @@ fun FavoriteChatItem(
 
     when (val state = userState) {
         is UserState.Success -> {
-            val user = state.user ?: User(name = "Удаленный аккаунт")
 
             Row(
                 verticalAlignment = Alignment.Top,
@@ -278,11 +277,6 @@ fun FavoriteChatItem(
                         color = Gray,
                         maxLines = 1,
                     )
-                    if (chat.unreadCount != 0) {
-                        UnreadMessageWidget(
-                            count = chat.unreadCount.toString()
-                        )
-                    }
                 }
             }
         }

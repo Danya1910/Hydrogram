@@ -505,7 +505,8 @@ private fun Content(
                     convertImageToOptimizedBase64(context, uri)
                 } catch (e: Exception) {
                     Log.e("EditDebug", "Ошибка конвертации изображения: ${e.message}")
-                    Toast.makeText(context, "Ошибка обработки изображения", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Ошибка обработки изображения", Toast.LENGTH_SHORT)
+                        .show()
                     return@rememberLauncherForActivityResult
                 }
 
@@ -1525,7 +1526,10 @@ private fun Content(
                         contextMenuState = null
                         currentReactingMessage = null
                     },
-                    onEditClick = if (currentReactingMessage?.type == "text") {
+                    onEditClick = if (
+                        currentReactingMessage?.type == "text" &&
+                        currentReactingMessage?.senderId == mineId
+                    ) {
                         {
                             currentEditingMessage = currentReactingMessage
                             textState = (currentEditingMessage as Message.Text).text ?: ""
@@ -1724,6 +1728,7 @@ private fun Content(
                                 replyData = replyData,
                             )
                         }
+                        isStickerWidgetVisible = false
                         currentMessageAnswer = null
                     },
                 )

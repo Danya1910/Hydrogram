@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.repository
 
+import android.util.Log
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.repository.InboxRepository
 import com.google.firebase.firestore.FirebaseFirestore
@@ -68,25 +69,51 @@ class InboxRepositoryImpl @Inject constructor(
                                                 ""
                                             }
 
-                                            val unreadCount = chatDoc.getLong("unreadCount")?.toInt() ?: 0
+                                            firestore.collection("chats")
+                                                .document(chatId)
+                                                .collection("messages")
+                                                .whereEqualTo("status", "sent")
+                                                .get()
+                                                .addOnSuccessListener { messagesSnapshot ->
+                                                    val unreadCount = messagesSnapshot.size()
 
-                                            val chat = Chat(
-                                                senderId = lastMsgDoc?.getString("senderId") ?: "",
-                                                chatId = chatId,
-                                                lastMessage = messageText,
-                                                lastMessageType = messageType,
-                                                lastMessageSenderId = lastMsgDoc?.getString("senderId") ?: "",
-                                                lastMessageTimestamp = lastMsgDoc?.getLong("timestamp") ?: 0L,
-                                                unreadCount = unreadCount,
-                                                members = members,
-                                                lastMessageStatus = lastMessageStatus,
-                                            )
+                                                    val chat = Chat(
+                                                        senderId = lastMsgDoc?.getString("senderId") ?: "",
+                                                        chatId = chatId,
+                                                        lastMessage = messageText,
+                                                        lastMessageType = messageType,
+                                                        lastMessageSenderId = lastMsgDoc?.getString("senderId") ?: "",
+                                                        lastMessageTimestamp = lastMsgDoc?.getLong("timestamp") ?: 0L,
+                                                        unreadCount = unreadCount,
+                                                        members = members,
+                                                        lastMessageStatus = lastMessageStatus,
+                                                    )
+                                                    Log.d("InboxRepository", "unreadCount: $unreadCount")
 
-                                            chatsCache[chatId] = chat
+                                                    chatsCache[chatId] = chat
 
-                                            val sortedChats = chatsCache.values
-                                                .sortedByDescending { it.lastMessageTimestamp }
-                                            trySend(sortedChats)
+                                                    val sortedChats = chatsCache.values
+                                                        .sortedByDescending { it.lastMessageTimestamp }
+                                                    trySend(sortedChats)
+                                                }
+                                                .addOnFailureListener {
+                                                    val chat = Chat(
+                                                        senderId = lastMsgDoc?.getString("senderId") ?: "",
+                                                        chatId = chatId,
+                                                        lastMessage = messageText,
+                                                        lastMessageType = messageType,
+                                                        lastMessageSenderId = lastMsgDoc?.getString("senderId") ?: "",
+                                                        lastMessageTimestamp = lastMsgDoc?.getLong("timestamp") ?: 0L,
+                                                        unreadCount = 0,
+                                                        members = members,
+                                                        lastMessageStatus = lastMessageStatus,
+                                                    )
+
+                                                    chatsCache[chatId] = chat
+                                                    val sortedChats = chatsCache.values
+                                                        .sortedByDescending { it.lastMessageTimestamp }
+                                                    trySend(sortedChats)
+                                                }
                                         }
                                 }
 
