@@ -82,7 +82,7 @@ fun ReactionWidget(
         ) {
             Text(
                 text = reactions?.mineReaction ?: reactions?.penpalReaction ?: "",
-                fontSize = 18.sp,
+                fontSize = 22.sp,
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
             )
