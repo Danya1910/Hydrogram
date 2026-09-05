@@ -62,6 +62,12 @@ class InboxRepositoryImpl @Inject constructor(
                                                 else -> "Сообщение"
                                             }
 
+                                            val lastMessageStatus = if(lastMsgDoc?.getString("senderId") == userId) {
+                                                lastMsgDoc.getString("status") ?: "sent"
+                                            } else {
+                                                ""
+                                            }
+
                                             val chat = Chat(
                                                 senderId = lastMsgDoc?.getString("senderId") ?: "",
                                                 chatId = chatId,
@@ -70,7 +76,8 @@ class InboxRepositoryImpl @Inject constructor(
                                                 lastMessageSenderId = lastMsgDoc?.getString("senderId") ?: "",
                                                 lastMessageTimestamp = lastMsgDoc?.getLong("timestamp") ?: 0L,
                                                 unreadCount = chatDoc.getLong("unreadCount")?.toInt() ?: 0,
-                                                members = members
+                                                members = members,
+                                                lastMessageStatus = lastMessageStatus,
                                             )
 
                                             chatsCache[chatId] = chat
