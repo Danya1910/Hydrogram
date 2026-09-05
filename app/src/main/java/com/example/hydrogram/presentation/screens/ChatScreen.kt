@@ -114,6 +114,7 @@ import coil3.ImageLoader
 import coil3.request.crossfade
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.states.MineState
+import com.example.hydrogram.presentation.util.CopyTextToClipboard
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
@@ -1517,6 +1518,19 @@ private fun Content(
                         contextMenuState = null
                         currentReactingMessage = null
                     },
+                    onCopyClick =
+                        if (currentReactingMessage?.type == "text") {
+                            {
+                                CopyTextToClipboard(
+                                    context = context,
+                                    text = (currentReactingMessage as Message.Text).text ?: "",
+                                )
+                                contextMenuState = null
+                                currentReactingMessage = null
+                            }
+                        } else {
+                            null
+                        },
                     onAnswerClick = {
                         currentMessageAnswer = currentReactingMessage
                         contextMenuState = null

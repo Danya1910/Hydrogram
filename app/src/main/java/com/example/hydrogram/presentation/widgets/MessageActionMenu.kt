@@ -39,6 +39,7 @@ import com.example.hydrogram.ui.theme.SfProText
 @Composable
 fun MessageActionMenu(
     onReactionClick: (String) -> Unit,
+    onCopyClick: (() -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
     onAnswerClick: () -> Unit,
     onDeleteClick: () -> Unit,
@@ -120,6 +121,18 @@ fun MessageActionMenu(
                         color = LightBlack,
                     )
                 )
+                onCopyClick?.let {
+                    RowMessageAction(
+                        item = RowMessageActionItem(
+                            icon = R.drawable.ic_copy,
+                            title = "Скопировать",
+                            onClick = {
+                                onCopyClick()
+                            },
+                            color= LightBlack,
+                        )
+                    )
+                }
                 onEditClick?.let {
                     RowMessageAction(
                         item = RowMessageActionItem(
