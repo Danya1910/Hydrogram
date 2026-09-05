@@ -652,7 +652,7 @@ private fun Content(
             verticalArrangement = Arrangement.Bottom,
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(
-                top = 86.dp,
+                top = 96.dp,
                 bottom = 75.dp + animatedBottomPadding,
             ),
             modifier = Modifier
