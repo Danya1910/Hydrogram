@@ -130,6 +130,7 @@ import com.example.hydrogram.presentation.widgets.messages.text.MineReplyTextMes
 import com.example.hydrogram.presentation.widgets.messages.text.MineTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalReplyTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessage
+import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -279,7 +280,9 @@ fun ChatScreen(
                                     .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(
+                                    color = Blue,
+                                )
                             }
                         }
 
