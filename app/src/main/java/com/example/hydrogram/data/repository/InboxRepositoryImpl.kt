@@ -21,7 +21,6 @@ class InboxRepositoryImpl @Inject constructor(
         val unreadListeners = mutableMapOf<String, ListenerRegistration>()
 
         val chatsCache = mutableMapOf<String, Chat>()
-        // Хранилище для счетчиков, если они загрузились быстрее, чем сам чат
         val unreadCountsCache = mutableMapOf<String, Int>()
 
         val chatsListListener = firestore.collection("chats")
@@ -50,7 +49,6 @@ class InboxRepositoryImpl @Inject constructor(
                     chatIds.forEach { chatId ->
                         if (!chatListeners.containsKey(chatId)) {
 
-                            // 1. СЛУШАТЕЛЬ ПОСЛЕДНЕГО СООБЩЕНИЯ И ДАННЫХ ЧАТА
                             val listener = firestore.collection("chats")
                                 .document(chatId)
                                 .collection("messages")
@@ -82,7 +80,6 @@ class InboxRepositoryImpl @Inject constructor(
                                                 ""
                                             }
 
-                                            // Берем значение из unreadCountsCache, а если его там нет — из текущего кэша чата
                                             val currentUnread = unreadCountsCache[chatId]
                                                 ?: chatsCache[chatId]?.unreadCount
                                                 ?: 0
@@ -105,7 +102,6 @@ class InboxRepositoryImpl @Inject constructor(
                                 }
                             chatListeners[chatId] = listener
 
-                            // 2. СЛУШАТЕЛЬ СЧЕТЧИКА НЕПРОЧИТАННЫХ
                             val unreadListener = firestore.collection("chats")
                                 .document(chatId)
                                 .collection("messages")
@@ -118,12 +114,10 @@ class InboxRepositoryImpl @Inject constructor(
                                             doc.getString("senderId") != userId
                                         }
 
-                                        // Сохраняем актуальный счетчик в отдельный кэш
                                         unreadCountsCache[chatId] = unreadCount
 
                                         val existingChat = chatsCache[chatId]
                                         if (existingChat != null) {
-                                            // Если чат уже загружен, обновляем его
                                             chatsCache[chatId] = existingChat.copy(unreadCount = unreadCount)
                                             emitSortedChats(chatsCache)
                                         }
@@ -145,11 +139,10 @@ class InboxRepositoryImpl @Inject constructor(
         }
     }
 
-    // Вспомогательная функция фильтрации и отправки списка в Flow
     private fun ProducerScope<List<Chat>>.emitSortedChats(chatsCache: Map<String, Chat>) {
         val sortedChats = chatsCache.values
-            .filter { it.lastMessageTimestamp != 0L } // Скрываем чаты, где нет сообщений
-            .sortedByDescending { it.lastMessageTimestamp } // Сортируем от новых к старым
+            .filter { it.lastMessageTimestamp != 0L }
+            .sortedByDescending { it.lastMessageTimestamp }
 
         trySend(sortedChats)
     }
