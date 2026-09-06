@@ -46,6 +46,8 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hydrogram.presentation.navigation.Screen
 
 
@@ -76,17 +78,21 @@ private fun Content(
 
     val isAvailable = password.length >= 8
 
+    val isPhoneRegistered by authViewModel.isRegistered.collectAsStateWithLifecycle()
+
+
     LaunchedEffect(Unit) {
         Log.d(
             "Password Input screen", "phone: ${authViewModel.authData.value.phone}," +
                     " email ${authViewModel.authData.value.email}"
         )
+        Log.d("PasswordInputScreen", "isPhoneRegistered: $isPhoneRegistered")
     }
 
     val isRegisted = authViewModel.isSuccess.collectAsState().value
 
     LaunchedEffect(isRegisted) {
-        if(isRegisted) {
+        if (isRegisted) {
             navController.navigate(Screen.ChatList.route) {
                 popUpTo("auth_graph") {
                     inclusive = true
@@ -152,16 +158,19 @@ private fun Content(
         AcceptButton(
             isAvailable = isAvailable,
             onClick = {
-                authViewModel.signIn(
-                    email = authViewModel.authData.value.email,
-                    password = password,
-                )
-//                authViewModel.signUp(
-//                    email = authViewModel.authData.value.email,
-//                    password = password,
-//                    name = authViewModel.authData.value.name,
-//                    phone = authViewModel.authData.value.phone,
-//                )
+                if (isPhoneRegistered == true) {
+                    authViewModel.signInWithPhoneAndPassword(
+                        phone = authViewModel.authData.value.phone,
+                        password = password,
+                    )
+                } else {
+                    authViewModel.signUp(
+                        email = authViewModel.authData.value.email,
+                        password = password,
+                        name = authViewModel.authData.value.name,
+                        phone = authViewModel.authData.value.phone,
+                    )
+                }
             },
         )
     }

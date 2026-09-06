@@ -18,6 +18,18 @@ class AuthRepositoryImpl @Inject constructor(
         Unit
     }
 
+    override suspend fun signInWithPhoneAndPassword(phone: String, password: String): Result<Unit>  = runCatching {
+        val result = firestore.collection("users")
+            .whereEqualTo("phone", phone)
+            .limit(1)
+            .get()
+            .await()
+        val userDoc = result.documents[0]
+        val email = userDoc.getString("email") ?: ""
+
+        auth.signInWithEmailAndPassword(email, password).await()
+    }
+
     override suspend fun signUp(email: String, password: String, name: String, phone: String): Result<Unit> = runCatching{
         val authResult = auth.createUserWithEmailAndPassword(email, password).await()
         val uid = authResult.user?.uid ?: throw Exception("User creation failed")

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.usecase.CheckPhoneRegistrationUseCase
 import com.example.hydrogram.domain.usecase.SignInUseCase
+import com.example.hydrogram.domain.usecase.SignInWithPhoneAndPasswordUseCase
 import com.example.hydrogram.domain.usecase.SignUpUseCase
 import com.example.hydrogram.presentation.util.AuthData
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,6 +18,7 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthViewModel @Inject constructor(
     private val signInUseCase: SignInUseCase,
+    private val signInWithPhoneAndPasswordUseCase: SignInWithPhoneAndPasswordUseCase,
     private val signUpUseCase: SignUpUseCase,
     private val checkPhoneRegistrationUseCase: CheckPhoneRegistrationUseCase,
 ) : ViewModel() {
@@ -48,6 +50,27 @@ class AuthViewModel @Inject constructor(
             _isLoading.value = true
             val result = signInUseCase(email = email, password = password)
             _isLoading.value = false
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка входа" }
+        }
+    }
+
+    fun signInWithPhoneAndPassword(
+        phone: String,
+        password: String,
+    ) {
+        if(_isLoading.value) {
+            return
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = signInWithPhoneAndPasswordUseCase(
+                phone = phone,
+                password = password,
+            )
+            _isLoading.value = false
+
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка входа" }

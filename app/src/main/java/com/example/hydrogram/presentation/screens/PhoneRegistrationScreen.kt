@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,6 +45,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.usecase.SignInUseCase
@@ -82,6 +85,19 @@ private fun Content(
     var phone by remember { mutableStateOf("") }
 
     val isAvailable = phone.length == 10
+
+    val isPhoneRegistered by authViewModel.isRegistered.collectAsStateWithLifecycle()
+
+    LaunchedEffect(isPhoneRegistered) {
+        Log.d("PhoneRegister", "isPhoneRegistered $isPhoneRegistered")
+        if (isPhoneRegistered != null) {
+            if (isPhoneRegistered == true) {
+                navController.navigate(Screen.PasswordInput.route)
+            } else {
+                navController.navigate(Screen.EmailRegistration.route)
+            }
+        }
+    }
 
     Column(
         verticalArrangement = Arrangement.Center,
@@ -141,7 +157,9 @@ private fun Content(
                 authViewModel.savePhone(
                     phone = phone,
                 )
-                navController.navigate(Screen.EmailRegistration.route)
+                authViewModel.checkPhoneRegister(
+                    phone = phone
+                )
             },
         )
     }
