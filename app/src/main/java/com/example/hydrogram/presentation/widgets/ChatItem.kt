@@ -6,6 +6,7 @@ import android.util.Base64
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,6 +64,7 @@ fun ChatItem(
     chat: Chat,
     mineId: String,
     navController: NavController,
+    onLongClick: () -> Unit = {},
     userViewModel: UserViewModel = hiltViewModel(key = chat.chatId),
 ) {
 
@@ -111,9 +113,15 @@ fun ChatItem(
                 modifier = Modifier
                     .height(78.dp)
                     .fillMaxWidth()
-                    .clickable {
-                        navController.navigate(Screen.Chat.createRoute(id = penpalId))
-                    }
+                    .combinedClickable(
+                        onClick = {
+                            navController.navigate(Screen.Chat.createRoute(id = penpalId))
+
+                        },
+                        onLongClick = {
+                            onLongClick()
+                        }
+                    )
                     .padding(
                         start = 10.dp,
                         end = 16.dp,
