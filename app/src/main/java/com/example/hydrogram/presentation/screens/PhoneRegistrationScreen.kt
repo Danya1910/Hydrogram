@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -87,6 +88,7 @@ private fun Content(
     val isAvailable = phone.length == 10
 
     val isPhoneRegistered by authViewModel.isRegistered.collectAsStateWithLifecycle()
+    val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
 
     LaunchedEffect(isPhoneRegistered) {
         Log.d("PhoneRegister", "isPhoneRegistered $isPhoneRegistered")
@@ -161,6 +163,7 @@ private fun Content(
                     phone = phone
                 )
             },
+            isLoading = isLoading,
         )
     }
 }
@@ -231,6 +234,7 @@ private fun InputNumberField(
 private fun AcceptButton(
     isAvailable: Boolean,
     onClick: () -> Unit,
+    isLoading: Boolean,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -253,13 +257,22 @@ private fun AcceptButton(
                 onClick()
             }
     ) {
-        Text(
-            text = "Применить",
-            fontFamily = SfProText,
-            fontWeight = FontWeight.Medium,
-            fontSize = 17.sp,
-            color = if (isAvailable) Color.White else Color.Black,
-        )
+        if(!isLoading) {
+            Text(
+                text = "Применить",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 17.sp,
+                color = if (isAvailable) Color.White else Color.Black,
+            )
+        } else {
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier
+                    .size(30.dp),
+                strokeWidth = 3.dp
+            )
+        }
     }
 
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -79,6 +80,7 @@ private fun Content(
     val isAvailable = password.length >= 8
 
     val isPhoneRegistered by authViewModel.isRegistered.collectAsStateWithLifecycle()
+    val isLoading by authViewModel.isLoading.collectAsStateWithLifecycle()
 
 
     LaunchedEffect(Unit) {
@@ -172,6 +174,7 @@ private fun Content(
                     )
                 }
             },
+            isLoading = isLoading,
         )
     }
 }
@@ -226,6 +229,7 @@ private fun InputPasswordField(
 private fun AcceptButton(
     isAvailable: Boolean,
     onClick: () -> Unit,
+    isLoading: Boolean,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -250,13 +254,22 @@ private fun AcceptButton(
                 onClick()
             }
     ) {
-        Text(
-            text = "Применить",
-            fontFamily = SfProText,
-            fontWeight = FontWeight.Medium,
-            fontSize = 17.sp,
-            color = if (isAvailable) Color.White else Color.Black,
-        )
+        if(!isLoading) {
+            Text(
+                text = "Применить",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 17.sp,
+                color = if (isAvailable) Color.White else Color.Black,
+            )
+        } else {
+            CircularProgressIndicator(
+                color = Color.White,
+                modifier = Modifier
+                    .size(30.dp),
+                strokeWidth = 3.dp
+            )
+        }
     }
 
 }
