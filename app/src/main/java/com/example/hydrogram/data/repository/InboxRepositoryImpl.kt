@@ -156,10 +156,27 @@ class InboxRepositoryImpl @Inject constructor(
 
     override suspend fun deleteChat(chatId: String): Result<Unit> {
         return try {
+            val messagesSnapshot = firestore
+                .collection("chats")
+                .document(chatId)
+                .collection("messages")
+                .get()
+                .await()
+
+            val batch = firestore.batch()
+            messagesSnapshot.documents.forEach { document ->
+                batch.delete(document.reference)
+            }
+
+            if (messagesSnapshot.documents.isNotEmpty()) {
+                batch.commit().await()
+            }
+
             firestore.collection("chats")
                 .document(chatId)
                 .delete()
                 .await()
+
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
