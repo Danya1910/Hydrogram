@@ -2,6 +2,7 @@ package com.example.hydrogram.presentation.viewModel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrogram.domain.usecase.CheckPhoneRegistrationUseCase
 import com.example.hydrogram.domain.usecase.SignInUseCase
 import com.example.hydrogram.domain.usecase.SignUpUseCase
 import com.example.hydrogram.presentation.util.AuthData
@@ -17,10 +18,14 @@ import javax.inject.Inject
 class AuthViewModel @Inject constructor(
     private val signInUseCase: SignInUseCase,
     private val signUpUseCase: SignUpUseCase,
+    private val checkPhoneRegistrationUseCase: CheckPhoneRegistrationUseCase,
 ) : ViewModel() {
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading = _isLoading.asStateFlow()
+
+    private val _isRegistered = MutableStateFlow<Boolean?>(null)
+    val isRegistered = _isRegistered.asStateFlow()
 
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage = _errorMessage.asStateFlow()
@@ -73,6 +78,25 @@ class AuthViewModel @Inject constructor(
             result
                 .onSuccess { _isSuccess.value = true }
                 .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка регистрации" }
+        }
+    }
+
+    fun checkPhoneRegister(
+        phone: String,
+    ) {
+        if(_isLoading.value) {
+            return
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+
+            val result = checkPhoneRegistrationUseCase(
+                phone = phone,
+            )
+
+            _isLoading.value = false
+
+            _isRegistered.value = result
         }
     }
 
