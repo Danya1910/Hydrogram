@@ -634,13 +634,22 @@ private fun Content(
     ) {
 
         if (messages.isEmpty()) {
+            Log.d("NewChatWidget", "=== SHOWING NEW CHAT WIDGET ===")
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
             ) {
                 NewChatWidget(
-                    onGreetingClick = {},
+                    onGreetingClick = {
+                        Log.d("NewChatWidget", "=== ON GREETING CLICK CALLED ===")
+                        chatViewModel.sendSticker(
+                            senderId = mineId,
+                            chatId = chatId,
+                            stickerPath = R.raw.duck_greeting_sticker.toString(),
+                        )
+                        Log.d("NewChatWidget", "sticker path: ${R.raw.duck_greeting_sticker}")
+                    },
                     context = context,
                     gifImageLoader = gifImageLoader,
                 )
@@ -1884,13 +1893,14 @@ private fun NewChatWidget(
                     brush = brush,
                     shape = RoundedCornerShape(16.dp)
                 )
-                .clickable {
-                    onGreetingClick()
-                }
                 .padding(
                     horizontal = 16.dp,
                     vertical = 10.dp,
                 )
+                .clickable {
+                    onGreetingClick()
+                    Log.d("NewChatWidget", "CLICKED")
+                }
         ) {
             Text(
                 textAlign = TextAlign.Center,
@@ -1917,7 +1927,8 @@ private fun NewChatWidget(
                     .build(),
                 imageLoader = gifImageLoader,
                 contentDescription = null,
-                modifier = Modifier.size(200.dp),
+                modifier = Modifier
+                    .size(200.dp)
             )
         }
     }
