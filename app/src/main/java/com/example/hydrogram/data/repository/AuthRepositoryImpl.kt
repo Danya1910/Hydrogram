@@ -36,6 +36,20 @@ class AuthRepositoryImpl @Inject constructor(
         firestore.collection("users").document(uid).set(userMap).await()
     }
 
+    override suspend fun checkPhoneRegistration(phone: String): Boolean {
+        return try {
+            val result = firestore.collection("users")
+                .whereEqualTo("phone", phone)
+                .limit(1)
+                .get()
+                .await()
+            !result.isEmpty
+        } catch (e: Exception) {
+            Log.d("AuthRepositoryImpl", e.toString())
+            false
+        }
+    }
+
     override fun getCurrentUserId(): String? = auth.currentUser?.uid
 
     override fun isUserLoggedIn(): Boolean = auth.currentUser != null
