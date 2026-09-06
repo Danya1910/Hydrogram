@@ -10,6 +10,7 @@ import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 
 class InboxRepositoryImpl @Inject constructor(
@@ -65,8 +66,10 @@ class InboxRepositoryImpl @Inject constructor(
                                         .addOnSuccessListener { chatDoc ->
                                             if (!chatDoc.exists()) return@addOnSuccessListener
 
-                                            val members = chatDoc.get("members") as? List<String> ?: emptyList()
-                                            val messageType = lastMsgDoc?.getString("type") ?: "text"
+                                            val members = chatDoc.get("members") as? List<String>
+                                                ?: emptyList()
+                                            val messageType =
+                                                lastMsgDoc?.getString("type") ?: "text"
                                             val messageText = when (messageType) {
                                                 "text" -> lastMsgDoc?.getString("text") ?: ""
                                                 "image" -> "Фотография"
@@ -74,11 +77,12 @@ class InboxRepositoryImpl @Inject constructor(
                                                 else -> "Сообщение"
                                             }
 
-                                            val lastMessageStatus = if (lastMsgDoc?.getString("senderId") == userId) {
-                                                lastMsgDoc.getString("status") ?: "sent"
-                                            } else {
-                                                ""
-                                            }
+                                            val lastMessageStatus =
+                                                if (lastMsgDoc?.getString("senderId") == userId) {
+                                                    lastMsgDoc.getString("status") ?: "sent"
+                                                } else {
+                                                    ""
+                                                }
 
                                             val currentUnread = unreadCountsCache[chatId]
                                                 ?: chatsCache[chatId]?.unreadCount
@@ -89,8 +93,10 @@ class InboxRepositoryImpl @Inject constructor(
                                                 chatId = chatId,
                                                 lastMessage = messageText,
                                                 lastMessageType = messageType,
-                                                lastMessageSenderId = lastMsgDoc?.getString("senderId") ?: "",
-                                                lastMessageTimestamp = lastMsgDoc?.getLong("timestamp") ?: 0L,
+                                                lastMessageSenderId = lastMsgDoc?.getString("senderId")
+                                                    ?: "",
+                                                lastMessageTimestamp = lastMsgDoc?.getLong("timestamp")
+                                                    ?: 0L,
                                                 unreadCount = currentUnread,
                                                 members = members,
                                                 lastMessageStatus = lastMessageStatus,
@@ -118,7 +124,8 @@ class InboxRepositoryImpl @Inject constructor(
 
                                         val existingChat = chatsCache[chatId]
                                         if (existingChat != null) {
-                                            chatsCache[chatId] = existingChat.copy(unreadCount = unreadCount)
+                                            chatsCache[chatId] =
+                                                existingChat.copy(unreadCount = unreadCount)
                                             emitSortedChats(chatsCache)
                                         }
                                     }
@@ -146,4 +153,17 @@ class InboxRepositoryImpl @Inject constructor(
 
         trySend(sortedChats)
     }
+
+    override suspend fun deleteChat(chatId: String): Result<Unit> {
+        return try {
+            firestore.collection("chats")
+                .document(chatId)
+                .delete()
+                .await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
 }

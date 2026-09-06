@@ -1,7 +1,9 @@
 package com.example.hydrogram.presentation.viewModel
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.hydrogram.domain.usecase.DeleteChatUseCase
 import com.example.hydrogram.domain.usecase.GetCurrentUserIdUseCase
 import com.example.hydrogram.domain.usecase.GetInboxChatsUseCase
 import com.example.hydrogram.domain.usecase.StartTrackingPresenceUseCase
@@ -17,9 +19,19 @@ import javax.inject.Inject
 @HiltViewModel
 class InboxViewModel @Inject constructor(
     private val getInboxChatsUseCase: GetInboxChatsUseCase,
+    private val deleteChatUseCase: DeleteChatUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val startTrackingPresenceUseCase: StartTrackingPresenceUseCase,
 ) : ViewModel() {
+
+    private val _isLoading = mutableStateOf(false)
+    val isSending = _isLoading
+
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage = _errorMessage.asStateFlow()
+
+    private val _isSuccess = MutableStateFlow(false)
+    val isSuccess = _isSuccess.asStateFlow()
 
     private val _uiState = MutableStateFlow<InboxUiState>(InboxUiState.Loading)
     val uiState = _uiState.asStateFlow()
@@ -57,4 +69,24 @@ class InboxViewModel @Inject constructor(
                 }
         }
     }
+
+    fun deleteChat(
+        chatId: String,
+    ) {
+        if (chatId.isEmpty()) {
+            return
+        }
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = deleteChatUseCase(
+                chatId = chatId
+            )
+            _isLoading.value = false
+
+            result
+                .onSuccess { _isSuccess.value = true }
+                .onFailure { _errorMessage.value = it.localizedMessage ?: ""}
+        }
+    }
+
 }

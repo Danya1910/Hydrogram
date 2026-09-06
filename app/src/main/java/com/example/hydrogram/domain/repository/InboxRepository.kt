@@ -7,6 +7,10 @@ interface InboxRepository {
 
     fun getInboxChats(
         userId: String
-    ) : Flow<List<Chat>>
+    ): Flow<List<Chat>>
+
+    suspend fun deleteChat(
+        chatId: String,
+    ): Result<Unit>
 
 }
