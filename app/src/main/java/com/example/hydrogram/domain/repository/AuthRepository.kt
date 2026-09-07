@@ -10,8 +10,12 @@ interface AuthRepository {
 
     suspend fun checkPhoneRegistration(phone: String): Boolean
 
+    suspend fun signOut(): Result<Unit>
+
     fun getCurrentUserId(): String?
 
     fun isUserLoggedIn(): Boolean
+
+    suspend fun updateFcmToken(token: String): Result<Unit>
 
 }
