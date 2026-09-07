@@ -16,6 +16,7 @@ data class User(
     val birthdayDate: String = "",
     val userName: String = "",
     val userNameLowercase: String = "",
+    val fcmTokens: Map<String, Boolean> = emptyMap(),
 )
 
 data class UserPresence(
