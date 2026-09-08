@@ -1,20 +1,25 @@
 package com.example.hydrogram
 
+import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.hydrogram.domain.usecase.StartTrackingPresenceUseCase
 import com.example.hydrogram.presentation.navigation.RootNavGraph
@@ -63,10 +68,55 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
+            RequestNotificationPermission()
+
+            val startChatId = remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+
+            // 2. Ловим клик по уведомлению при "холодном" старте (когда приложение было закрыто)
+            LaunchedEffect(intent) {
+                intent?.let {
+                    if (it.action == "OPEN_CHAT_ACTIVITY") {
+                        startChatId.value = it.getStringExtra("CHAT_ID")
+                    }
+                }
+            }
 
             RootNavGraph(
                 startDescription = startDescription,
             )
+
+            LaunchedEffect(startChatId.value) {
+                val id = startChatId.value
+                if (!id.isNullOrEmpty()) {
+                    startChatId.value =
+                        null
+                    // сделать переход на чат по id
+                    //navController.navigate("chat_screen/$id")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun RequestNotificationPermission() {
+    val context = LocalContext.current
+
+    // Создаем лаунчер для системного диалога запроса разрешений
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Пользователь разрешил уведомления
+        } else {
+            // Пользователь отказал в доступе
+        }
+    }
+
+    // Запускаем проверку один раз при старте экрана
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 }

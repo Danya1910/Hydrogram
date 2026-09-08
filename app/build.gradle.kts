@@ -41,6 +41,13 @@ android {
     buildFeatures {
         compose = true
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/INDEX.LIST"
+            excludes += "/META-INF/DEPENDENCIES"
+        }
+    }
 }
 
 kotlin {
@@ -59,12 +66,16 @@ dependencies {
     implementation("com.google.firebase:firebase-messaging")
     implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
 
+    implementation("com.google.accompanist:accompanist-permissions:0.34.0")
+
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")
     implementation(libs.androidx.compose.ui.geometry)
     implementation(libs.androidx.compose.material.core)
     ksp("com.google.dagger:hilt-compiler:2.56")
     implementation(libs.androidx.hilt.navigation.compose)
+
+    implementation("com.auth0:java-jwt:4.4.0")
 
     // Haze
     implementation("dev.chrisbanes.haze:haze-materials:1.1.1")
