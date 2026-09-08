@@ -8,6 +8,7 @@ import android.util.Base64
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.repository.ChatRepository
+import com.example.hydrogram.domain.repository.NotificationRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,6 +19,7 @@ import kotlin.String
 class SendMessageUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val chatRepository: ChatRepository,
+    private val notificationRepository: NotificationRepository,
 ) {
 
     suspend operator fun invoke(
@@ -27,9 +29,19 @@ class SendMessageUseCase @Inject constructor(
         messageType: String,
         imageUri: Uri? = null,
         replyData: ReplyData? = null,
+        targetUserId: String,
+        senderName: String,
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         try {
+
+            val pushMessageText = when(messageType) {
+                "text" -> content
+                "sticker" -> "Стикер"
+                "image" -> "Фотография"
+                else -> "Сообщение"
+            }
+
             val message = when (messageType) {
                 "text" -> {
                     Message.Text(
@@ -69,11 +81,25 @@ class SendMessageUseCase @Inject constructor(
                 }
             }
 
-            return@withContext chatRepository.sendMessage(
+
+            val sendResult = chatRepository.sendMessage(
                 senderId = senderId,
                 chatId = chatId,
                 message = message,
             )
+
+            if (sendResult.isSuccess) {
+                notificationRepository.sendPushNotification(
+                    targetUserId = targetUserId,
+                    senderName = senderName,
+                    messageText = pushMessageText,
+                    chatId = chatId
+                )
+
+                Result.success(Unit)
+            } else {
+                Result.failure(sendResult.exceptionOrNull() ?: Exception("Ошибка сохранения сообщения"))
+            }
 
         } catch (e: Exception) {
             return@withContext Result.failure(e)

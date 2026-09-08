@@ -531,6 +531,8 @@ private fun Content(
                     senderId = mineId,
                     chatId = chatId,
                     imageUri = uri,
+                    targetUserId = penpalData?.uid ?: "",
+                    senderName = mineName,
                 )
             } else {
                 val content = when (currentMessageAnswer) {
@@ -560,6 +562,8 @@ private fun Content(
                     chatId = chatId,
                     imageUri = uri,
                     replyData = replyData,
+                    targetUserId = penpalData?.uid ?: "",
+                    senderName = mineName,
                 )
             }
         }
@@ -647,6 +651,8 @@ private fun Content(
                             senderId = mineId,
                             chatId = chatId,
                             stickerPath = R.raw.duck_greeting_sticker.toString(),
+                            targetUserId = penpalData?.uid ?: "",
+                            senderName = mineName,
                         )
                         Log.d("NewChatWidget", "sticker path: ${R.raw.duck_greeting_sticker}")
                     },
@@ -1627,6 +1633,8 @@ private fun Content(
                                     senderId = mineId,
                                     chatId = chatId,
                                     text = messageText,
+                                    targetUserId = penpalData?.uid ?: "",
+                                    senderName = mineName,
                                 )
                             } else {
                                 val content = when (currentMessageAnswer) {
@@ -1654,6 +1662,8 @@ private fun Content(
                                     chatId = chatId,
                                     text = messageText,
                                     replyData = replyData,
+                                    targetUserId = penpalData?.uid ?: "",
+                                    senderName = mineName,
                                 )
                             }
                             currentMessageAnswer = null
@@ -1723,6 +1733,8 @@ private fun Content(
                                 senderId = mineId,
                                 chatId = chatId,
                                 stickerPath = stickerString,
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
                             )
                         } else {
                             val content = when (currentMessageAnswer) {
@@ -1752,6 +1764,8 @@ private fun Content(
                                 chatId = chatId,
                                 stickerPath = stickerString,
                                 replyData = replyData,
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
                             )
                         }
                         isStickerWidgetVisible = false

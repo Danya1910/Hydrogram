@@ -3,11 +3,13 @@ package com.example.hydrogram.data.di
 import com.example.hydrogram.data.repository.AuthRepositoryImpl
 import com.example.hydrogram.data.repository.ChatRepositoryImpl
 import com.example.hydrogram.data.repository.InboxRepositoryImpl
+import com.example.hydrogram.data.repository.NotificationRepositoryImpl
 import com.example.hydrogram.data.repository.PresenceRepositoryImpl
 import com.example.hydrogram.data.repository.UserRepositoryImpl
 import com.example.hydrogram.domain.repository.AuthRepository
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.example.hydrogram.domain.repository.InboxRepository
+import com.example.hydrogram.domain.repository.NotificationRepository
 import com.example.hydrogram.domain.repository.PresenceRepository
 import com.example.hydrogram.domain.repository.UserRepository
 import dagger.Binds
@@ -25,30 +27,36 @@ abstract class RepositoryModule {
     @Singleton
     abstract fun bindChatRepository(
         chatImpl: ChatRepositoryImpl,
-    ) : ChatRepository
+    ): ChatRepository
 
     @Binds
     @Singleton
     abstract fun bindInboxRepository(
         inboxImpl: InboxRepositoryImpl,
-    ) : InboxRepository
+    ): InboxRepository
 
     @Binds
     @Singleton
     abstract fun bindUserRepository(
         userImpl: UserRepositoryImpl,
-    ) : UserRepository
+    ): UserRepository
 
     @Binds
     @Singleton
     abstract fun bindAuthRepository(
         authImpl: AuthRepositoryImpl,
-    ) : AuthRepository
+    ): AuthRepository
 
     @Binds
     @Singleton
     abstract fun bingPresenceRepository(
         presenceImpl: PresenceRepositoryImpl
-    ) : PresenceRepository
+    ): PresenceRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindNotificationRepository(
+        notificationImpl: NotificationRepositoryImpl
+    ): NotificationRepository
 
 }

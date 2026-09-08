@@ -57,6 +57,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage")
     implementation("com.google.firebase:firebase-database")
     implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.23.0")
 
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")
