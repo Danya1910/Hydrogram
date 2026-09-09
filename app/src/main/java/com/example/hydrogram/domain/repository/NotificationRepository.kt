@@ -5,6 +5,7 @@ interface NotificationRepository {
         targetUserId: String,
         senderName: String,
         messageText: String,
-        chatId: String
+        chatId: String,
+        avatarBase64: String?,
     ): Result<Unit>
 }

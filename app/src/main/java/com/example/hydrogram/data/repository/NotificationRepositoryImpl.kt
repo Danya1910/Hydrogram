@@ -47,7 +47,8 @@ class NotificationRepositoryImpl @Inject constructor(
         targetUserId: String,
         senderName: String,
         messageText: String,
-        chatId: String
+        chatId: String,
+        avatarBase64: String?,
     ): Result<Unit> = runCatching {
         Log.d("FCM_FINAL", "1. Метод отправки пуша ЗАПУЩЕН")
 
@@ -78,6 +79,11 @@ class NotificationRepositoryImpl @Inject constructor(
                     put("notification", JSONObject().apply {
                         put("title", senderName)
                         put("body", messageText)
+                        if (!avatarBase64.isNullOrEmpty()) {
+                            val compressedAvatar = compressBase64IfNeeded(avatarBase64)
+                            put("avatarBase64", compressedAvatar)
+                            Log.d("FCM_FINAL", "📷 Размер аватарки: ${avatarBase64.length} символов")
+                        }
                     })
                     put("data", JSONObject().apply {
                         put("chatId", chatId)
@@ -114,4 +120,14 @@ class NotificationRepositoryImpl @Inject constructor(
     }.onFailure { exception ->
         Log.e("FCM_FINAL", "❌ ФАТАЛЬНЫЙ СБОЙ В РЕПОЗИТОРИИ:", exception)
     }
+
+    private fun compressBase64IfNeeded(base64: String, maxSize: Int = 2000): String {
+        return if (base64.length > maxSize) {
+            Log.w("FCM_FINAL", "⚠️ Аватарка слишком большая, обрезаем до $maxSize символов")
+            base64.take(maxSize)
+        } else {
+            base64
+        }
+    }
+
 }
