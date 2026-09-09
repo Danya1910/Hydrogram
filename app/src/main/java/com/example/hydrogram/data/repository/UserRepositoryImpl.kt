@@ -159,15 +159,21 @@ class UserRepositoryImpl @Inject constructor(
         val auth = Firebase.auth
         val currentUser = auth.currentUser
 
-        if(currentUser != null) {
+        val userId = currentUser?.uid
+        if (userId != null) {
             try {
-                currentUser.getIdToken(true).await()
+                firestore.collection("users")
+                    .document(userId)
+                    .update("fcmTokens", emptyMap<String, Boolean>())
+                    .await()
+                Log.d("AuthRepository", "✅ Токены удалены для $userId")
             } catch (e: Exception) {
-
+                Log.e("AuthRepository", "⚠️ Не удалось удалить токены: ${e.message}")
             }
         }
 
         auth.signOut()
+        Log.d("AuthRepository", "✅ Пользователь вышел из системы")
 
     }
 
