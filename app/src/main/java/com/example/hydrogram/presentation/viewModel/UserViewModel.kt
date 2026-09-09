@@ -12,7 +12,6 @@ import com.example.hydrogram.domain.usecase.LogoutUseCase
 import com.example.hydrogram.domain.usecase.ObserveUserPresenceUseCase
 import com.example.hydrogram.domain.usecase.SaveUserNameUseCase
 import com.example.hydrogram.domain.usecase.SaveUserProfileUseCase
-import com.example.hydrogram.domain.usecase.SetUserOnlineStatsUseCase
 import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.states.UserState
 import com.google.firebase.Firebase
@@ -38,7 +37,6 @@ import javax.inject.Inject
 class UserViewModel @Inject constructor(
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
-    private val setUserOnlineStatsUseCase: SetUserOnlineStatsUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
     private val saveUserNameUseCase: SaveUserNameUseCase,
     private val observeUserPresenceUseCase: ObserveUserPresenceUseCase,
