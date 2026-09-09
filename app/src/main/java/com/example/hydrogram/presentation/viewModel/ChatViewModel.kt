@@ -60,6 +60,7 @@ class ChatViewModel @Inject constructor(
         replyData: ReplyData? = null,
         targetUserId: String,
         senderName: String,
+        senderAvatar: String,
     ) {
         if (text.isBlank()) {
             _errorMessage.value = "Пустое сообщение"
@@ -80,6 +81,7 @@ class ChatViewModel @Inject constructor(
                 replyData = replyData,
                 targetUserId = targetUserId,
                 senderName = senderName,
+                senderAvatar = senderAvatar,
             )
             _isSending.value = false
             Log.d("ChatVM", "sent text message result: $result")
@@ -96,6 +98,7 @@ class ChatViewModel @Inject constructor(
         replyData: ReplyData? = null,
         targetUserId: String,
         senderName: String,
+        senderAvatar: String,
     ) {
         if(stickerPath.isBlank()) {
             _errorMessage.value = "Пустой Стикер"
@@ -116,6 +119,7 @@ class ChatViewModel @Inject constructor(
                 replyData = replyData,
                 targetUserId = targetUserId,
                 senderName = senderName,
+                senderAvatar = senderAvatar,
             )
             _isSending.value = false
             Log.d("ChatVM", "sent sticker message result: $result")
@@ -132,6 +136,7 @@ class ChatViewModel @Inject constructor(
         replyData: ReplyData? = null,
         targetUserId: String,
         senderName: String,
+        senderAvatar: String,
     ) {
         if(_isSending.value) {
             return
@@ -147,6 +152,7 @@ class ChatViewModel @Inject constructor(
                 replyData = replyData,
                 targetUserId = targetUserId,
                 senderName = senderName,
+                senderAvatar = senderAvatar,
             )
             _isSending.value = false
             Log.d("ChatVM", "sent image message result: $result")
