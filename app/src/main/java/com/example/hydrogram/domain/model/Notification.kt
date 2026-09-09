@@ -9,5 +9,5 @@ data class Notification (
     val messageType: String? = null,
     val timeStamp: String? = null,
     val status: String? = null,
-
+    val avatarBase64: String? = null,
 )
