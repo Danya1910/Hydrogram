@@ -1,5 +1,6 @@
 package com.example.hydrogram.data.service
 
+import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -24,7 +25,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ProcessLifecycleOwner
 
 @AndroidEntryPoint
 class MessengerMessagingService : FirebaseMessagingService() {
@@ -42,28 +44,39 @@ class MessengerMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        val title = remoteMessage.notification?.title ?: "Новое сообщение"
-        val body = remoteMessage.notification?.body ?: ""
+        // 🌟 НОВЫЙ СПОСОБ: Проверяем реальное состояние приложения через Jetpack Lifecycle
+        val isAppInForeground = ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+
+        if (isAppInForeground) {
+            showInAppNotification(remoteMessage)
+            return
+        }
+
+        val title = remoteMessage.data["title"] ?: "Новое сообщение"
+        val body = remoteMessage.data["body"] ?: ""
         val chatId = remoteMessage.data["chatId"]
-
-        // Получаем строку
         val avatarBase64 = remoteMessage.data["avatarBase64"]
-
-
-        // ЛОГ 1: Проверяем, пришла ли вообще строка и её длину
-        android.util.Log.d("FCM_AVATAR", "Пришла строка Base64: ${avatarBase64?.take(30)}... Длина: ${avatarBase64?.length}")
-
         val avatarBitmap = avatarBase64?.let { getBitmapFromBase64(it) }
-
-        // ЛОГ 2: Проверяем, создался ли Bitmap успешным
-        android.util.Log.d("FCM_AVATAR", "Результат декодирования Bitmap: ${avatarBitmap != null} (Ширина: ${avatarBitmap?.width}, Высота: ${avatarBitmap?.height})")
 
         showNotification(title, body, chatId, avatarBitmap)
     }
 
+    private fun showInAppNotification(remoteMessage: RemoteMessage) {
+        val title = remoteMessage.data["title"] ?: "Новое сообщение"
+        val body = remoteMessage.data["body"] ?: ""
+        val chatId = remoteMessage.data["chatId"]
+
+        // Безопасный способ передачи данных в UI через Broadcast
+        sendBroadcast(Intent("com.example.hydrogram.NEW_MESSAGE").apply {
+            putExtra("title", title)
+            putExtra("body", body)
+            putExtra("chatId", chatId)
+        })
+    }
+
     private fun showNotification(
-        title: String, // Имя отправителя
-        body: String,  // Текст сообщения
+        title: String,
+        body: String,
         chatId: String?,
         avatarBitmap: Bitmap?,
     ) {
@@ -87,7 +100,7 @@ class MessengerMessagingService : FirebaseMessagingService() {
         }
 
         val notificationId = chatId?.hashCode() ?: 0
-        val shortcutId = "shortcut_chat_$chatId" // Уникальный ID ярлыка для этого чата
+        val shortcutId = "shortcut_chat_$chatId"
 
         val pendingIntent = PendingIntent.getActivity(
             this,
@@ -96,41 +109,38 @@ class MessengerMessagingService : FirebaseMessagingService() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // 1. Создаем иконку для ярлыка и стиля
-        val iconCompat = if (avatarBitmap != null) {
-            IconCompat.createWithBitmap(avatarBitmap)
+        val circleAvatar = avatarBitmap?.let { getCircleBitmap(it) }
+
+        val iconCompat = if (circleAvatar != null) {
+            IconCompat.createWithBitmap(circleAvatar)
         } else {
             IconCompat.createWithResource(this, R.drawable.ic_contacts)
         }
 
-        // 2. Создаем объект пользователя чата
         val sender = Person.Builder()
             .setName(title)
             .setIcon(iconCompat)
             .setImportant(true)
             .build()
 
-        // 3. ОБЯЗАТЕЛЬНЫЙ ШАГ ДЛЯ АНДРОИД 11+: Создаем и регистрируем ярлык чата
         val shortcut = ShortcutInfoCompat.Builder(this, shortcutId)
             .setShortLabel(title)
             .setIcon(iconCompat)
             .setIntent(intent)
-            .setLongLived(true) // Позволяет системе сохранять ярлык в кэше
+            .setLongLived(true)
             .setPerson(sender)
             .build()
 
         ShortcutManagerCompat.pushDynamicShortcut(this, shortcut)
 
-        // 4. Настраиваем MessagingStyle
         val messagingStyle = NotificationCompat.MessagingStyle(sender)
             .setConversationTitle(title)
             .addMessage(body, System.currentTimeMillis(), sender)
 
-        // 5. Собираем уведомление
         val notification = NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(R.drawable.ic_contacts)
+            .setSmallIcon(R.drawable.ic_telegram)
             .setStyle(messagingStyle)
-            .setShortcutId(shortcutId) // 🌟 Связываем уведомление с созданным ярлыком
+            .setShortcutId(shortcutId)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
@@ -140,7 +150,6 @@ class MessengerMessagingService : FirebaseMessagingService() {
         notificationManager.notify(notificationId, notification)
     }
 
-    // Вспомогательный метод скругления аватарки (обязательно оставьте его в сервисе)
     private fun getCircleBitmap(bitmap: Bitmap): Bitmap {
         val output = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(output)
@@ -154,7 +163,6 @@ class MessengerMessagingService : FirebaseMessagingService() {
         return output
     }
 
-
     private fun getBitmapFromBase64(base64Str: String): Bitmap? {
         return try {
             val cleanBase64 = base64Str.substringAfter(",")
@@ -165,5 +173,4 @@ class MessengerMessagingService : FirebaseMessagingService() {
             null
         }
     }
-
 }

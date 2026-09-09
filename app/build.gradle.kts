@@ -68,6 +68,7 @@ dependencies {
 
     implementation("com.google.accompanist:accompanist-permissions:0.34.0")
     implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.lifecycle:lifecycle-process:2.8.7")
 
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")

@@ -25,17 +25,14 @@ class NotificationRepositoryImpl @Inject constructor(
 ) : NotificationRepository {
 
     private suspend fun getAccessToken(): String = withContext(Dispatchers.IO) {
-        // Проверяем содержимое файла
         val stream = context.assets.open("service_account.json")
         val jsonString = stream.bufferedReader().use { it.readText() }
         val jsonObject = JSONObject(jsonString)
 
-        // Логируем ключи, чтобы убедиться, что файл правильный
         Log.d("FCM_FINAL", "Ключи в service_account.json: ${jsonObject.keys().asSequence().toList()}")
         Log.d("FCM_FINAL", "project_id: ${jsonObject.optString("project_id")}")
         Log.d("FCM_FINAL", "client_email: ${jsonObject.optString("client_email")}")
 
-        // Открываем заново для создания credentials
         val newStream = context.assets.open("service_account.json")
         val credentials = GoogleCredentials.fromStream(newStream)
             .createScoped(listOf("https://www.googleapis.com/auth/firebase.messaging"))
@@ -54,7 +51,6 @@ class NotificationRepositoryImpl @Inject constructor(
         Log.d("FCM_FINAL", "1. Метод отправки пуша ЗАПУЩЕН")
         Log.d("FCM_FINAL", "mineAvatar: $avatarBase64")
 
-        // 1. Получаем FCM токен получателя из Firestore
         val userDoc = firestore.collection("users").document(targetUserId).get().await()
         val fcmTokensMap = userDoc.get("fcmTokens") as? Map<*, *> ?: emptyMap<String, Boolean>()
         val activeTokens = fcmTokensMap.filterValues { it == true }.keys.map { it.toString() }
@@ -64,27 +60,23 @@ class NotificationRepositoryImpl @Inject constructor(
             return@runCatching Unit
         }
 
-        // 2. Генерируем Access Token
         Log.d("FCM_FINAL", "2. Начинаем генерацию OAuth 2.0 токена...")
         val oauthToken = getAccessToken()
         Log.d("FCM_FINAL", "3. Токен успешно сгенерирован! Первые 10 символов: ${oauthToken.take(10)}...")
 
-        // 3. Декодируем URL для FCM V1
         val encodedUrl = "aHR0cHM6Ly9mY20uZ29vZ2xlYXBpcy5jb20vdjEvcHJvamVjdHMvaHlkcm9ncmFtL21lc3NhZ2VzOnNlbmQ="
         val decodedUrl = String(android.util.Base64.decode(encodedUrl, android.util.Base64.DEFAULT))
 
         val compressedAvatar = resizeBase64Avatar(avatarBase64)
 
-        // 4. Отправляем сообщение на каждое устройство
         for (token in activeTokens) {
+            // 🌟 ИСПРАВЛЕНИЕ: Перенесли title и body в data, удалив объект notification
             val jsonPayload = JSONObject().apply {
                 put("message", JSONObject().apply {
                     put("token", token)
-                    put("notification", JSONObject().apply {
+                    put("data", JSONObject().apply {
                         put("title", senderName)
                         put("body", messageText)
-                    })
-                    put("data", JSONObject().apply {
                         put("chatId", chatId)
                         put("senderName", senderName)
                         put("avatarBase64", compressedAvatar)
@@ -128,17 +120,12 @@ class NotificationRepositoryImpl @Inject constructor(
             val decodedBytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
             val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size) ?: return ""
 
-            // 1. Делаем иконку компактной — 64x64 пикселей
             val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 64, 64, true)
-
-            // 2. Создаем пустой Bitmap с поддержкой прозрачности (ARGB_8888)
             val alphaBitmap = Bitmap.createBitmap(scaledBitmap.width, scaledBitmap.height, Bitmap.Config.ARGB_8888)
             val canvas = android.graphics.Canvas(alphaBitmap)
             canvas.drawBitmap(scaledBitmap, 0f, 0f, null)
 
             val outputStream = java.io.ByteArrayOutputStream()
-
-            // 3. Сжимаем в JPEG с качеством 60% — строка выйдет около 1.2–1.5 КБ, пуш точно пролетит
             alphaBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
             val byteArray = outputStream.toByteArray()
 
@@ -148,5 +135,4 @@ class NotificationRepositoryImpl @Inject constructor(
             ""
         }
     }
-
 }
