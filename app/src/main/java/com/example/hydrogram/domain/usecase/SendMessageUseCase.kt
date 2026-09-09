@@ -31,6 +31,7 @@ class SendMessageUseCase @Inject constructor(
         replyData: ReplyData? = null,
         targetUserId: String,
         senderName: String,
+        senderAvatar: String,
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         try {
@@ -93,7 +94,8 @@ class SendMessageUseCase @Inject constructor(
                     targetUserId = targetUserId,
                     senderName = senderName,
                     messageText = pushMessageText,
-                    chatId = chatId
+                    chatId = chatId,
+                    avatarBase64 = senderAvatar,
                 )
 
                 Result.success(Unit)

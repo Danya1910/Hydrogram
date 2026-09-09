@@ -1,6 +1,8 @@
 package com.example.hydrogram.data.repository
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.util.Log
 import com.example.hydrogram.domain.repository.NotificationRepository
 import com.google.auth.oauth2.GoogleCredentials
@@ -10,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.InputStream
 import java.io.OutputStreamWriter
 import java.net.HttpURLConnection
 import java.net.URL
@@ -48,9 +49,10 @@ class NotificationRepositoryImpl @Inject constructor(
         senderName: String,
         messageText: String,
         chatId: String,
-        avatarBase64: String?,
+        avatarBase64: String,
     ): Result<Unit> = runCatching {
         Log.d("FCM_FINAL", "1. Метод отправки пуша ЗАПУЩЕН")
+        Log.d("FCM_FINAL", "mineAvatar: $avatarBase64")
 
         // 1. Получаем FCM токен получателя из Firestore
         val userDoc = firestore.collection("users").document(targetUserId).get().await()
@@ -71,6 +73,8 @@ class NotificationRepositoryImpl @Inject constructor(
         val encodedUrl = "aHR0cHM6Ly9mY20uZ29vZ2xlYXBpcy5jb20vdjEvcHJvamVjdHMvaHlkcm9ncmFtL21lc3NhZ2VzOnNlbmQ="
         val decodedUrl = String(android.util.Base64.decode(encodedUrl, android.util.Base64.DEFAULT))
 
+        val compressedAvatar = resizeBase64Avatar(avatarBase64)
+
         // 4. Отправляем сообщение на каждое устройство
         for (token in activeTokens) {
             val jsonPayload = JSONObject().apply {
@@ -79,15 +83,11 @@ class NotificationRepositoryImpl @Inject constructor(
                     put("notification", JSONObject().apply {
                         put("title", senderName)
                         put("body", messageText)
-                        if (!avatarBase64.isNullOrEmpty()) {
-                            val compressedAvatar = compressBase64IfNeeded(avatarBase64)
-                            put("avatarBase64", compressedAvatar)
-                            Log.d("FCM_FINAL", "📷 Размер аватарки: ${avatarBase64.length} символов")
-                        }
                     })
                     put("data", JSONObject().apply {
                         put("chatId", chatId)
                         put("senderName", senderName)
+                        put("avatarBase64", compressedAvatar)
                     })
                 })
             }
@@ -121,12 +121,31 @@ class NotificationRepositoryImpl @Inject constructor(
         Log.e("FCM_FINAL", "❌ ФАТАЛЬНЫЙ СБОЙ В РЕПОЗИТОРИИ:", exception)
     }
 
-    private fun compressBase64IfNeeded(base64: String, maxSize: Int = 2000): String {
-        return if (base64.length > maxSize) {
-            Log.w("FCM_FINAL", "⚠️ Аватарка слишком большая, обрезаем до $maxSize символов")
-            base64.take(maxSize)
-        } else {
-            base64
+    private fun resizeBase64Avatar(originalBase64: String): String {
+        return try {
+            if (originalBase64.isEmpty()) return ""
+            val cleanBase64 = originalBase64.substringAfter(",")
+            val decodedBytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
+            val originalBitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size) ?: return ""
+
+            // 1. Делаем иконку компактной — 64x64 пикселей
+            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, 64, 64, true)
+
+            // 2. Создаем пустой Bitmap с поддержкой прозрачности (ARGB_8888)
+            val alphaBitmap = Bitmap.createBitmap(scaledBitmap.width, scaledBitmap.height, Bitmap.Config.ARGB_8888)
+            val canvas = android.graphics.Canvas(alphaBitmap)
+            canvas.drawBitmap(scaledBitmap, 0f, 0f, null)
+
+            val outputStream = java.io.ByteArrayOutputStream()
+
+            // 3. Сжимаем в JPEG с качеством 60% — строка выйдет около 1.2–1.5 КБ, пуш точно пролетит
+            alphaBitmap.compress(Bitmap.CompressFormat.JPEG, 60, outputStream)
+            val byteArray = outputStream.toByteArray()
+
+            android.util.Base64.encodeToString(byteArray, android.util.Base64.NO_WRAP)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            ""
         }
     }
 
