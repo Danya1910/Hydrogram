@@ -94,7 +94,7 @@ class MessengerMessagingService : FirebaseMessagingService() {
         }
 
         val intent = Intent(this, MainActivity::class.java).apply {
-            action = "OPEN_CHAT_ACTIVITY"
+            action = Intent.ACTION_VIEW
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             putExtra("CHAT_ID", chatId)
         }
@@ -123,10 +123,15 @@ class MessengerMessagingService : FirebaseMessagingService() {
             .setImportant(true)
             .build()
 
+        val shortcutIntent = Intent(this, MainActivity::class.java).apply {
+            action = Intent.ACTION_VIEW
+            putExtra("CHAT_ID", chatId)
+        }
+
         val shortcut = ShortcutInfoCompat.Builder(this, shortcutId)
             .setShortLabel(title)
             .setIcon(iconCompat)
-            .setIntent(intent)
+            .setIntent(shortcutIntent)
             .setLongLived(true)
             .setPerson(sender)
             .build()
