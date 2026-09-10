@@ -6,6 +6,8 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.core.graphics.rotationMatrix
+import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
@@ -14,9 +16,11 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun RootNavGraph(
     startDescription: String,
+    navController: NavHostController,
+    pendingChatId: String?,
+    onPendingChatNavigated: () -> Unit
 ) {
 
-    val navController = rememberNavController()
 
     NavHost(
         navController = navController,
@@ -36,7 +40,11 @@ fun RootNavGraph(
             startDestination = Screen.ChatList.route,
             route = "main_graph"
         ) {
-            MainNavGraph(navController = navController)
+            MainNavGraph(
+                navController = navController,
+                pendingChatId = pendingChatId,
+                onPendingChatNavigated = onPendingChatNavigated
+            )
         }
     }
 
