@@ -57,6 +57,9 @@ class InboxViewModel @Inject constructor(
             _uiState.value = InboxUiState.Error("Пользователь не авторизирован")
             return
         }
+        if(_uiState.value is InboxUiState.Success) {
+            return
+        }
         viewModelScope.launch {
             getInboxChatsUseCase(userId = userId)
                 .catch { exception ->
