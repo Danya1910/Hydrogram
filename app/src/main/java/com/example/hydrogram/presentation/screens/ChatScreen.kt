@@ -84,7 +84,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import androidx.wear.compose.materialcore.currentTimeMillis
 import coil3.request.ImageRequest
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
@@ -435,7 +434,6 @@ private fun Content(
         val unreadId = firstUnreadMessageId
 
         if (unreadId != null) {
-            // Сценарий А: Есть зафиксированное непрочитанное -> скроллим к нему
             val itemIndex = listState.layoutInfo.visibleItemsInfo
                 .firstOrNull { it.key == unreadId }?.index
 
@@ -446,7 +444,7 @@ private fun Content(
                 var found = false
                 for ((_, dayMessages) in groupedMessages) {
                     if (found) break
-                    targetIndex++ // Пропускаем плашку даты
+                    targetIndex++
                     for (msg in dayMessages) {
                         if (msg.messageId == unreadId) {
                             found = true; break
@@ -457,11 +455,9 @@ private fun Content(
                 if (found) listState.scrollToItem(index = targetIndex, scrollOffset = 0)
             }
         } else {
-            // Сценарий Б: Чат полностью прочитан -> скроллим плавно в самый низ к инпут-бару
             if (messages.isNotEmpty()) {
                 val totalItems = listState.layoutInfo.totalItemsCount
                 if (totalItems > 0) {
-                    // Анимация идет синхронно с ростом dynamicBottomPadding
                     listState.animateScrollToItem(index = totalItems - 1, scrollOffset = 0)
                 }
             }
