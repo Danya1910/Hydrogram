@@ -26,6 +26,8 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 @RequiresApi(Build.VERSION_CODES.S)
 fun NavGraphBuilder.MainNavGraph(
     navController: NavController,
+    pendingChatId: String?,
+    onPendingChatNavigated: () -> Unit
 ) {
     composable(route = Screen.ContactsScreen.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
@@ -63,6 +65,8 @@ fun NavGraphBuilder.MainNavGraph(
         ChatListScreen(
             inboxViewModel = inboxViewModel,
             navController = navController,
+            pendingChatId = pendingChatId,
+            onPendingChatNavigated = onPendingChatNavigated
         )
     }
 
