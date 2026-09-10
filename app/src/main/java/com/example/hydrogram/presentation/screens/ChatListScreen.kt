@@ -74,7 +74,32 @@ import java.util.Date
 fun ChatListScreen(
     inboxViewModel: InboxViewModel,
     navController: NavController,
+    pendingChatId: String?,
+    onPendingChatNavigated: () -> Unit
 ) {
+
+    val mineId by inboxViewModel.currentId.collectAsStateWithLifecycle()
+
+    LaunchedEffect(pendingChatId, mineId) {
+        if (!pendingChatId.isNullOrBlank() && mineId.isNotEmpty()) {
+            val rawId = pendingChatId.trim()
+
+            val penpalId = if (rawId.contains("_")) {
+                val parts = rawId.split("_")
+                parts.firstOrNull { it != mineId } ?: parts[0]
+            } else {
+                rawId
+            }
+
+            navController.navigate(Screen.Chat.createRoute(penpalId)) {
+                launchSingleTop = true
+            }
+
+            onPendingChatNavigated()
+        }
+    }
+
+
     Scaffold(
         topBar = {
             ChatListTopBar()
