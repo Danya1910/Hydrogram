@@ -1,6 +1,7 @@
 package com.example.hydrogram
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -17,12 +18,17 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.hydrogram.domain.usecase.StartTrackingPresenceUseCase
 import com.example.hydrogram.presentation.navigation.RootNavGraph
+import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.ui.theme.HydrogramTheme
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
@@ -34,69 +40,60 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private val pendingChatId = mutableStateOf<String?>(null)
+
     @RequiresApi(Build.VERSION_CODES.S)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseDatabase.getInstance().setPersistenceEnabled(true)
 
         val auth = Firebase.auth
-
         val currentUser = auth.currentUser
-
-        val startDescription = if(currentUser!=null) "main_graph" else "auth_graph"
+        val startDescription = if (currentUser != null) "main_graph" else "auth_graph"
 
         enableEdgeToEdge()
-        try {
-            val info = packageManager.getPackageInfo(
-                packageName,
-                PackageManager.GET_SIGNING_CERTIFICATES
-            )
 
-            info.signingInfo?.apkContentsSigners?.forEach { cert ->
-                val md = java.security.MessageDigest.getInstance("SHA-1")
-                val sha1 = md.digest(cert.toByteArray())
-                    .joinToString(":") { "%02X".format(it) }
-                Log.e("SHA_CHECK", "SHA-1: $sha1")
-
-                val md256 = java.security.MessageDigest.getInstance("SHA-256")
-                val sha256 = md256.digest(cert.toByteArray())
-                    .joinToString(":") { "%02X".format(it) }
-                Log.e("SHA_CHECK", "SHA-256: $sha256")
-            }
-        } catch (e: Exception) {
-            Log.e("SHA_CHECK", "Error", e)
-        }
+        handleIntent(intent)
 
         setContent {
             RequestNotificationPermission()
 
-            val startChatId = remember { androidx.compose.runtime.mutableStateOf<String?>(null) }
+            val navController = rememberNavController()
 
-            // 2. Ловим клик по уведомлению при "холодном" старте (когда приложение было закрыто)
-            LaunchedEffect(intent) {
-                intent?.let {
-                    if (it.action == "OPEN_CHAT_ACTIVITY") {
-                        startChatId.value = it.getStringExtra("CHAT_ID")
-                    }
-                }
-            }
-
+            // Просто передаем состояние id чата из уведомления прямо в граф навигации
             RootNavGraph(
                 startDescription = startDescription,
+                navController = navController,
+                pendingChatId = pendingChatId.value,
+                onPendingChatNavigated = { pendingChatId.value = null }
             )
+        }
+    }
 
-            LaunchedEffect(startChatId.value) {
-                val id = startChatId.value
-                if (!id.isNullOrEmpty()) {
-                    startChatId.value =
-                        null
-                    // сделать переход на чат по id
-                    //navController.navigate("chat_screen/$id")
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        intent?.let {
+            if (it.hasExtra("CHAT_ID")) {
+                val chatId = it.getStringExtra("CHAT_ID")
+
+                Log.d("FCM_RAW_CHECK", "СЫРОЙ ID ИЗ УВЕДОМЛЕНИЯ: '$chatId'")
+
+                if (!chatId.isNullOrBlank()) {
+                    pendingChatId.value = chatId
+
+                    it.removeExtra("CHAT_ID")
                 }
             }
         }
     }
 }
+
 
 @Composable
 fun RequestNotificationPermission() {
