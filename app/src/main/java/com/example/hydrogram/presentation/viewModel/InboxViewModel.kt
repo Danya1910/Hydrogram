@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,7 @@ import com.example.hydrogram.domain.usecase.GetInboxChatsUseCase
 import com.example.hydrogram.domain.usecase.StartTrackingPresenceUseCase
 import com.example.hydrogram.presentation.states.InboxUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -39,6 +41,12 @@ class InboxViewModel @Inject constructor(
     private val _currentId = MutableStateFlow("")
     val currentId = _currentId.asStateFlow()
 
+    private var inboxJob: Job? = null
+
+    init{
+        getCurrentUserId()
+    }
+
 
     fun getCurrentUserId() {
         viewModelScope.launch {
@@ -57,10 +65,17 @@ class InboxViewModel @Inject constructor(
             _uiState.value = InboxUiState.Error("Пользователь не авторизирован")
             return
         }
-        if(_uiState.value is InboxUiState.Success) {
+
+        if (inboxJob?.isActive == true) {
             return
         }
-        viewModelScope.launch {
+
+        inboxJob = viewModelScope.launch {
+
+            if (_uiState.value !is InboxUiState.Success) {
+                _uiState.value = InboxUiState.Loading
+            }
+
             getInboxChatsUseCase(userId = userId)
                 .catch { exception ->
                     _uiState.value = InboxUiState.Error(
