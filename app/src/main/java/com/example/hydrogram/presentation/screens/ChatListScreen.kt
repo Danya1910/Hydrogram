@@ -129,10 +129,6 @@ private fun Content(
 
     val uiState by inboxViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) {
-        inboxViewModel.getCurrentUserId()
-    }
-
     LaunchedEffect(mineId) {
         if(mineId.isNotBlank()) {
             inboxViewModel.observeInboxChats(
