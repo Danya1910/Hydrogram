@@ -1,13 +1,13 @@
 package com.example.hydrogram.presentation.navigation
 
 import android.os.Build
+import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
-import com.example.hydrogram.presentation.viewModel.AuthViewModel
-import com.example.hydrogram.presentation.screens.PhoneRegistrationScreen
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
@@ -15,7 +15,6 @@ import com.example.hydrogram.presentation.screens.ChangeUserDataScreen
 import com.example.hydrogram.presentation.screens.ChatListScreen
 import com.example.hydrogram.presentation.screens.ChatScreen
 import com.example.hydrogram.presentation.screens.ContactsScreen
-import com.example.hydrogram.presentation.screens.EmailRegistrationScreen
 import com.example.hydrogram.presentation.screens.SettingsScreen
 import com.example.hydrogram.presentation.screens.UserProfileScreen
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
@@ -60,7 +59,14 @@ fun NavGraphBuilder.MainNavGraph(
     }
 
     composable(route = Screen.ChatList.route) { backStackEntry ->
-        val inboxViewModel: InboxViewModel = hiltViewModel()
+
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("main_graph")
+        }
+
+        val inboxViewModel: InboxViewModel = hiltViewModel(
+            parentEntry
+        )
 
         ChatListScreen(
             inboxViewModel = inboxViewModel,
