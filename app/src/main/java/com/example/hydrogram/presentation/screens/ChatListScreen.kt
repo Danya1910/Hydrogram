@@ -134,9 +134,11 @@ private fun Content(
     }
 
     LaunchedEffect(mineId) {
-        inboxViewModel.observeInboxChats(
-            userId = mineId,
-        )
+        if(mineId.isNotBlank()) {
+            inboxViewModel.observeInboxChats(
+                userId = mineId,
+            )
+        }
     }
 
     var contextMenuState by remember { mutableStateOf<ChatContextMenuState?>(null) }
