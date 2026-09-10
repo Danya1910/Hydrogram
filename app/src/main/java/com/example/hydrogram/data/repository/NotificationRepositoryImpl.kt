@@ -56,7 +56,7 @@ class NotificationRepositoryImpl @Inject constructor(
         val activeTokens = fcmTokensMap.filterValues { it == true }.keys.map { it.toString() }
 
         if (activeTokens.isEmpty()) {
-            Log.d("FCM_FINAL", "⚠️ У пользователя $targetUserId нет активных токенов.")
+            Log.d("FCM_FINAL", "⚠У пользователя $targetUserId нет активных токенов.")
             return@runCatching Unit
         }
 
@@ -70,7 +70,6 @@ class NotificationRepositoryImpl @Inject constructor(
         val compressedAvatar = resizeBase64Avatar(avatarBase64)
 
         for (token in activeTokens) {
-            // 🌟 ИСПРАВЛЕНИЕ: Перенесли title и body в data, удалив объект notification
             val jsonPayload = JSONObject().apply {
                 put("message", JSONObject().apply {
                     put("token", token)
@@ -100,17 +99,17 @@ class NotificationRepositoryImpl @Inject constructor(
                 val responseCode = connection.responseCode
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val responseBody = connection.inputStream.bufferedReader().use { it.readText() }
-                    Log.d("FCM_FINAL", "✅ Пуш доставлен! Ответ: $responseBody")
+                    Log.d("FCM_FINAL", "Пуш доставлен! Ответ: $responseBody")
                 } else {
                     val errorBody = connection.errorStream?.bufferedReader()?.use { it.readText() } ?: ""
-                    Log.e("FCM_FINAL", "❌ Ошибка Firebase V1: $responseCode | $errorBody")
+                    Log.e("FCM_FINAL", "Ошибка Firebase V1: $responseCode | $errorBody")
                 }
                 connection.disconnect()
             }
         }
         Unit
     }.onFailure { exception ->
-        Log.e("FCM_FINAL", "❌ ФАТАЛЬНЫЙ СБОЙ В РЕПОЗИТОРИИ:", exception)
+        Log.e("FCM_FINAL", "ФАТАЛЬНЫЙ СБОЙ В РЕПОЗИТОРИИ:", exception)
     }
 
     private fun resizeBase64Avatar(originalBase64: String): String {
