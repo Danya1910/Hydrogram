@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.widgets
 
 import android.util.Log
+import androidx.collection.buildLongLongMap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -38,7 +39,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
@@ -53,6 +56,7 @@ import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
+import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.SfProText
 
 
@@ -71,14 +75,17 @@ fun ChatInputField(
     onReplyMessageClick: (String) -> Unit,
     editingMessage: Message?,
     onCancelEditClick: () -> Unit,
+    isScrollToBottomVisible: Boolean,
+    onScrollToBottomClick: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
 
     Log.d("ChatInput", "currentEditingMessage: $editingMessage, replyMessage: $replyMessage")
 
-    Row(
-        verticalAlignment = Alignment.Bottom,
+    Column(
+        verticalArrangement = Arrangement.Bottom,
+        horizontalAlignment = Alignment.End,
         modifier = Modifier
             .navigationBarsPadding()
             .fillMaxWidth()
@@ -88,37 +95,42 @@ fun ChatInputField(
                 bottom = 0.dp,
             )
     ) {
-        AttachButton(
-            onAttachClick = onAttachClick
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        MessageInputField(
-            inputText = inputText,
-            onValueChange = onValueChange,
-            onSendClick = onSendClick,
-            onStickerClick = onStickerClick,
-            modifier = Modifier.weight(1f),
-            isExpanded = isExpanded,
-            isEditing = isEditing,
-            replyMessage = replyMessage,
-            replyName = replyName,
-            onCancelClick = {
-                onCancelClick()
-            },
-            onReplyMessageClick = { messageId ->
-                onReplyMessageClick(messageId)
-            },
-            editingMessage = editingMessage,
-            onCancelEditClick = {
-                onCancelEditClick()
-            },
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        SendButton(
-            onSendClick = onSendClick,
-            isTextMessage = isTextMessage
-        )
-
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.Bottom,
+            modifier = Modifier
+        ) {
+            AttachButton(
+                onAttachClick = onAttachClick
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            MessageInputField(
+                inputText = inputText,
+                onValueChange = onValueChange,
+                onSendClick = onSendClick,
+                onStickerClick = onStickerClick,
+                modifier = Modifier.weight(1f),
+                isExpanded = isExpanded,
+                isEditing = isEditing,
+                replyMessage = replyMessage,
+                replyName = replyName,
+                onCancelClick = {
+                    onCancelClick()
+                },
+                onReplyMessageClick = { messageId ->
+                    onReplyMessageClick(messageId)
+                },
+                editingMessage = editingMessage,
+                onCancelEditClick = {
+                    onCancelEditClick()
+                },
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            SendButton(
+                onSendClick = onSendClick,
+                isTextMessage = isTextMessage
+            )
+        }
     }
 
 }
@@ -597,32 +609,37 @@ private fun ReplyMessageData(
     }
 }
 
-
 @Composable
-@Preview(showBackground = true, backgroundColor = 0xFF7D5260)
-private fun ChatInputFieldPreview() {
-
-    var textState by remember { mutableStateOf("") }
-
-//    ChatInputField(
-//        inputText = textState,
-//        onValueChange = { newValue ->
-//            textState = newValue
-//        },
-//        onSendClick = {
-//            println("Отправлено: $textState")
-//            textState = ""
-//        },
-//        onAttachClick = {
-//            println("Нажата скрепка")
-//        },
-//        onStickerClick = {
-//
-//        },
-//        isExpanded = false,
-//        replyMessage = Message(),
-//        replyName = "Debil",
-//        onCancelClick = {},
-//    )
-
+private fun ScrollToBottomButton(
+    onScrollToBottomClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(42.dp)
+            .clip(
+                shape = CircleShape,
+            )
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape,
+            )
+            .clickable{
+                onScrollToBottomClick()
+            },
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_sticker),
+            contentDescription = null,
+            tint = LightBlack,
+        )
+    }
 }
+
+
+

@@ -1708,6 +1708,7 @@ private fun Content(
                     onCancelEditClick = {
                         currentEditingMessage = null
                     },
+
                 )
             }
         }
