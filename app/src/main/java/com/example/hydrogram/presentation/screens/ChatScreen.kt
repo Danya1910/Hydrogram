@@ -453,7 +453,6 @@ private fun Content(
                 for ((_, dayMessages) in groupedMessages) {
                     if (found) break
 
-                    // Индекс заголовка дня
                     targetIndex++
 
                     for (msg in dayMessages) {
