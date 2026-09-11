@@ -209,7 +209,7 @@ fun ChatScreen(
                             shape = RectangleShape,
                             style = HazeDefaults.style(
                                 backgroundColor = Color.White.copy(alpha = 0.01f),
-                                blurRadius = 6.dp
+                                blurRadius = 2.dp
                             )
                         )
                         .background(
