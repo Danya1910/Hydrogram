@@ -2230,7 +2230,7 @@ private fun ScrollToBottomButton(
             },
     ) {
         Icon(
-            painter = painterResource(R.drawable.ic_sticker),
+            painter = painterResource(R.drawable.ic_arrow_down),
             contentDescription = null,
             tint = LightBlack,
         )
