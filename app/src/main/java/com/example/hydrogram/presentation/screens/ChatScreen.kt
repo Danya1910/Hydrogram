@@ -430,7 +430,9 @@ private fun Content(
         hasInitializedUnreadId = true
     }
 
-    LaunchedEffect(firstUnreadMessageId, messages.size, isStickerWidgetVisible) {
+    val chatScrollTrigger = chatId
+
+    LaunchedEffect(chatScrollTrigger) {
         val unreadId = firstUnreadMessageId
 
         if (unreadId != null) {
@@ -442,22 +444,35 @@ private fun Content(
             } else {
                 var targetIndex = 0
                 var found = false
+
                 for ((_, dayMessages) in groupedMessages) {
                     if (found) break
+
+                    // Индекс заголовка дня
                     targetIndex++
+
                     for (msg in dayMessages) {
                         if (msg.messageId == unreadId) {
-                            found = true; break
+                            found = true
+                            break
                         }
                         targetIndex++
                     }
                 }
-                if (found) listState.scrollToItem(index = targetIndex, scrollOffset = 0)
+
+                if (found) {
+                    val fastJumpIndex = (targetIndex - 10).coerceAtLeast(0)
+                    listState.scrollToItem(index = fastJumpIndex, scrollOffset = 0)
+                    listState.animateScrollToItem(index = targetIndex, scrollOffset = 0)
+                }
             }
         } else {
             if (messages.isNotEmpty()) {
                 val totalItems = listState.layoutInfo.totalItemsCount
                 if (totalItems > 0) {
+                    val intermediateIndex = (totalItems - 20).coerceAtLeast(0)
+
+                    listState.scrollToItem(index = intermediateIndex, scrollOffset = 0)
                     listState.animateScrollToItem(index = totalItems - 1, scrollOffset = 0)
                 }
             }
