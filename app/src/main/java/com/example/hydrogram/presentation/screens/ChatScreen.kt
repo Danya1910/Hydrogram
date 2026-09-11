@@ -629,6 +629,33 @@ private fun Content(
     }
 
     val density = LocalDensity.current
+    val thresholdPx = with(density) {100.dp.toPx()}
+
+    val isScrollToBottomVisible by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleItems = layoutInfo.visibleItemsInfo
+
+            if(visibleItems.isEmpty()) {
+                false
+            } else {
+                val lastVisibleItem = visibleItems.last()
+
+                val isLastItemVisible = lastVisibleItem.index == layoutInfo.totalItemsCount - 1
+
+                if(isLastItemVisible) {
+                    val lastItemBottom = lastVisibleItem.offset + lastVisibleItem.size
+                    val viewportEnd = layoutInfo.viewportEndOffset
+
+                    val remining = lastItemBottom - viewportEnd
+
+                    remining <= thresholdPx
+                } else {
+                    false
+                }
+            }
+        }
+    }
 
     LaunchedEffect(isExpanded, messages.size) {
         if (isAtBottom && messages.isNotEmpty()) {
@@ -644,6 +671,8 @@ private fun Content(
             }
         }
     }
+
+
 
     Box(
         modifier = Modifier
@@ -1708,7 +1737,18 @@ private fun Content(
                     onCancelEditClick = {
                         currentEditingMessage = null
                     },
+                    isScrollToBottomVisible = isScrollToBottomVisible,
+                    onScrollToBottomClick = {
+                        coroutineScope.launch {
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            if (totalItems > 0) {
+                                val intermediateIndex = (totalItems - 15).coerceAtLeast(0)
+                                listState.scrollToItem(index = intermediateIndex, scrollOffset = 0)
 
+                                listState.animateScrollToItem(index = totalItems - 1, scrollOffset = 0)
+                            }
+                        }
+                    },
                 )
             }
         }

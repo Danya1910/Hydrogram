@@ -3,7 +3,9 @@ package com.example.hydrogram.presentation.widgets
 import android.util.Log
 import androidx.collection.buildLongLongMap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -95,6 +97,28 @@ fun ChatInputField(
                 bottom = 0.dp,
             )
     ) {
+        AnimatedVisibility(
+            visible = !isScrollToBottomVisible,
+            enter = fadeIn(animationSpec = tween(durationMillis = 200)) +
+                    scaleIn(
+                        initialScale = 0.5f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessMedium
+                        )
+                    ),
+            exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
+                    scaleOut(
+                        targetScale = 0.5f,
+                        animationSpec = tween(durationMillis = 150)
+                    )
+        ) {
+            ScrollToBottomButton(
+                onScrollToBottomClick = {
+                    onScrollToBottomClick()
+                }
+            )
+        }
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             verticalAlignment = Alignment.Bottom,
