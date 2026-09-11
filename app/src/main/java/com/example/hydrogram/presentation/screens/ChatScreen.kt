@@ -66,6 +66,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -2209,9 +2210,14 @@ private fun ScrollToBottomButton(
     onScrollToBottomClick: () -> Unit,
 ) {
     Box(
-        contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(42.dp)
+            .shadow(
+                elevation = 12.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.9f),
+            )
             .clip(
                 shape = CircleShape,
             )
@@ -2227,6 +2233,7 @@ private fun ScrollToBottomButton(
             .clickable {
                 onScrollToBottomClick()
             },
+        contentAlignment = Alignment.Center,
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_arrow_down),
