@@ -97,28 +97,28 @@ fun ChatInputField(
                 bottom = 0.dp,
             )
     ) {
-        AnimatedVisibility(
-            visible = !isScrollToBottomVisible,
-            enter = fadeIn(animationSpec = tween(durationMillis = 200)) +
-                    scaleIn(
-                        initialScale = 0.5f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium
-                        )
-                    ),
-            exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
-                    scaleOut(
-                        targetScale = 0.5f,
-                        animationSpec = tween(durationMillis = 150)
-                    )
-        ) {
-            ScrollToBottomButton(
-                onScrollToBottomClick = {
-                    onScrollToBottomClick()
-                }
-            )
-        }
+//        AnimatedVisibility(
+//            visible = !isScrollToBottomVisible,
+//            enter = fadeIn(animationSpec = tween(durationMillis = 200)) +
+//                    scaleIn(
+//                        initialScale = 0.5f,
+//                        animationSpec = spring(
+//                            dampingRatio = Spring.DampingRatioMediumBouncy,
+//                            stiffness = Spring.StiffnessMedium
+//                        )
+//                    ),
+//            exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
+//                    scaleOut(
+//                        targetScale = 0.5f,
+//                        animationSpec = tween(durationMillis = 150)
+//                    )
+//        ) {
+//            ScrollToBottomButton(
+//                onScrollToBottomClick = {
+//                    onScrollToBottomClick()
+//                }
+//            )
+//        }
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             verticalAlignment = Alignment.Bottom,

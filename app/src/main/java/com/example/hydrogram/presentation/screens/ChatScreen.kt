@@ -17,11 +17,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
@@ -114,6 +117,7 @@ import coil3.request.crossfade
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.util.CopyTextToClipboard
+import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
@@ -131,6 +135,7 @@ import com.example.hydrogram.presentation.widgets.messages.text.MineTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalReplyTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessage
 import com.example.hydrogram.ui.theme.Blue
+import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -629,21 +634,21 @@ private fun Content(
     }
 
     val density = LocalDensity.current
-    val thresholdPx = with(density) {100.dp.toPx()}
+    val thresholdPx = with(density) { 100.dp.toPx() }
 
     val isScrollToBottomVisible by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
             val visibleItems = layoutInfo.visibleItemsInfo
 
-            if(visibleItems.isEmpty()) {
+            if (visibleItems.isEmpty()) {
                 false
             } else {
                 val lastVisibleItem = visibleItems.last()
 
                 val isLastItemVisible = lastVisibleItem.index == layoutInfo.totalItemsCount - 1
 
-                if(isLastItemVisible) {
+                if (isLastItemVisible) {
                     val lastItemBottom = lastVisibleItem.offset + lastVisibleItem.size
                     val viewportEnd = layoutInfo.viewportEndOffset
 
@@ -1622,10 +1627,52 @@ private fun Content(
         }
 
         Column(
+            horizontalAlignment = Alignment.End,
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
         ) {
+            AnimatedVisibility(
+                visible = !isScrollToBottomVisible,
+                enter = fadeIn(animationSpec = tween(durationMillis = 200)) +
+                        scaleIn(
+                            initialScale = 0.5f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ),
+                exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
+                        scaleOut(
+                            targetScale = 0.5f,
+                            animationSpec = tween(durationMillis = 150)
+                        ),
+                modifier = Modifier
+                    .padding(
+                        horizontal = 8.dp
+                    )
+            ) {
+                ScrollToBottomButton(
+                    onScrollToBottomClick = {
+                        coroutineScope.launch {
+                            val totalItems = listState.layoutInfo.totalItemsCount
+                            if (totalItems > 0) {
+                                val intermediateIndex = (totalItems - 15).coerceAtLeast(0)
+                                listState.scrollToItem(
+                                    index = intermediateIndex,
+                                    scrollOffset = 0
+                                )
+
+                                listState.animateScrollToItem(
+                                    index = totalItems - 1,
+                                    scrollOffset = 0
+                                )
+                            }
+                        }
+                    }
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -1745,7 +1792,10 @@ private fun Content(
                                 val intermediateIndex = (totalItems - 15).coerceAtLeast(0)
                                 listState.scrollToItem(index = intermediateIndex, scrollOffset = 0)
 
-                                listState.animateScrollToItem(index = totalItems - 1, scrollOffset = 0)
+                                listState.animateScrollToItem(
+                                    index = totalItems - 1,
+                                    scrollOffset = 0
+                                )
                             }
                         }
                     },
@@ -2167,6 +2217,38 @@ private fun convertImageToOptimizedBase64(
             originalBitmap.recycle()
         }
         throw e
+    }
+}
+
+@Composable
+private fun ScrollToBottomButton(
+    onScrollToBottomClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(42.dp)
+            .clip(
+                shape = CircleShape,
+            )
+            .background(
+                brush = GlassBackground,
+                shape = CircleShape,
+            )
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape,
+            )
+            .clickable {
+                onScrollToBottomClick()
+            },
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_sticker),
+            contentDescription = null,
+            tint = LightBlack,
+        )
     }
 }
 
