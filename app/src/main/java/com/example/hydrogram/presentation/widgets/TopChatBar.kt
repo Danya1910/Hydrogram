@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -112,6 +113,12 @@ private fun BackButton(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(44.dp)
+            .shadow(
+                elevation = 20.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.9f),
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
@@ -162,6 +169,12 @@ private fun UserIcon(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(44.dp)
+            .shadow(
+                elevation = 20.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.9f),
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
