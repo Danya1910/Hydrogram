@@ -1784,21 +1784,6 @@ private fun Content(
                     onCancelEditClick = {
                         currentEditingMessage = null
                     },
-                    isScrollToBottomVisible = isScrollToBottomVisible,
-                    onScrollToBottomClick = {
-                        coroutineScope.launch {
-                            val totalItems = listState.layoutInfo.totalItemsCount
-                            if (totalItems > 0) {
-                                val intermediateIndex = (totalItems - 15).coerceAtLeast(0)
-                                listState.scrollToItem(index = intermediateIndex, scrollOffset = 0)
-
-                                listState.animateScrollToItem(
-                                    index = totalItems - 1,
-                                    scrollOffset = 0
-                                )
-                            }
-                        }
-                    },
                 )
             }
         }

@@ -77,8 +77,6 @@ fun ChatInputField(
     onReplyMessageClick: (String) -> Unit,
     editingMessage: Message?,
     onCancelEditClick: () -> Unit,
-    isScrollToBottomVisible: Boolean,
-    onScrollToBottomClick: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -97,28 +95,7 @@ fun ChatInputField(
                 bottom = 0.dp,
             )
     ) {
-//        AnimatedVisibility(
-//            visible = !isScrollToBottomVisible,
-//            enter = fadeIn(animationSpec = tween(durationMillis = 200)) +
-//                    scaleIn(
-//                        initialScale = 0.5f,
-//                        animationSpec = spring(
-//                            dampingRatio = Spring.DampingRatioMediumBouncy,
-//                            stiffness = Spring.StiffnessMedium
-//                        )
-//                    ),
-//            exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
-//                    scaleOut(
-//                        targetScale = 0.5f,
-//                        animationSpec = tween(durationMillis = 150)
-//                    )
-//        ) {
-//            ScrollToBottomButton(
-//                onScrollToBottomClick = {
-//                    onScrollToBottomClick()
-//                }
-//            )
-//        }
+
         Spacer(modifier = Modifier.height(10.dp))
         Row(
             verticalAlignment = Alignment.Bottom,
@@ -632,38 +609,3 @@ private fun ReplyMessageData(
         )
     }
 }
-
-@Composable
-private fun ScrollToBottomButton(
-    onScrollToBottomClick: () -> Unit,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(42.dp)
-            .clip(
-                shape = CircleShape,
-            )
-            .background(
-                brush = GlassBackground,
-                shape = CircleShape,
-            )
-            .border(
-                width = 1.dp,
-                brush = GlassBorder,
-                shape = CircleShape,
-            )
-            .clickable{
-                onScrollToBottomClick()
-            },
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_sticker),
-            contentDescription = null,
-            tint = LightBlack,
-        )
-    }
-}
-
-
-
