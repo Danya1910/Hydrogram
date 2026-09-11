@@ -19,6 +19,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -87,6 +89,12 @@ private fun EditButton(
         modifier = Modifier
             .height(44.dp)
             .width(52.dp)
+            .shadow(
+                elevation = 20.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.9f),
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape,
@@ -134,6 +142,12 @@ private fun RowEdit(
         modifier = Modifier
             .height(44.dp)
             .width(92.dp)
+            .shadow(
+                elevation = 20.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.9f),
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape,

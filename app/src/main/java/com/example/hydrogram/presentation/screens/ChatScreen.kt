@@ -2213,7 +2213,7 @@ private fun ScrollToBottomButton(
         modifier = Modifier
             .size(42.dp)
             .shadow(
-                elevation = 12.dp,
+                elevation = 20.dp,
                 shape = CircleShape,
                 clip = true,
                 ambientColor = Color.Black.copy(alpha = 0.9f),
