@@ -75,26 +75,26 @@ fun SettingsScreen(
     userViewModel: UserViewModel,
     navController: NavController,
 ) {
-        Scaffold(
-            containerColor = LightGrayBackground,
-            contentWindowInsets = WindowInsets(0, 0, 0, 0),
-            topBar = {
-                    TopBar(
-                        navController = navController,
-                    )
-            },
-            bottomBar = {
-                BottomBar(
-                    navController = navController,
-                )
-            },
-        ) { paddingValues ->
-            Content(
-                userViewModel = userViewModel,
+    Scaffold(
+        containerColor = LightGrayBackground,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+            TopBar(
                 navController = navController,
-                paddingValues = paddingValues,
             )
-        }
+        },
+        bottomBar = {
+            BottomBar(
+                navController = navController,
+            )
+        },
+    ) { paddingValues ->
+        Content(
+            userViewModel = userViewModel,
+            navController = navController,
+            paddingValues = paddingValues,
+        )
+    }
 }
 
 @Composable
@@ -110,11 +110,10 @@ private fun Content(
     LaunchedEffect(Unit) {
         userViewModel.getCurrentUserId()
     }
-        //
+
     LaunchedEffect(mineId, mineData) {
         if (mineId.isBlank()) return@LaunchedEffect
         val state = mineData
-        // грузим, если ещё Loading/Error или Success без пользователя
         if (state !is UserState.Success || state.user == null) {
             userViewModel.setTargetUserId(uid = mineId)
         }
@@ -521,7 +520,7 @@ private fun FakeItem(
             .background(
                 color = Color.White,
             )
-            .clickable{
+            .clickable {
                 item.onClick()
             }
             .padding(horizontal = 20.dp)
