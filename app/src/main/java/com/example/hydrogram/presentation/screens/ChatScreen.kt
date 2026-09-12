@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -716,11 +717,12 @@ private fun Content(
             horizontalAlignment = Alignment.CenterHorizontally,
             contentPadding = PaddingValues(
                 top = 96.dp,
-                bottom = 75.dp + animatedBottomPadding,
+                bottom = 47.dp + animatedBottomPadding,
             ),
             modifier = Modifier
                 .fillMaxSize()
                 .haze(hazeState)
+                .navigationBarsPadding()
                 .clickable(
                     enabled = isStickerWidgetVisible,
                     interactionSource = remember { MutableInteractionSource() },

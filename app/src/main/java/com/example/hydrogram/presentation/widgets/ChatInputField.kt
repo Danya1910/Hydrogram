@@ -91,12 +91,10 @@ fun ChatInputField(
             .fillMaxWidth()
             .padding(horizontal = 8.dp)
             .padding(
-                top = 4.dp,
-                bottom = 0.dp,
+                bottom = 7.dp,
             )
     ) {
 
-        Spacer(modifier = Modifier.height(10.dp))
         Row(
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
@@ -149,6 +147,13 @@ private fun AttachButton(
             .clip(
                 shape = CircleShape,
             )
+            .shadow(
+                elevation = 4.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.5f),
+                spotColor = Color.Black.copy(alpha = 0.4f),
+            )
             .background(
                 brush = GlassBackground,
                 shape = CircleShape
@@ -182,6 +187,13 @@ private fun SendButton(
             modifier = Modifier
                 .width(44.dp)
                 .height(42.dp)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = CircleShape,
+                    clip = true,
+                    ambientColor = Color.Black.copy(alpha = 0.5f),
+                    spotColor = Color.Black.copy(alpha = 0.4f),
+                )
                 .background(
                     color = Blue,
                     shape = CircleShape,
@@ -209,6 +221,13 @@ private fun SendButton(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(42.dp)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = CircleShape,
+                    clip = true,
+                    ambientColor = Color.Black.copy(alpha = 0.5f),
+                    spotColor = Color.Black.copy(alpha = 0.4f),
+                )
                 .background(
                     brush = GlassBackground,
                     shape = CircleShape,
@@ -390,7 +409,15 @@ private fun MessageInputField(
                                 }
                         )
                     }
-                }
+                },
+                modifier = Modifier
+                    .shadow(
+                        elevation = 4.dp,
+                        shape = CircleShape,
+                        clip = true,
+                        ambientColor = Color.Black.copy(alpha = 0.5f),
+                        spotColor = Color.Black.copy(alpha = 0.4f),
+                    ),
             )
         }
     }
