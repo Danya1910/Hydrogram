@@ -222,6 +222,7 @@ fun ChatScreen(
                                 )
                             )
                         )
+                        .padding(bottom = 5.dp)
                 ) {
                     when (val state = penpalData) {
                         is UserState.Loading -> {
