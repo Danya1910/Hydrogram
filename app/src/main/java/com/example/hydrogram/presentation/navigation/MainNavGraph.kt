@@ -1,10 +1,8 @@
 package com.example.hydrogram.presentation.navigation
 
 import android.os.Build
-import androidx.activity.ComponentActivity
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.compose.composable
@@ -28,7 +26,7 @@ fun NavGraphBuilder.MainNavGraph(
     pendingChatId: String?,
     onPendingChatNavigated: () -> Unit
 ) {
-    composable(route = Screen.ContactsScreen.route) { backStackEntry ->
+    composable(route = Screen.Contacts.route) { backStackEntry ->
         val parentEntry = remember(backStackEntry) {
             navController.getBackStackEntry("main_graph")
         }
