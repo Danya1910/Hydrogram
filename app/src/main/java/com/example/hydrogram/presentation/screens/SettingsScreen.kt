@@ -112,7 +112,9 @@ private fun Content(
     }
 
     LaunchedEffect(mineId) {
-        userViewModel.setTargetUserId(uid = mineId)
+        if((mineData as UserState.Success).user == null) {
+            userViewModel.setTargetUserId(uid = mineId)
+        }
     }
 
     val profileList = listOf(
