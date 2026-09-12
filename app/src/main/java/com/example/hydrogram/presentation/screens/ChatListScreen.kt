@@ -223,6 +223,7 @@ private fun ChatsList(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = 5.dp)
     ) {
         itemsIndexed(
             items = chats,
@@ -259,17 +260,16 @@ private fun ChatsList(
                         },
                     )
                 }
-
-                if (index != chats.size - 1) {
-                    SeparatorLine(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                start = 82.dp,
-                                end = 16.dp
-                            )
-                    )
-                }
+            }
+            if (index != chats.size - 1) {
+                SeparatorLine(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start = 82.dp,
+                            end = 16.dp
+                        )
+                )
             }
         }
     }
