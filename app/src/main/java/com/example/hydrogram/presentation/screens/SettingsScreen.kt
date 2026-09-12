@@ -353,13 +353,23 @@ private fun UserInfoHat(
             letterSpacing = 0.38.sp
         )
         Spacer(modifier = Modifier.height(5.dp))
-        Text(
-            text = "$phoneNumber • @$userName",
-            fontFamily = SfProText,
-            fontSize = 20.sp,
-            color = LightBlack,
-            fontWeight = FontWeight.Medium,
-        )
+        if (userName.isNullOrBlank()) {
+            Text(
+                text = "$phoneNumber",
+                fontFamily = SfProText,
+                fontSize = 20.sp,
+                color = LightBlack,
+                fontWeight = FontWeight.Medium,
+            )
+        } else {
+            Text(
+                text = "$phoneNumber • @$userName",
+                fontFamily = SfProText,
+                fontSize = 20.sp,
+                color = LightBlack,
+                fontWeight = FontWeight.Medium,
+            )
+        }
         Spacer(modifier = Modifier.height(5.dp))
     }
 }
