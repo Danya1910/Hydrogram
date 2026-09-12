@@ -35,6 +35,13 @@ class InboxRepositoryImpl @Inject constructor(
                 if (snapshot != null) {
                     val chatIds = snapshot.documents.map { it.id }
 
+                    if (chatIds.isEmpty()) {
+                        chatsCache.clear()
+                        unreadCountsCache.clear()
+                        trySend(emptyList())
+                        return@addSnapshotListener
+                    }
+
                     val removedIds = chatListeners.keys.filter { it !in chatIds }
                     removedIds.forEach { id ->
                         chatListeners[id]?.remove()

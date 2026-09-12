@@ -71,18 +71,20 @@ class InboxViewModel @Inject constructor(
         }
 
         inboxJob = viewModelScope.launch {
-
+            Log.d("InboxViewModel", "collect started for userId=$userId")
             if (_uiState.value !is InboxUiState.Success) {
                 _uiState.value = InboxUiState.Loading
             }
 
             getInboxChatsUseCase(userId = userId)
                 .catch { exception ->
+                    Log.e("InboxViewModel", "flow error", exception)
                     _uiState.value = InboxUiState.Error(
                         exception.localizedMessage ?: "Не удалось загрузить список чатов"
                     )
                 }
                 .collect { chats ->
+                    Log.d("InboxViewModel", "collect chats size=${chats.size}")
                     _uiState.value = InboxUiState.Success(chats = chats)
                 }
         }
