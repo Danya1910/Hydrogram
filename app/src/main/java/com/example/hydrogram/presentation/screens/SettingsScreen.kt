@@ -110,9 +110,12 @@ private fun Content(
     LaunchedEffect(Unit) {
         userViewModel.getCurrentUserId()
     }
-
-    LaunchedEffect(mineId) {
-        if((mineData as UserState.Success).user == null) {
+        //
+    LaunchedEffect(mineId, mineData) {
+        if (mineId.isBlank()) return@LaunchedEffect
+        val state = mineData
+        // грузим, если ещё Loading/Error или Success без пользователя
+        if (state !is UserState.Success || state.user == null) {
             userViewModel.setTargetUserId(uid = mineId)
         }
     }
