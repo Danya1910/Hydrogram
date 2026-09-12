@@ -77,7 +77,14 @@ fun NavGraphBuilder.MainNavGraph(
     }
 
     composable(route = Screen.Settings.route) { backStackEntry ->
-        val userViewModel: UserViewModel = hiltViewModel()
+
+        val parentEntry = remember(backStackEntry) {
+            navController.getBackStackEntry("main_graph")
+        }
+
+        val userViewModel: UserViewModel = hiltViewModel(
+            parentEntry
+        )
 
         SettingsScreen(
             userViewModel = userViewModel,
