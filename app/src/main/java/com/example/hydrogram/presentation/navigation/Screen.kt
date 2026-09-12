@@ -20,7 +20,7 @@ sealed interface Screen {
         override val route = "PasswordInput"
     }
 
-    data object ContactsScreen : Screen {
+    data object Contacts : Screen {
         override val route = "Contacts"
     }
 
