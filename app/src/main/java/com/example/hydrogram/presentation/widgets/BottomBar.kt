@@ -23,6 +23,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -84,6 +85,7 @@ fun BottomBar(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .navigationBarsPadding()
+            .padding(bottom = 8.dp)
             .fillMaxWidth()
             .padding(horizontal = 25.dp)
     ) {
@@ -93,6 +95,13 @@ fun BottomBar(
             modifier = Modifier
                 .height(62.dp)
                 .weight(1f)
+                .shadow(
+                    elevation = 4.dp,
+                    shape = CircleShape,
+                    clip = true,
+                    ambientColor = Color.Black.copy(alpha = 0.5f),
+                    spotColor = Color.Black.copy(alpha = 0.4f),
+                )
                 .background(
                     brush = glassBrush,
                     shape = CircleShape
@@ -173,6 +182,13 @@ private fun BottomSearch() {
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .size(62.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = CircleShape,
+                clip = true,
+                ambientColor = Color.Black.copy(alpha = 0.5f),
+                spotColor = Color.Black.copy(alpha = 0.4f),
+            )
             .background(
                 color = Color.White.copy(alpha = 0.6f),
                 shape = CircleShape
