@@ -301,9 +301,14 @@ private fun ContactsList(
     contacts: List<RegisteredContact>,
     navController: NavController,
 ) {
+
+    val sortedContacts = remember(contacts) {
+        contacts.sortedByDescending { it.user.lastSeen }
+    }
+
     LazyColumn {
         itemsIndexed(
-            items = contacts,
+            items = sortedContacts,
             key = { _, state -> state.user.uid }
         ) { index, contact ->
             ContactUserCard(
@@ -706,6 +711,9 @@ private fun ContactsMatchingList(
     contacts: List<RegisteredContact>,
     navController: NavController,
 ) {
+    val sortedContacts = remember(contacts) {
+        contacts.sortedByDescending { it.user.lastSeen }
+    }
 
     Column(
         modifier = Modifier
@@ -722,16 +730,16 @@ private fun ContactsMatchingList(
         Spacer(modifier = Modifier.height(10.dp))
         LazyColumn {
             itemsIndexed(
-                items = contacts,
-                key = { _, state -> state.user.uid }
+                items = sortedContacts,
             ) { index, contact ->
+                Log.d("ContactsData", "В КАРТОЧКЕ: ${contact.contactName} lastSeen: ${contact.user.lastSeen}")
                 ContactUserCard(
                     contact = contact,
                     onUserClick = {
                         navController.navigate(Screen.Chat.createRoute(id = contact.user.uid))
                     }
                 )
-                if (index != contacts.size - 1) {
+                if (index != sortedContacts.size - 1) {
                     SeparatorLine(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -752,6 +760,10 @@ private fun GlobalSearchedList(
     navController: NavController,
 ) {
 
+    val sortedUsers = remember(users) {
+        users.sortedByDescending { it.lastSeen }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -769,7 +781,7 @@ private fun GlobalSearchedList(
         Spacer(modifier = Modifier.height(10.dp))
         LazyColumn {
             itemsIndexed(
-                items = users,
+                items = sortedUsers,
                 key = { _, state -> state.uid }
             ) { index, user ->
                 GlobalUserCard(
