@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -410,6 +411,14 @@ private fun ChatActionRow(
     onDeleteClick: () -> Unit,
 ) {
 
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            LightGrayBackground,
+            Color.White,
+            Color.White,
+        )
+    )
+
     Column(
         horizontalAlignment = Alignment.End,
         modifier = Modifier
@@ -423,12 +432,19 @@ private fun ChatActionRow(
                 .clip(
                     shape = RoundedCornerShape(34.dp),
                 )
+                .shadow(
+                    elevation = 12.dp,
+                    shape = CircleShape,
+                    clip = false,
+                    ambientColor = Color.Black.copy(alpha = 0.9f),
+                    spotColor = Color.Black.copy(alpha = 0.2f),
+                )
                 .background(
-                    brush = GlassBackground
+                    brush = brush,
                 )
                 .border(
-                    width = 1.dp,
-                    brush = GlassBorder,
+                    width = 0.4.dp,
+                    color = LightBlack.copy(alpha = 0.3f),
                     shape = RoundedCornerShape(34.dp),
                 )
         ) {
