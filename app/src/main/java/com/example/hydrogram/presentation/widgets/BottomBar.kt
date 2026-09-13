@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ import com.example.hydrogram.R
 import com.example.hydrogram.presentation.navigation.NavigationData
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.BottomNavItem
+import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SelectedItem
 import com.example.hydrogram.ui.theme.SfProText
 
@@ -44,6 +46,7 @@ import com.example.hydrogram.ui.theme.SfProText
 @Composable
 fun BottomBar(
     navController: NavController,
+    unreadCount: String? = null,
 ) {
     val buttons = listOf(
         NavigationData(
@@ -128,18 +131,44 @@ fun BottomBar(
                             color = if (isSelected) SelectedItem else Color.Transparent,
                             shape = CircleShape,
                         )
-                        .clickable{
+                        .clickable {
                             navController.navigate(item.route)
                         }
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            painter = painterResource(item.icon),
-                            contentDescription = null,
-                            tint = if (isSelected) Blue else BottomNavItem,
-                        )
+                        Box() {
+                            Icon(
+                                painter = painterResource(item.icon),
+                                contentDescription = null,
+                                tint = if (isSelected) Blue else BottomNavItem,
+                            )
+                            val showBadge = !unreadCount.isNullOrBlank() && unreadCount != "0"
+
+                            if (showBadge && item.route == "Chats") {
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .padding(start = 10.dp)
+                                        .height(16.dp)
+                                        .widthIn(min = 12.dp)
+                                        .clip(CircleShape)
+                                        .background(color = Red, shape = CircleShape)
+                                        .padding(horizontal = 4.dp),
+                                ) {
+                                    Text(
+                                        text = unreadCount ?: "",
+                                        fontFamily = SfProText,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 10.sp,
+                                        color = Color.White,
+                                        letterSpacing = -(0.23).sp,
+                                    )
+                                }
+                            }
+                        }
                         Spacer(modifier = Modifier.height(3.dp))
                         Text(
                             text = item.title,

@@ -113,6 +113,12 @@ fun ChatListScreen(
         }
     }
 
+    var unreadCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(unreadCount) {
+        Log.d("ChatListScreen", "unreadCount: $unreadCount")
+    }
+
 
     Scaffold(
         topBar = {
@@ -121,13 +127,17 @@ fun ChatListScreen(
         bottomBar = {
             BottomBar(
                 navController = navController,
+                unreadCount = unreadCount.toString(),
             )
         },
     ) { paddingValues ->
         Content(
             inboxViewModel = inboxViewModel,
             navController = navController,
-            paddingValues = paddingValues
+            paddingValues = paddingValues,
+            addUnreadCount = {
+                unreadCount += it
+            }
         )
     }
 }
@@ -137,6 +147,7 @@ private fun Content(
     inboxViewModel: InboxViewModel,
     navController: NavController,
     paddingValues: PaddingValues,
+    addUnreadCount: (Int) -> Unit,
 ) {
 
     val context = LocalContext.current
@@ -168,6 +179,18 @@ private fun Content(
     var contextMenuState by remember { mutableStateOf<ChatContextMenuState?>(null) }
     var selectedChatCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var selectedChat by remember { mutableStateOf<Chat?>(null) }
+
+    LaunchedEffect(uiState) {
+        if (uiState is InboxUiState.Success) {
+            val chats = (uiState as InboxUiState.Success).chats
+
+            if (chats.isNotEmpty()) {
+                for (chat in chats) {
+                    addUnreadCount(chat.unreadCount)
+                }
+            }
+        }
+    }
 
 
     when (val state = uiState) {
