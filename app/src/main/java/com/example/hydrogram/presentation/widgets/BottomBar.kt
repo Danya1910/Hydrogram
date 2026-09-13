@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.widgets
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,8 +20,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -131,14 +134,19 @@ fun BottomBar(
                             color = if (isSelected) SelectedItem else Color.Transparent,
                             shape = CircleShape,
                         )
-                        .clickable {
-                            navController.navigate(item.route)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = ripple(color = Blue.copy(alpha = 0.2f)),
+                        ) {
+                            if (currentRoute != item.route) {
+                                navController.navigate(item.route)
+                            }
                         }
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Box() {
+                        Box {
                             Icon(
                                 painter = painterResource(item.icon),
                                 contentDescription = null,
@@ -159,7 +167,7 @@ fun BottomBar(
                                         .padding(horizontal = 4.dp),
                                 ) {
                                     Text(
-                                        text = unreadCount ?: "",
+                                        text = unreadCount,
                                         fontFamily = SfProText,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 10.sp,
