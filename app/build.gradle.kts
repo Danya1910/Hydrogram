@@ -70,6 +70,8 @@ dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.lifecycle:lifecycle-process:2.8.7")
 
+    implementation("com.amazonaws:aws-android-sdk-s3:2.73.0")
+
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")
     implementation(libs.androidx.compose.ui.geometry)
