@@ -40,6 +40,18 @@ fun MessageDto.toDomain(): Message {
             isEdited = isEdited,
             image = image,
         )
+        "voice" -> Message.Voice(
+            messageId = messageId,
+            senderId = senderId,
+            timestamp = timestamp,
+            type = type,
+            status = status,
+            reactions = reactions,
+            replyData = replyData,
+            isEdited = isEdited,
+            durationSeconds = durationSeconds,
+            audioUrl = audioUrl,
+        )
 
         else -> {
             Message.Text(
