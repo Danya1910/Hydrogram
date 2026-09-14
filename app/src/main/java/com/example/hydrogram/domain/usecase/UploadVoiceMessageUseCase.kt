@@ -9,7 +9,7 @@ class UploadVoiceMessageUseCase @Inject constructor(
 ) {
 
     suspend operator fun invoke(
-        localFile: File,
+        localFile: File?,
         messageId: String,
     ) : String {
         return storageRepository.uploadVoiceMessage(
