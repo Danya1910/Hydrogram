@@ -15,4 +15,6 @@ data class MessageDto(
     val text: String? = null,
     val stickerPath: String? = null,
     val image: String? = null,
+    val audioUrl: String? = "",
+    val durationSeconds: Int? = 0,
 )
