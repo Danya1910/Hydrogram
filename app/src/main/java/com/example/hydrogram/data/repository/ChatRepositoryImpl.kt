@@ -21,6 +21,13 @@ class ChatRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
 ) : ChatRepository {
 
+    override fun generateMessageId(chatId: String): String {
+        return firestore.collection("chats")
+            .document(chatId)
+            .collection("messages")
+            .document().id
+    }
+
     override suspend fun sendMessage(
         senderId: String,
         chatId: String,
@@ -46,6 +53,9 @@ class ChatRepositoryImpl @Inject constructor(
 
                 is Message.Image -> {
                     "Фото" to "image"
+                }
+                is Message.Voice -> {
+                    "голосовое сообщение" to "voice"
                 }
             }
 
@@ -86,6 +96,20 @@ class ChatRepositoryImpl @Inject constructor(
                         reactions = null,
                         replyData = message.replyData,
                         image = message.image,
+                    )
+                }
+
+                is Message.Voice -> {
+                    MessageDto(
+                        messageId = message.messageId,
+                        senderId = message.senderId,
+                        timestamp = message.timestamp,
+                        status = message.status,
+                        type = "voice",
+                        reactions = null,
+                        replyData = message.replyData,
+                        durationSeconds = message.durationSeconds,
+                        audioUrl = message.audioUrl
                     )
                 }
             }

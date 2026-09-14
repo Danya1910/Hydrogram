@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatRepository {
 
+    fun generateMessageId(chatId: String): String
+
     suspend fun sendMessage(
         senderId: String,
         chatId: String,
