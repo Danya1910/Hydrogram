@@ -1,4 +1,12 @@
 package com.example.hydrogram.domain.repository
 
-class StorageRepository {
+import java.io.File
+
+interface StorageRepository {
+
+    suspend fun uploadVoiceMessage(
+        localFile: File?,
+        messageId: String,
+    ) : String
+
 }

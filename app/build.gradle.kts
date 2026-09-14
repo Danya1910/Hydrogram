@@ -14,6 +14,10 @@ android {
     namespace = "com.example.hydrogram"
     compileSdk = 36
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.hydrogram"
         minSdk = 26
@@ -26,12 +30,16 @@ android {
         val properties = Properties()
         val propertiesFile = project.rootProject.file("local.properties")
         if (propertiesFile.exists()) {
-            properties.load(propertiesFile.inputStream())
+            propertiesFile.inputStream().use { properties.load(it) }
         }
 
-        buildConfigField("String", "S3_KEY", "\"${properties.getProperty("yandex.s3.key")}\"")
-        buildConfigField("String", "S3_SECRET", "\"${properties.getProperty("yandex.s3.secret")}\"")
+        // 3. Достаем значения
+        val s3Key = properties.getProperty("yandex.s3.key") ?: ""
+        val s3Secret = properties.getProperty("yandex.s3.secret") ?: ""
 
+        // 4. Регистрируем строковые поля в BuildConfig
+        buildConfigField("String", "S3_KEY", "\"$s3Key\"")
+        buildConfigField("String", "S3_SECRET", "\"$s3Secret\"")
     }
 
     buildTypes {
