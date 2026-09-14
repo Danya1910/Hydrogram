@@ -85,6 +85,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.permissions.rememberPermissionState
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -139,6 +140,8 @@ import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessag
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -329,6 +332,7 @@ fun ChatScreen(
 }
 
 
+@OptIn(ExperimentalPermissionsApi::class)
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun Content(
@@ -348,6 +352,9 @@ private fun Content(
     var contextMenuState by remember { mutableStateOf<ContextMenuState?>(null) }
 
     var textState by remember { mutableStateOf("") }
+
+    val micPermissionState = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
+
 
     val gifImageLoader = remember(context) {
         ImageLoader.Builder(context)
@@ -679,6 +686,7 @@ private fun Content(
         }
     }
 
+    var isRecording by remember { mutableStateOf(false) }
 
 
     Box(
@@ -1023,6 +1031,8 @@ private fun Content(
                                         penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 }
+                            } else if (message.type == "voice") {
+                                // сделать UI
                             } else {
                                 if (message.replyData == null) {
                                     MineImageMessage(
@@ -1425,6 +1435,8 @@ private fun Content(
                                         penpalAvatar = penpalData?.avatarUrl ?: "",
                                     )
                                 }
+                            } else if (message.type == "voice") {
+
                             } else {
                                 if (message.replyData == null) {
                                     PenpalImageMessage(
@@ -1780,6 +1792,63 @@ private fun Content(
                     editingMessage = currentEditingMessage,
                     onCancelEditClick = {
                         currentEditingMessage = null
+                    },
+                    isRecording = isRecording,
+                    changeRecordState = {
+                        isRecording = it
+                    },
+                    onRecordStart = {
+                        if (micPermissionState.status.isGranted) {
+                            chatViewModel.startRecording()
+                        } else {
+                            micPermissionState.launchPermissionRequest()
+                        }
+                    },
+                    onRecordStop = {
+                        if (currentMessageAnswer == null) {
+                            chatViewModel.stopAndSendRecording(
+                                senderId = mineId,
+                                chatId = chatId,
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
+                                senderAvatar = mineData?.avatarUrl ?: "",
+                            )
+                        } else {
+                            val content = when (currentMessageAnswer) {
+                                is Message.Text -> (currentMessageAnswer as Message.Text).text
+                                    ?: ""
+
+                                is Message.Image -> (currentMessageAnswer as Message.Image).image
+                                    ?: ""
+
+                                is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
+                                    ?: ""
+
+                                is Message.Voice -> "Голосовое сообщение"
+
+                                else -> {
+                                    ""
+                                }
+                            }
+                            val replyData = ReplyData(
+                                messageId = currentMessageAnswer!!.messageId,
+                                senderId = currentMessageAnswer!!.senderId,
+                                type = currentMessageAnswer!!.type,
+                                content = content,
+                            )
+                            chatViewModel.stopAndSendRecording(
+                                senderId = mineId,
+                                chatId = chatId,
+                                replyData = replyData,
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
+                                senderAvatar = mineData?.avatarUrl ?: "",
+                            )
+                        }
+                        currentMessageAnswer = null
+                    },
+                    onRecordCancel = {
+                        chatViewModel.cancelRecording()
                     },
                 )
             }
