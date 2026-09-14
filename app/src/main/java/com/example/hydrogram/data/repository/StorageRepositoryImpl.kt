@@ -8,10 +8,13 @@ import com.example.hydrogram.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class StorageRepositoryImpl : StorageRepository {
+class StorageRepositoryImpl @Inject constructor(
+
+) : StorageRepository {
 
     private val s3Client = AmazonS3Client(
         BasicAWSCredentials(
