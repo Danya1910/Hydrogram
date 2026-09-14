@@ -16,6 +16,9 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +48,8 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -77,6 +82,11 @@ fun ChatInputField(
     onReplyMessageClick: (String) -> Unit,
     editingMessage: Message?,
     onCancelEditClick: () -> Unit,
+    isRecording: Boolean,
+    changeRecordState: (Boolean) -> Unit,
+    onRecordStart: () -> Unit,
+    onRecordStop: () -> Unit,
+    onRecordCancel: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -127,7 +137,21 @@ fun ChatInputField(
             Spacer(modifier = Modifier.width(6.dp))
             SendButton(
                 onSendClick = onSendClick,
-                isTextMessage = isTextMessage
+                isTextMessage = isTextMessage,
+                isRecording = isRecording,
+                changeRecordState = {
+                    it
+                    changeRecordState(it)
+                },
+                onRecordStart = {
+                    onRecordStart()
+                },
+                onRecordStop = {
+                    onRecordStop()
+                },
+                onRecordCancel = {
+                    onRecordCancel()
+                },
             )
         }
     }
@@ -179,6 +203,11 @@ private fun AttachButton(
 private fun SendButton(
     onSendClick: () -> Unit,
     isTextMessage: Boolean,
+    isRecording: Boolean,
+    changeRecordState: (Boolean) -> Unit,
+    onRecordStart: () -> Unit,
+    onRecordStop: () -> Unit,
+    onRecordCancel: () -> Unit,
 ) {
 
     if (isTextMessage) {
@@ -236,7 +265,50 @@ private fun SendButton(
                     width = 1.dp,
                     brush = GlassBorder,
                     shape = CircleShape,
-                ),
+                )
+                .pointerInput(Unit) {
+                    // Используем корутины для отслеживания сырых касаний экрана
+                    awaitEachGesture {
+                        // 1. Ожидаем, пока пользователь прикоснется к кнопке
+                        val down = awaitFirstDown(requireUnconsumed = false)
+
+                        // Переключаем стейт в интерфейсе и стартуем физический рекордер
+                        changeRecordState(true)
+                        onRecordStart()
+
+                        var isCanceled = false
+
+                        // 2. Запускаем цикл отслеживания пальца, пока он нажат
+                        while (true) {
+                            val event = awaitPointerEvent()
+
+                            // Если палец двигается, проверяем свайп отмены влево
+                            if (event.type == PointerEventType.Move) {
+                                val pointer = event.changes.firstOrNull()
+                                if (pointer != null) {
+                                    // Координата X ушла влево дальше чем на 150 пикселей от кнопки
+                                    if (pointer.position.x < -150f) {
+                                        isCanceled = true
+                                        changeRecordState(false)
+                                        onRecordCancel() // Вызываем отмену во ViewModel
+                                        break // Выходим из цикла, запись прервана
+                                    }
+                                }
+                            }
+
+                            // ПАЛЕЦ ПОДНЯЛСЯ (Пользователь отпустил кнопку в любом месте экрана)
+                            if (event.type == PointerEventType.Release) {
+                                break // Выходим из цикла, переходим к отправке
+                            }
+                        }
+
+                        // 3. Финал: если запись не была отменена свайпом, отправляем её
+                        if (!isCanceled) {
+                            changeRecordState(false)
+                            onRecordStop() // ЭТОТ МЕТОД ТЕПЕРЬ ГАРАНТИРОВАННО ВЫЗОВЕТСЯ!
+                        }
+                    }
+                },
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_microphone),
