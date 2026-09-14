@@ -46,6 +46,19 @@ sealed interface Message {
         val image: String? = "",
     ) : Message
 
+    data class Voice(
+        override val messageId: String = "",
+        override val senderId: String = "",
+        override val type: String = "voice",
+        override val status: String = "sent",
+        override val timestamp: Long = 0L,
+        override val reactions: Map<String, String>? = null,
+        override val replyData: ReplyData? = null,
+        override val isEdited: Boolean = false,
+        val audioUrl: String? = "",
+        val durationSeconds: Int? = 0,
+    ) : Message
+
 
 }
 
