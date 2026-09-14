@@ -9,10 +9,12 @@ import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.repository.ChatRepository
 import com.example.hydrogram.domain.repository.NotificationRepository
+import com.example.hydrogram.domain.repository.StorageRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 import javax.inject.Inject
 import kotlin.String
 
@@ -20,12 +22,15 @@ class SendMessageUseCase @Inject constructor(
     @ApplicationContext private val context: Context,
     private val chatRepository: ChatRepository,
     private val notificationRepository: NotificationRepository,
+    private val storageRepository: StorageRepository,
 ) {
 
     suspend operator fun invoke(
         senderId: String,
         chatId: String,
         content: String = "",
+        audio: File? = null,
+        voiceDuration: Int? = 0,
         messageType: String,
         imageUri: Uri? = null,
         replyData: ReplyData? = null,
@@ -36,10 +41,11 @@ class SendMessageUseCase @Inject constructor(
 
         try {
 
-            val pushMessageText = when(messageType) {
+            val pushMessageText = when (messageType) {
                 "text" -> content
                 "sticker" -> "Стикер"
                 "image" -> "Фотография"
+                "voice" -> "Голосовое сообщение"
                 else -> "Сообщение"
             }
 
@@ -53,6 +59,7 @@ class SendMessageUseCase @Inject constructor(
                         replyData = replyData,
                     )
                 }
+
                 "sticker" -> {
                     Message.Sticker(
                         senderId = senderId,
@@ -62,6 +69,7 @@ class SendMessageUseCase @Inject constructor(
                         replyData = replyData,
                     )
                 }
+
                 "image" -> {
                     val uri = imageUri ?: return@withContext Result.failure(
                         Exception("URI изображения не передан")
@@ -77,6 +85,28 @@ class SendMessageUseCase @Inject constructor(
                         replyData = replyData,
                     )
                 }
+
+                "voice" -> {
+
+                    val messageId = chatRepository.generateMessageId(chatId)
+
+                    val audioUrl = storageRepository.uploadVoiceMessage(
+                        localFile = audio,
+                        messageId = messageId,
+                    )
+
+                    Message.Voice(
+                        messageId = messageId,
+                        senderId = senderId,
+                        status = "sent",
+                        timestamp = System.currentTimeMillis(),
+                        audioUrl = audioUrl,
+                        durationSeconds = voiceDuration,
+                        replyData = replyData,
+                    )
+
+                }
+
                 else -> {
                     return@withContext Result.failure(Exception("Неизвестный тип сообщения"))
                 }
@@ -100,7 +130,9 @@ class SendMessageUseCase @Inject constructor(
 
                 Result.success(Unit)
             } else {
-                Result.failure(sendResult.exceptionOrNull() ?: Exception("Ошибка сохранения сообщения"))
+                Result.failure(
+                    sendResult.exceptionOrNull() ?: Exception("Ошибка сохранения сообщения")
+                )
             }
 
         } catch (e: Exception) {
