@@ -109,7 +109,7 @@ class ChatRepositoryImpl @Inject constructor(
                         reactions = null,
                         replyData = message.replyData,
                         durationSeconds = message.durationSeconds,
-                        audioUrl = message.audioUrl
+                        audioUrl = message.audioUrl,
                     )
                 }
             }
