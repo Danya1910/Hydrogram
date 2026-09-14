@@ -1,6 +1,9 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.content.Context
+import android.media.MediaRecorder
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalGraphicsContext
@@ -16,10 +19,12 @@ import com.example.hydrogram.domain.usecase.SendMessageUseCase
 import com.example.hydrogram.domain.usecase.ToggleReactionUseCase
 import com.example.hydrogram.presentation.states.ChatUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 import kotlin.enums.enumEntries
 
@@ -33,6 +38,7 @@ class ChatViewModel @Inject constructor(
     private val toggleReactionUseCase: ToggleReactionUseCase,
     private val deleteMessageUseCase: DeleteMessageUseCase,
     private val changeMessageUseCase: ChangeMessageUseCase,
+    @ApplicationContext private val context: Context,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
@@ -52,6 +58,10 @@ class ChatViewModel @Inject constructor(
     val currentId = _currentId.asStateFlow()
 
     private val updatingMessageIds = mutableSetOf<String>()
+
+    private var mediaRecorder: MediaRecorder? = null
+    private var currentRecordingFile: File? = null
+    private var recordingTime = 0L
 
     fun sendText(
         senderId: String,
@@ -100,11 +110,11 @@ class ChatViewModel @Inject constructor(
         senderName: String,
         senderAvatar: String,
     ) {
-        if(stickerPath.isBlank()) {
+        if (stickerPath.isBlank()) {
             _errorMessage.value = "Пустой Стикер"
             return
         }
-        if(_isSending.value) {
+        if (_isSending.value) {
             return
         }
         Log.d("ChatVM", "relay data : $replyData")
@@ -138,7 +148,7 @@ class ChatViewModel @Inject constructor(
         senderName: String,
         senderAvatar: String,
     ) {
-        if(_isSending.value) {
+        if (_isSending.value) {
             return
         }
         Log.d("ChatVM", "sent image message called")
@@ -162,11 +172,117 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun startRecording() {
+        try {
+            recordingTime = System.currentTimeMillis()
+            Log.d("Recording", "recording starts")
+
+            val file = File(context.cacheDir, "voice_msg_${recordingTime}.m4a")
+            currentRecordingFile = file
+
+            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                MediaRecorder(context)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaRecorder()
+            }.apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setOutputFile(file.absolutePath)
+                prepare()
+                start()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            currentRecordingFile = null
+        }
+    }
+
+    fun stopAndSendRecording(
+        senderId: String,
+        chatId: String,
+        replyData: ReplyData? = null,
+        targetUserId: String,
+        senderName: String,
+        senderAvatar: String,
+    ) {
+        Log.d("Recording", "stopAndSendRecording вызвана!")
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            mediaRecorder = null
+        }
+        val file = currentRecordingFile ?: return
+        val endOfRecordingTime = System.currentTimeMillis()
+        val durationSeconds = ((endOfRecordingTime - recordingTime) / 1000).toInt()
+
+        if(durationSeconds >= 1) {
+            viewModelScope.launch {
+
+                Log.d("Recording", "recording sending")
+
+                _isSending.value = true
+                val result = sendMessageUseCase(
+                    senderId = senderId,
+                    chatId = chatId,
+                    messageType = "voice",
+                    audio = file,
+                    voiceDuration = durationSeconds,
+                    replyData = replyData,
+                    targetUserId = targetUserId,
+                    senderName = senderName,
+                    senderAvatar = senderAvatar,
+                )
+                Log.d("Recording", "recording result: $result")
+
+                _isSending.value = false
+                Log.d("ChatVM", "sent image message result: $result")
+                result
+                    .onSuccess { _isSuccess.value = true }
+                    .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+            }
+        } else {
+            file.delete()
+        }
+        currentRecordingFile = null
+    }
+
+    fun cancelRecording() {
+        try {
+            Log.d("Recording", "stop recording")
+
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            mediaRecorder = null
+        }
+
+        currentRecordingFile?.delete()
+        currentRecordingFile = null
+
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        mediaRecorder?.release()
+        mediaRecorder = null
+    }
+
     fun deleteMessage(
         chatId: String,
         messageId: String,
     ) {
-        if(_isSending.value) {
+        if (_isSending.value) {
             return
         }
         viewModelScope.launch {
@@ -194,7 +310,7 @@ class ChatViewModel @Inject constructor(
         typeOfChange: String,
         change: String,
     ) {
-        if(_isSending.value) {
+        if (_isSending.value) {
             return
         }
         viewModelScope.launch {
@@ -222,11 +338,11 @@ class ChatViewModel @Inject constructor(
         messageId: String,
     ) {
 
-        if(chatId.isEmpty() || messageId.isEmpty()) {
+        if (chatId.isEmpty() || messageId.isEmpty()) {
             return
         }
 
-        if(_isSending.value) {
+        if (_isSending.value) {
             return
         }
 
@@ -247,7 +363,9 @@ class ChatViewModel @Inject constructor(
 
             result
                 .onSuccess { _isSuccess.value = true }
-                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка изменения реакции" }
+                .onFailure {
+                    _errorMessage.value = it.localizedMessage ?: "Ошибка изменения реакции"
+                }
 
         }
     }
