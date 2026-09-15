@@ -189,6 +189,10 @@ class ChatViewModel @Inject constructor(
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+
+                setAudioSamplingRate(44100) // Частота дискретизации (студийное качество речи)
+                setAudioEncodingBitRate(96000) // Битрейт сжатия речи
+
                 setOutputFile(file.absolutePath)
                 prepare()
                 start()
