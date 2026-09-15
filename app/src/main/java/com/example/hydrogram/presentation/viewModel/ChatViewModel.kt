@@ -20,6 +20,7 @@ import com.example.hydrogram.domain.usecase.ToggleReactionUseCase
 import com.example.hydrogram.presentation.states.ChatUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -204,7 +205,8 @@ class ChatViewModel @Inject constructor(
                 start()
             }
             isRecordingAmplitudes = true
-            viewModelScope.launch {
+            viewModelScope.launch(Dispatchers.Default) {
+                delay(50)
                 while (isRecordingAmplitudes) {
                     val maxAmplitude = try {
                         mediaRecorder?.maxAmplitude ?: 0
@@ -252,6 +254,8 @@ class ChatViewModel @Inject constructor(
         if(durationSeconds >= 1) {
             viewModelScope.launch {
 
+                val finalAmplitudes = getTelegramStyleAmplitudes(voiceMessageAmplitudes, durationSeconds)
+
                 Log.d("Recording", "recording sending")
 
                 _isSending.value = true
@@ -265,7 +269,7 @@ class ChatViewModel @Inject constructor(
                     targetUserId = targetUserId,
                     senderName = senderName,
                     senderAvatar = senderAvatar,
-                    recordingAmplitudes = voiceMessageAmplitudes,
+                    recordingAmplitudes = finalAmplitudes,
                 )
                 Log.d("Recording", "recording result: $result")
 
@@ -468,6 +472,53 @@ class ChatViewModel @Inject constructor(
                     _uiState.value = ChatUiState.Success(messages)
                 }
         }
+    }
+
+    private fun getTelegramStyleAmplitudes(rawAmplitudes: List<Int>, durationSeconds: Int): List<Int> {
+        if (rawAmplitudes.isEmpty()) return emptyList()
+
+        // 1. Убираем "мусорные" нули (единицы после нормализации) с самого начала и конца записи,
+        // чтобы не было пустых плоских заборов, как на скриншоте
+        val trimmed = rawAmplitudes.dropWhile { it <= 1 }.dropLastWhile { it <= 1 }
+        val dataToProcess = if (trimmed.size >= 5) trimmed else rawAmplitudes
+
+        // 2. Вычисляем целевое количество палочек по логарифмической шкале Telegram
+        val targetSpikesCount = when {
+            durationSeconds <= 1 -> 8
+            durationSeconds <= 2 -> 12
+            durationSeconds <= 3 -> 15 // Для 3 секунд делаем строго 15 палочек!
+            durationSeconds <= 5 -> 20
+            durationSeconds <= 10 -> 26
+            else -> 35 // Жесткий потолок, чтобы карточка не раздувалась
+        }
+
+        val compressed = mutableListOf<Int>()
+        val step = dataToProcess.size.toFloat() / targetSpikesCount
+
+        for (i in 0 until targetSpikesCount) {
+            val startIdx = (i * step).toInt().coerceIn(0, dataToProcess.lastIndex)
+            val endIdx = ((i + 1) * step).toInt().coerceIn(0, dataToProcess.lastIndex)
+
+            // Вместо слепого копирования берем МАКСИМАЛЬНОЕ значение на этом отрезке времени.
+            // Это сделает график выразительным, выделяя именно пики речи.
+            val subList = dataToProcess.subList(startIdx, (endIdx + 1).coerceAtMost(dataToProcess.size))
+            val maxVal = subList.maxOrNull() ?: 1
+
+            compressed.add(maxVal)
+        }
+
+        // 3. Сглаживание (Moving Average): чтобы палочки плавно росли и убывали, а не прыгали хаотично
+        val smoothed = mutableListOf<Int>()
+        for (i in compressed.indices) {
+            val prev = if (i > 0) compressed[i - 1] else compressed[i]
+            val curr = compressed[i]
+            val next = if (i < compressed.lastIndex) compressed[i + 1] else compressed[i]
+
+            // Среднее значение между соседями сглаживает "острые" заборы
+            smoothed.add((prev + curr + next) / 3)
+        }
+
+        return smoothed
     }
 
 }
