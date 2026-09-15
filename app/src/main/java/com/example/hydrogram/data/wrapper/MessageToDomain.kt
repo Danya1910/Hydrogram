@@ -51,6 +51,7 @@ fun MessageDto.toDomain(): Message {
             isEdited = isEdited,
             durationSeconds = durationSeconds,
             audioUrl = audioUrl,
+            recordingAmplitudes = recordingAmplitudes,
         )
 
         else -> {
