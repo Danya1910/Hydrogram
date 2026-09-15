@@ -95,12 +95,13 @@ dependencies {
     implementation("com.google.dagger:hilt-android:2.56")
     implementation(libs.androidx.compose.ui.geometry)
     implementation(libs.androidx.compose.material.core)
+    implementation(libs.androidx.media3.exoplayer)
     ksp("com.google.dagger:hilt-compiler:2.56")
     implementation(libs.androidx.hilt.navigation.compose)
 
     implementation("com.auth0:java-jwt:4.4.0")
 
-    implementation("com.github.lincollincol:audiowaveform:1.1.1")
+    implementation("com.github.lincollincol:compose-audiowaveform:1.1.2")
 
     // Haze
     implementation("dev.chrisbanes.haze:haze-materials:1.1.1")
