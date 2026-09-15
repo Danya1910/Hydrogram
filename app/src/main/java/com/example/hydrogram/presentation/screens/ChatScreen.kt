@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.screens
 
+import android.Manifest
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -137,6 +138,7 @@ import com.example.hydrogram.presentation.widgets.messages.text.MineReplyTextMes
 import com.example.hydrogram.presentation.widgets.messages.text.MineTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalReplyTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessage
+import com.example.hydrogram.presentation.widgets.messages.voice.VoiceWidget
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
@@ -353,7 +355,7 @@ private fun Content(
 
     var textState by remember { mutableStateOf("") }
 
-    val micPermissionState = rememberPermissionState(android.Manifest.permission.RECORD_AUDIO)
+    val micPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
 
 
     val gifImageLoader = remember(context) {
@@ -1032,7 +1034,11 @@ private fun Content(
                                     )
                                 }
                             } else if (message.type == "voice") {
-                                // сделать UI
+                                VoiceWidget(
+                                    message = message,
+                                    isMine = true,
+                                    context = context,
+                                )
                             } else {
                                 if (message.replyData == null) {
                                     MineImageMessage(
