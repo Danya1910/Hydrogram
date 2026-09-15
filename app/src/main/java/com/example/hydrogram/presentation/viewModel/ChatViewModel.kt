@@ -20,6 +20,7 @@ import com.example.hydrogram.domain.usecase.ToggleReactionUseCase
 import com.example.hydrogram.presentation.states.ChatUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -62,6 +63,10 @@ class ChatViewModel @Inject constructor(
     private var mediaRecorder: MediaRecorder? = null
     private var currentRecordingFile: File? = null
     private var recordingTime = 0L
+
+    private var isRecordingAmplitudes = false
+    val voiceMessageAmplitudes = mutableListOf<Int>()
+
 
     fun sendText(
         senderId: String,
@@ -174,6 +179,7 @@ class ChatViewModel @Inject constructor(
 
     fun startRecording() {
         try {
+            voiceMessageAmplitudes.clear()
             recordingTime = System.currentTimeMillis()
             Log.d("Recording", "recording starts")
 
@@ -190,16 +196,32 @@ class ChatViewModel @Inject constructor(
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
 
-                setAudioSamplingRate(44100) // Частота дискретизации (студийное качество речи)
-                setAudioEncodingBitRate(96000) // Битрейт сжатия речи
+                setAudioSamplingRate(44100)
+                setAudioEncodingBitRate(96000)
 
                 setOutputFile(file.absolutePath)
                 prepare()
                 start()
             }
+            isRecordingAmplitudes = true
+            viewModelScope.launch {
+                while (isRecordingAmplitudes) {
+                    val maxAmplitude = try {
+                        mediaRecorder?.maxAmplitude ?: 0
+                    } catch (e: Exception) {
+                        0
+                    }
+
+                    val normalized = (maxAmplitude / 6553.5).toInt().coerceIn(1, 50)
+                    voiceMessageAmplitudes.add(normalized)
+
+                    delay(100)
+                }
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             currentRecordingFile = null
+            isRecordingAmplitudes = false
         }
     }
 
@@ -212,6 +234,7 @@ class ChatViewModel @Inject constructor(
         senderAvatar: String,
     ) {
         Log.d("Recording", "stopAndSendRecording вызвана!")
+        isRecordingAmplitudes = false
         try {
             mediaRecorder?.apply {
                 stop()
@@ -242,8 +265,11 @@ class ChatViewModel @Inject constructor(
                     targetUserId = targetUserId,
                     senderName = senderName,
                     senderAvatar = senderAvatar,
+                    recordingAmplitudes = voiceMessageAmplitudes,
                 )
                 Log.d("Recording", "recording result: $result")
+
+                voiceMessageAmplitudes.clear()
 
                 _isSending.value = false
                 Log.d("ChatVM", "sent image message result: $result")
@@ -258,6 +284,7 @@ class ChatViewModel @Inject constructor(
     }
 
     fun cancelRecording() {
+        isRecordingAmplitudes = false
         try {
             Log.d("Recording", "stop recording")
 
@@ -271,6 +298,8 @@ class ChatViewModel @Inject constructor(
             mediaRecorder = null
         }
 
+        voiceMessageAmplitudes.clear()
+
         currentRecordingFile?.delete()
         currentRecordingFile = null
 
@@ -278,6 +307,8 @@ class ChatViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
+        isRecordingAmplitudes = false
+        voiceMessageAmplitudes.clear()
         mediaRecorder?.release()
         mediaRecorder = null
     }

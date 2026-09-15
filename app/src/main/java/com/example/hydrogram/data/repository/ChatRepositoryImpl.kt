@@ -10,7 +10,6 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.toObjects
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -110,6 +109,7 @@ class ChatRepositoryImpl @Inject constructor(
                         replyData = message.replyData,
                         durationSeconds = message.durationSeconds,
                         audioUrl = message.audioUrl,
+                        recordingAmplitudes = message.recordingAmplitudes,
                     )
                 }
             }
