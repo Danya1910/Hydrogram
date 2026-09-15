@@ -100,6 +100,8 @@ dependencies {
 
     implementation("com.auth0:java-jwt:4.4.0")
 
+    implementation("com.github.lincollincol:audiowaveform:1.1.1")
+
     // Haze
     implementation("dev.chrisbanes.haze:haze-materials:1.1.1")
 
