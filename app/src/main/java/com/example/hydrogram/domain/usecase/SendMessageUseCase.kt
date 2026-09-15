@@ -37,6 +37,7 @@ class SendMessageUseCase @Inject constructor(
         targetUserId: String,
         senderName: String,
         senderAvatar: String,
+        recordingAmplitudes: List<Int>? = null,
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         try {
@@ -103,6 +104,7 @@ class SendMessageUseCase @Inject constructor(
                         audioUrl = audioUrl,
                         durationSeconds = voiceDuration,
                         replyData = replyData,
+                        recordingAmplitudes = recordingAmplitudes,
                     )
 
                 }
