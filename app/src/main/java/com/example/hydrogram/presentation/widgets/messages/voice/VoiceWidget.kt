@@ -17,7 +17,11 @@ import androidx.compose.material3.Icon
 import android.content.Context
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,6 +55,7 @@ import com.example.hydrogram.ui.theme.SfProText
 import com.linc.audiowaveform.model.WaveformAlignment
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.unit.times
 import java.util.Date
 
 @Composable
@@ -138,69 +143,110 @@ fun VoiceWidget(
             )
             Spacer(modifier = Modifier.width(10.dp))
             message.recordingAmplitudes?.let { amplitudes ->
-                val exactWaveformWidth = (amplitudes.size * (2 + 2)).dp
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.width(exactWaveformWidth)
-                ) {
-                    Log.d("VoiceMessage", "amplitudes: ${message.recordingAmplitudes}")
-                    AudioWaveform(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp)
-                            .clipToBounds(),
-                        amplitudes = amplitudes,
-                        progress = if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f,
-                        onProgressChange = { progress ->
-                            val seekToMs = (progress * totalDurationMs).toLong()
-                            exoPlayer.seekTo(seekToMs)
-                            currentPosition = seekToMs
-                        },
-                        waveformAlignment = WaveformAlignment.Center,
-                        spikeWidth = 2.dp,
-                        spikeRadius = 2.dp,
-                        spikePadding = 2.dp,
-                        progressBrush = SolidColor(Color.Gray),
-                        waveformBrush = SolidColor(Color.White),
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        val displayTimeMs = if (isPlaying) currentPosition else totalDurationMs
-                        val minutes = (displayTimeMs / 1000) / 60
-                        val seconds = (displayTimeMs / 1000) % 60
 
-                        Text(
-                            text = String.format(
-                                LocalLocale.current.platformLocale,
-                                "%02d:%02d",
-                                minutes,
-                                seconds
-                            ),
-                            fontFamily = SfProText,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 11.sp,
-                            letterSpacing = -(0.43).sp,
-                            color = MineMessageTimeColor,
-                        )
-                        Spacer(modifier = Modifier.width(5.dp))
-                        Box(
+                val minRaw = amplitudes.minOrNull()?.toFloat() ?: 0f
+                val maxRaw = amplitudes.maxOrNull()?.toFloat() ?: 1f
+                val range = (maxRaw - minRaw).takeIf { it > 0f } ?: 1f
+
+                val animatedAmplitudes = amplitudes.map { rawValue ->
+                    val normalized = (rawValue - minRaw) / range  // 0f..1f
+                    kotlin.math.round(30f + normalized * 70f).toInt()
+                }
+
+                val exactWaveformWidth = (amplitudes.size * 4).dp
+
+                Box(
+                    modifier = Modifier
+                        .widthIn(min = 45.dp, max = exactWaveformWidth)
+                        .wrapContentHeight()
+                ) {
+                    val spikeWidthDp = 2.dp
+                    val spikePaddingDp = 2.dp
+                    val minSpikeHeightDp = 2.dp
+                    val maxSpikeHeightDp = 16.dp
+
+                    val density = androidx.compose.ui.platform.LocalDensity.current
+                    val spikeWidthPx = with(density) { spikeWidthDp.toPx() }
+                    val spikePaddingPx = with(density) { spikePaddingDp.toPx() }
+                    val minSpikeHeightPx = with(density) { minSpikeHeightDp.toPx() }
+                    val maxSpikeHeightPx = with(density) { maxSpikeHeightDp.toPx() }
+
+                    val exactWaveformWidth = (amplitudes.size * (spikeWidthDp + spikePaddingDp))
+
+                    val maxRawAmplitude = amplitudes.maxOrNull()?.toFloat() ?: 1f
+                    val progress = if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
+
+                    Column(
+                        modifier = Modifier
+                            .width(exactWaveformWidth)
+                            .wrapContentHeight()
+                    ) {
+                        Canvas(
                             modifier = Modifier
-                                .size(4.dp)
-                                .clip(
-                                    shape = CircleShape
+                                .fillMaxWidth()
+                                .height(maxSpikeHeightDp)
+                        ) {
+                            val canvasHeight = size.height
+
+                            amplitudes.forEachIndexed { index, amplitude ->
+                                val isPlayed = (index.toFloat() / amplitudes.size) < progress
+                                val brushColor = if (isPlayed) Color.Gray else Color.White
+
+                                val rawProgress = amplitude.toFloat() / maxRawAmplitude
+                                val spikeHeight = minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
+
+                                val x = index * (spikeWidthPx + spikePaddingPx)
+                                val y = canvasHeight - spikeHeight
+
+                                drawRoundRect(
+                                    color = brushColor,
+                                    topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                                    size = androidx.compose.ui.geometry.Size(spikeWidthPx, spikeHeight),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(with(density) { 1.dp.toPx() })
                                 )
-                                .background(
-                                    color = Color.Yellow,
-                                )
-                        )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(5.dp))
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            val displayTimeMs = if (isPlaying) currentPosition else totalDurationMs
+                            val minutes = (displayTimeMs / 1000) / 60
+                            val seconds = (displayTimeMs / 1000) % 60
+
+                            Text(
+                                text = String.format(
+                                    LocalLocale.current.platformLocale,
+                                    "%02d:%02d",
+                                    minutes,
+                                    seconds
+                                ),
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 11.sp,
+                                letterSpacing = -(0.43).sp,
+                                color = MineMessageTimeColor,
+                            )
+                            Spacer(modifier = Modifier.width(5.dp))
+                            Box(
+                                modifier = Modifier
+                                    .size(4.dp)
+                                    .clip(CircleShape)
+                                    .background(color = Color.Yellow)
+                            )
+                        }
                     }
                 }
             }
+
             Spacer(modifier = Modifier.width(5.dp))
             Column(
-                verticalArrangement = Arrangement.Bottom
+                verticalArrangement = Arrangement.Bottom,
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(bottom = 4.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -231,7 +277,6 @@ fun VoiceWidget(
             }
         }
     }
-
 }
 
 @Composable
