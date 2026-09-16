@@ -57,7 +57,7 @@ sealed interface Message {
         override val isEdited: Boolean = false,
         val audioUrl: String? = "",
         val durationSeconds: Int? = 0,
-        val recordingAmplitudes: List<Int>? = emptyList(),
+        val recordingAmplitudes: List<Float>? = emptyList(),
     ) : Message
 
 

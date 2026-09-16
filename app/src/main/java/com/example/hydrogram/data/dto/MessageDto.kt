@@ -17,5 +17,5 @@ data class MessageDto(
     val image: String? = null,
     val audioUrl: String? = "",
     val durationSeconds: Int? = 0,
-    val recordingAmplitudes: List<Int>? = emptyList(),
+    val recordingAmplitudes: List<Float>? = emptyList(),
 )

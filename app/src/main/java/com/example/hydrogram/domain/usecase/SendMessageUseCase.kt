@@ -37,7 +37,7 @@ class SendMessageUseCase @Inject constructor(
         targetUserId: String,
         senderName: String,
         senderAvatar: String,
-        recordingAmplitudes: List<Int>? = null,
+        recordingAmplitudes: List<Float>? = null,
     ): Result<Unit> = withContext(Dispatchers.IO) {
 
         try {
