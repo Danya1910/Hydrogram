@@ -66,7 +66,7 @@ class ChatViewModel @Inject constructor(
     private var recordingTime = 0L
 
     private var isRecordingAmplitudes = false
-    val voiceMessageAmplitudes = mutableListOf<Int>()
+    val voiceMessageAmplitudes = mutableListOf<Float>()
 
 
     fun sendText(
@@ -214,8 +214,20 @@ class ChatViewModel @Inject constructor(
                         0
                     }
 
-                    val normalized = (maxAmplitude / 6553.5).toInt().coerceIn(1, 50)
-                    voiceMessageAmplitudes.add(normalized)
+                    val db = if (maxAmplitude > 0) {
+                        20 * kotlin.math.log10(maxAmplitude.toDouble())
+                    } else {
+                        0.0
+                    }
+
+                    val minDb = 0.0
+                    val maxDb = 90.0
+
+                    val normalizedFloat = (1f + (db - minDb) / (maxDb - minDb) * (50f - 1f))
+                        .toFloat()
+                        .coerceIn(1f, 50f)
+
+                    voiceMessageAmplitudes.add(normalizedFloat)
 
                     delay(100)
                 }
@@ -474,51 +486,45 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun getTelegramStyleAmplitudes(rawAmplitudes: List<Int>, durationSeconds: Int): List<Int> {
+    private fun getTelegramStyleAmplitudes(rawAmplitudes: List<Float>, durationSeconds: Int): List<Float> {
         if (rawAmplitudes.isEmpty()) return emptyList()
 
-        // 1. Убираем "мусорные" нули (единицы после нормализации) с самого начала и конца записи,
-        // чтобы не было пустых плоских заборов, как на скриншоте
-        val trimmed = rawAmplitudes.dropWhile { it <= 1 }.dropLastWhile { it <= 1 }
+        val trimmed = rawAmplitudes.dropWhile { it <= 1f }.dropLastWhile { it <= 1f }
         val dataToProcess = if (trimmed.size >= 5) trimmed else rawAmplitudes
 
-        // 2. Вычисляем целевое количество палочек по логарифмической шкале Telegram
         val targetSpikesCount = when {
             durationSeconds <= 1 -> 8
             durationSeconds <= 2 -> 12
-            durationSeconds <= 3 -> 15 // Для 3 секунд делаем строго 15 палочек!
+            durationSeconds <= 3 -> 15
             durationSeconds <= 5 -> 20
             durationSeconds <= 10 -> 26
-            else -> 35 // Жесткий потолок, чтобы карточка не раздувалась
+            else -> 35
         }
 
-        val compressed = mutableListOf<Int>()
+        val compressed = mutableListOf<Float>()
         val step = dataToProcess.size.toFloat() / targetSpikesCount
 
         for (i in 0 until targetSpikesCount) {
             val startIdx = (i * step).toInt().coerceIn(0, dataToProcess.lastIndex)
             val endIdx = ((i + 1) * step).toInt().coerceIn(0, dataToProcess.lastIndex)
 
-            // Вместо слепого копирования берем МАКСИМАЛЬНОЕ значение на этом отрезке времени.
-            // Это сделает график выразительным, выделяя именно пики речи.
             val subList = dataToProcess.subList(startIdx, (endIdx + 1).coerceAtMost(dataToProcess.size))
-            val maxVal = subList.maxOrNull() ?: 1
+            val maxVal = subList.maxOrNull() ?: 1f
 
             compressed.add(maxVal)
         }
 
-        // 3. Сглаживание (Moving Average): чтобы палочки плавно росли и убывали, а не прыгали хаотично
-        val smoothed = mutableListOf<Int>()
+        val smoothed = mutableListOf<Float>()
         for (i in compressed.indices) {
             val prev = if (i > 0) compressed[i - 1] else compressed[i]
             val curr = compressed[i]
             val next = if (i < compressed.lastIndex) compressed[i + 1] else compressed[i]
 
-            // Среднее значение между соседями сглаживает "острые" заборы
-            smoothed.add((prev + curr + next) / 3)
+            smoothed.add((prev + curr + next) / 3f)
         }
 
         return smoothed
     }
+
 
 }
