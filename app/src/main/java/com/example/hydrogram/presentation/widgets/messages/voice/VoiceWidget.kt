@@ -56,6 +56,7 @@ import com.linc.audiowaveform.model.WaveformAlignment
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.unit.times
+import com.example.hydrogram.ui.theme.Red
 import java.util.Date
 
 @Composable
@@ -94,6 +95,9 @@ fun VoiceWidget(
                     exoPlayer.seekTo(0)
                     exoPlayer.pause()
                 }
+            }
+            override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
+                isPlaying = isPlayingChanged
             }
         }
         exoPlayer.addListener(listener)
@@ -139,19 +143,13 @@ fun VoiceWidget(
                 )
         ) {
             PlayButton(
-                onClick = {},
+                isPlaying = isPlaying,
+                onClick = {
+                        exoPlayer.togglePlay()
+                },
             )
             Spacer(modifier = Modifier.width(10.dp))
             message.recordingAmplitudes?.let { amplitudes ->
-
-                val minRaw = amplitudes.minOrNull()?.toFloat() ?: 0f
-                val maxRaw = amplitudes.maxOrNull()?.toFloat() ?: 1f
-                val range = (maxRaw - minRaw).takeIf { it > 0f } ?: 1f
-
-                val animatedAmplitudes = amplitudes.map { rawValue ->
-                    val normalized = (rawValue - minRaw) / range  // 0f..1f
-                    kotlin.math.round(30f + normalized * 70f).toInt()
-                }
 
                 val exactWaveformWidth = (amplitudes.size * 4).dp
 
@@ -279,8 +277,17 @@ fun VoiceWidget(
     }
 }
 
+fun ExoPlayer.togglePlay() {
+    if(isPlaying) {
+        pause()
+    } else {
+        play()
+    }
+}
+
 @Composable
 private fun PlayButton(
+    isPlaying: Boolean,
     onClick: () -> Unit,
 ) {
     Box(
@@ -297,7 +304,7 @@ private fun PlayButton(
         Icon(
             painter = painterResource(R.drawable.ic_play),
             contentDescription = null,
-            tint = MineMessageTimeColor,
+            tint = if(isPlaying) Red else Color.White,
         )
     }
 }
