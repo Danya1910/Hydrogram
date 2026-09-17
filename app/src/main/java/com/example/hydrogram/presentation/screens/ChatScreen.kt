@@ -1038,6 +1038,55 @@ private fun Content(
                                     message = message,
                                     isMine = true,
                                     context = context,
+                                    messageCallbacks = MessageCallbacks(
+                                        onReply = {
+                                            currentMessageAnswer = it
+                                            Log.d("ChatScreen", it.toString())
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot =
+                                                    coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessage = message
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onReplyMessageClick = {},
+                                    ),
+                                    mineId = mineId,
                                 )
                             } else {
                                 if (message.replyData == null) {
@@ -1446,6 +1495,55 @@ private fun Content(
                                     message = message,
                                     isMine = false,
                                     context = context,
+                                    messageCallbacks = MessageCallbacks(
+                                        onReply = {
+                                            currentMessageAnswer = it
+                                            Log.d("ChatScreen", it.toString())
+                                        },
+                                        onDoubleClick = {
+                                            Log.d(
+                                                "ChatScreen",
+                                                "chatId: $chatId, messageId: ${message.messageId}"
+                                            )
+                                            Log.d(
+                                                "ChatScreen",
+                                                "have mine Id: $it"
+                                            )
+                                            chatViewModel.toggleReaction(
+                                                reaction = if (it) null else "\u2764\uFE0F",
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onLongClick = {
+                                            val coordinates = messageCoordinates.value
+                                            if (coordinates != null) {
+                                                val positionInRoot =
+                                                    coordinates.positionInRoot()
+
+
+                                                contextMenuState = ContextMenuState(
+                                                    message = message,
+                                                    position = IntOffset(
+                                                        positionInRoot.x.toInt(),
+                                                        positionInRoot.y.toInt()
+                                                    ),
+                                                    isMine = true,
+                                                    size = coordinates.size
+                                                )
+                                                currentReactingMessage = message
+                                            }
+                                        },
+                                        onReactionClick = {
+                                            chatViewModel.toggleReaction(
+                                                reaction = null,
+                                                chatId = chatId,
+                                                messageId = message.messageId,
+                                            )
+                                        },
+                                        onReplyMessageClick = {},
+                                    ),
+                                    mineId = mineId,
                                 )
                             } else {
                                 if (message.replyData == null) {
