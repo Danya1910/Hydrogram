@@ -16,10 +16,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import android.content.Context
 import android.text.format.DateFormat
-import android.util.Log
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -34,16 +32,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linc.audiowaveform.AudioWaveform
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
@@ -52,7 +48,6 @@ import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.SfProText
-import com.linc.audiowaveform.model.WaveformAlignment
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.unit.times
@@ -135,7 +130,7 @@ fun VoiceWidget(
                     shape = RoundedCornerShape(17.dp)
                 )
                 .background(
-                    color = if (isMine) Green else Color.White
+                    color = if (isMine) Color(0xFFE3FFC6) else Color.White
                 )
                 .padding(
                     horizontal = 10.dp,
@@ -172,7 +167,6 @@ fun VoiceWidget(
                     val exactWaveformWidth = (amplitudes.size * (spikeWidthDp + spikePaddingDp))
 
                     val maxRawAmplitude = amplitudes.maxOrNull()?.toFloat() ?: 1f
-                    val progress = if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
 
                     Column(
                         modifier = Modifier
@@ -185,25 +179,43 @@ fun VoiceWidget(
                                 .height(maxSpikeHeightDp)
                         ) {
                             val canvasHeight = size.height
+                            val progress = if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
+
+                            val totalWaveformWidthPx = amplitudes.size * (spikeWidthPx + spikePaddingPx) - spikePaddingPx
+
+                            val cornerRadiusPx = 1.dp.toPx()
+
+                            val waveColor = Color(0xFF97D187)
+                            val playedColor = Color(0xFF42C23A)
+
+                            val sharpProgressGradient = Brush.linearGradient(
+                                colorStops = arrayOf(
+                                    0.0f to playedColor,
+                                    progress to playedColor,
+                                    (progress + 0.001f).coerceAtMost(1f) to waveColor,
+                                    1.0f to waveColor
+                                ),
+                                start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                end = androidx.compose.ui.geometry.Offset(totalWaveformWidthPx, 0f)
+                            )
 
                             amplitudes.forEachIndexed { index, amplitude ->
-                                val isPlayed = (index.toFloat() / amplitudes.size) < progress
-                                val brushColor = if (isPlayed) Color.Gray else Color.White
-
-                                val rawProgress = amplitude.toFloat() / maxRawAmplitude
+                                val rawProgress = amplitude / maxRawAmplitude
                                 val spikeHeight = minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
 
-                                val x = index * (spikeWidthPx + spikePaddingPx)
+                                val spikeLeftX = index * (spikeWidthPx + spikePaddingPx)
                                 val y = canvasHeight - spikeHeight
 
                                 drawRoundRect(
-                                    color = brushColor,
-                                    topLeft = androidx.compose.ui.geometry.Offset(x, y),
+                                    brush = sharpProgressGradient,
+                                    topLeft = androidx.compose.ui.geometry.Offset(spikeLeftX, y),
                                     size = androidx.compose.ui.geometry.Size(spikeWidthPx, spikeHeight),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(with(density) { 1.dp.toPx() })
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadiusPx)
                                 )
                             }
                         }
+
+
 
                         Spacer(modifier = Modifier.height(5.dp))
 
@@ -225,15 +237,17 @@ fun VoiceWidget(
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 11.sp,
                                 letterSpacing = -(0.43).sp,
-                                color = MineMessageTimeColor,
+                                color = Color(0xFF42C23A),
                             )
                             Spacer(modifier = Modifier.width(5.dp))
-                            Box(
-                                modifier = Modifier
-                                    .size(4.dp)
-                                    .clip(CircleShape)
-                                    .background(color = Color.Yellow)
-                            )
+                            if(message.status != "read") {
+                                Box(
+                                    modifier = Modifier
+                                        .size(4.dp)
+                                        .clip(CircleShape)
+                                        .background(color = Color.Green)
+                                )
+                            }
                         }
                     }
                 }
@@ -244,7 +258,6 @@ fun VoiceWidget(
                 verticalArrangement = Arrangement.Bottom,
                 modifier = Modifier
                     .fillMaxHeight()
-                    .padding(bottom = 4.dp),
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -253,21 +266,21 @@ fun VoiceWidget(
                         text = formattedTime,
                         fontFamily = SfProText,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 11.sp,
-                        color = MineMessageTimeColor,
+                        fontSize = 12.sp,
+                        color = Color(0xFF42C23A),
                     )
                     Spacer(modifier = Modifier.width(3.dp))
                     if (message.status == "read") {
                         Icon(
                             painter = painterResource(R.drawable.ic_read_status),
                             contentDescription = null,
-                            tint = MineMessageTimeColor,
+                            tint = Color(0xFF42C23A),
                         )
                     } else {
                         Icon(
                             painter = painterResource(R.drawable.ic_sent_status),
                             contentDescription = null,
-                            tint = MineMessageTimeColor,
+                            tint = Color(0xFF42C23A),
                             modifier = Modifier.size(15.dp)
                         )
                     }
@@ -297,6 +310,9 @@ private fun PlayButton(
             .clip(
                 shape = CircleShape,
             )
+            .background(
+                color = Color(0xFF42C23A)
+            )
             .clickable {
                 onClick()
             }
@@ -304,7 +320,8 @@ private fun PlayButton(
         Icon(
             painter = painterResource(R.drawable.ic_play),
             contentDescription = null,
-            tint = if(isPlaying) Red else Color.White,
+            tint = Color.White,
+            modifier = Modifier.padding(start = 3.dp),
         )
     }
 }
