@@ -100,7 +100,7 @@ class ChatRepositoryImpl @Inject constructor(
 
                 is Message.Voice -> {
                     MessageDto(
-                        messageId = message.messageId,
+                        messageId = messageRef.id,
                         senderId = message.senderId,
                         timestamp = message.timestamp,
                         status = message.status,
@@ -165,18 +165,29 @@ class ChatRepositoryImpl @Inject constructor(
         status: String
     ): Result<Unit> {
         return try {
-            firestore.collection("chats")
+            Log.d("ChatRepositoryImpl", "change message called для ID: $messageId")
+
+            val messageRef = firestore.collection("chats")
                 .document(chatId)
                 .collection("messages")
                 .document(messageId)
-                .update("status", status)
-                .await()
+
+            val snapshot = messageRef.get().await()
+
+            if (snapshot.exists()) {
+                messageRef.update("status", status).await()
+                Log.d("ChatRepositoryImpl", "Статус успешно обновлен через update()")
+            } else {
+                Log.d("ChatRepositoryImpl", "Документ $messageId еще не создан на сервере. Пропускаем.")
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e("ChatRepositoryImpl", "Ошибка смены статуса", e)
             Result.failure(e)
         }
     }
+
 
     override suspend fun toggleReaction(
         reaction: String?,
