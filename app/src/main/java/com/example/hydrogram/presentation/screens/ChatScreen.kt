@@ -1442,7 +1442,11 @@ private fun Content(
                                     )
                                 }
                             } else if (message.type == "voice") {
-
+                                VoiceWidget(
+                                    message = message,
+                                    isMine = false,
+                                    context = context,
+                                )
                             } else {
                                 if (message.replyData == null) {
                                     PenpalImageMessage(
