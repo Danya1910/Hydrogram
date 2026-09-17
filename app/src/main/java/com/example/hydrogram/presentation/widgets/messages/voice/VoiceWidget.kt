@@ -16,8 +16,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import android.content.Context
 import android.text.format.DateFormat
+import android.util.Log
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -26,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,7 +41,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -47,15 +57,21 @@ import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.times
+import com.example.hydrogram.presentation.util.MessageCallbacks
+import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
 import com.example.hydrogram.ui.theme.Blue
 import java.util.Date
+import kotlin.math.roundToInt
 
 @Composable
 fun VoiceWidget(
     message: Message,
     isMine: Boolean,
     context: Context,
+    messageCallbacks: MessageCallbacks,
+    mineId: String,
 ) {
 
     val exoPlayer = remember {
@@ -64,6 +80,46 @@ fun VoiceWidget(
             setMediaItem(mediaItem)
             prepare()
         }
+    }
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
+        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
     }
 
 
@@ -111,17 +167,48 @@ fun VoiceWidget(
     val configuration = LocalConfiguration.current
     val maxCardWidth = (configuration.screenWidthDp * 0.8f).dp
 
-    Box(
+    BoxWithConstraints(
         contentAlignment = if (isMine) Alignment.CenterEnd else Alignment.CenterStart,
         modifier = Modifier
             .fillMaxWidth()
             .padding(
                 horizontal = 16.dp
-            ),
+            )
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            messageCallbacks.onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
     ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .height(63.dp)
                 .widthIn(max = maxCardWidth)
                 .clip(
@@ -129,6 +216,19 @@ fun VoiceWidget(
                 )
                 .background(
                     color = if (isMine) Color(0xFFE3FFC6) else Color.White
+                )
+                .combinedClickable(
+                    onClick = {},
+                    onDoubleClick = {
+                        messageCallbacks.onDoubleClick(
+                            message.reactions?.get(mineId) != null
+                        )
+                    },
+                    onLongClick = {
+                        messageCallbacks.onLongClick(
+                            false
+                        )
+                    }
                 )
                 .padding(
                     horizontal = 10.dp,
@@ -274,9 +374,9 @@ fun VoiceWidget(
                         fontFamily = SfProText,
                         fontWeight = FontWeight.Normal,
                         fontSize = 11.sp,
-                        color = if(isMine) Color(0xFF42C23A) else Color.Gray,
+                        color = if (isMine) Color(0xFF42C23A) else Color.Gray,
                     )
-                    if(isMine) {
+                    if (isMine) {
                         Spacer(modifier = Modifier.width(3.dp))
                         if (message.status == "read") {
                             Icon(
@@ -321,7 +421,7 @@ private fun PlayButton(
                 shape = CircleShape,
             )
             .background(
-                color = if(isMine) Color(0xFF42C23A) else Blue,
+                color = if (isMine) Color(0xFF42C23A) else Blue,
             )
             .clickable {
                 onClick()
