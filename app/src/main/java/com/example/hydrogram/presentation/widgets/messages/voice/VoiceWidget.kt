@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -45,13 +44,11 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
-import com.example.hydrogram.ui.theme.Green
-import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.unit.times
-import com.example.hydrogram.ui.theme.Red
+import com.example.hydrogram.ui.theme.Blue
 import java.util.Date
 
 @Composable
@@ -91,6 +88,7 @@ fun VoiceWidget(
                     exoPlayer.pause()
                 }
             }
+
             override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
                 isPlaying = isPlayingChanged
             }
@@ -140,8 +138,9 @@ fun VoiceWidget(
             PlayButton(
                 isPlaying = isPlaying,
                 onClick = {
-                        exoPlayer.togglePlay()
+                    exoPlayer.togglePlay()
                 },
+                isMine = isMine,
             )
             Spacer(modifier = Modifier.width(10.dp))
             message.recordingAmplitudes?.let { amplitudes ->
@@ -179,14 +178,16 @@ fun VoiceWidget(
                                 .height(maxSpikeHeightDp)
                         ) {
                             val canvasHeight = size.height
-                            val progress = if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
+                            val progress =
+                                if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
 
-                            val totalWaveformWidthPx = amplitudes.size * (spikeWidthPx + spikePaddingPx) - spikePaddingPx
+                            val totalWaveformWidthPx =
+                                amplitudes.size * (spikeWidthPx + spikePaddingPx) - spikePaddingPx
 
                             val cornerRadiusPx = 1.dp.toPx()
 
-                            val waveColor = Color(0xFF97D187)
-                            val playedColor = Color(0xFF42C23A)
+                            val waveColor = if (isMine) Color(0xFF97D187) else Color.Gray
+                            val playedColor = if (isMine) Color(0xFF42C23A) else Blue
 
                             val sharpProgressGradient = Brush.linearGradient(
                                 colorStops = arrayOf(
@@ -201,7 +202,8 @@ fun VoiceWidget(
 
                             amplitudes.forEachIndexed { index, amplitude ->
                                 val rawProgress = amplitude / maxRawAmplitude
-                                val spikeHeight = minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
+                                val spikeHeight =
+                                    minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
 
                                 val spikeLeftX = index * (spikeWidthPx + spikePaddingPx)
                                 val y = canvasHeight - spikeHeight
@@ -209,8 +211,13 @@ fun VoiceWidget(
                                 drawRoundRect(
                                     brush = sharpProgressGradient,
                                     topLeft = androidx.compose.ui.geometry.Offset(spikeLeftX, y),
-                                    size = androidx.compose.ui.geometry.Size(spikeWidthPx, spikeHeight),
-                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(cornerRadiusPx)
+                                    size = androidx.compose.ui.geometry.Size(
+                                        spikeWidthPx,
+                                        spikeHeight
+                                    ),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                                        cornerRadiusPx
+                                    )
                                 )
                             }
                         }
@@ -237,15 +244,15 @@ fun VoiceWidget(
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 11.sp,
                                 letterSpacing = -(0.43).sp,
-                                color = Color(0xFF42C23A),
+                                color = if (isMine) Color(0xFF42C23A) else Color.Gray,
                             )
                             Spacer(modifier = Modifier.width(5.dp))
-                            if(message.status != "read") {
+                            if (message.status != "read") {
                                 Box(
                                     modifier = Modifier
                                         .size(4.dp)
                                         .clip(CircleShape)
-                                        .background(color = Color.Green)
+                                        .background(color = if (isMine) Color(0xFF42C23A) else Blue)
                                 )
                             }
                         }
@@ -266,23 +273,25 @@ fun VoiceWidget(
                         text = formattedTime,
                         fontFamily = SfProText,
                         fontWeight = FontWeight.Normal,
-                        fontSize = 12.sp,
-                        color = Color(0xFF42C23A),
+                        fontSize = 11.sp,
+                        color = if(isMine) Color(0xFF42C23A) else Color.Gray,
                     )
-                    Spacer(modifier = Modifier.width(3.dp))
-                    if (message.status == "read") {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_read_status),
-                            contentDescription = null,
-                            tint = Color(0xFF42C23A),
-                        )
-                    } else {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sent_status),
-                            contentDescription = null,
-                            tint = Color(0xFF42C23A),
-                            modifier = Modifier.size(15.dp)
-                        )
+                    if(isMine) {
+                        Spacer(modifier = Modifier.width(3.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = Color(0xFF42C23A),
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = Color(0xFF42C23A),
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -291,7 +300,7 @@ fun VoiceWidget(
 }
 
 fun ExoPlayer.togglePlay() {
-    if(isPlaying) {
+    if (isPlaying) {
         pause()
     } else {
         play()
@@ -302,6 +311,7 @@ fun ExoPlayer.togglePlay() {
 private fun PlayButton(
     isPlaying: Boolean,
     onClick: () -> Unit,
+    isMine: Boolean,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -311,7 +321,7 @@ private fun PlayButton(
                 shape = CircleShape,
             )
             .background(
-                color = Color(0xFF42C23A)
+                color = if(isMine) Color(0xFF42C23A) else Blue,
             )
             .clickable {
                 onClick()
