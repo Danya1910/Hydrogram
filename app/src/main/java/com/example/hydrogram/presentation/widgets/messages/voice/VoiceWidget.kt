@@ -17,6 +17,7 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -27,6 +28,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
@@ -176,6 +178,33 @@ fun VoiceWidget(
     val configuration = LocalConfiguration.current
     val maxCardWidth = (configuration.screenWidthDp * 0.8f).dp
 
+    val hasBothDifferentReactions = reactions?.mineReaction != null &&
+            reactions.penpalReaction != null &&
+            reactions.mineReaction != reactions.penpalReaction
+
+    val animatedAmplitudes = remember(message.recordingAmplitudes, message.durationSeconds, hasBothDifferentReactions) {
+        getTelegramStyleAmplitudes(
+            rawAmplitudes = message.recordingAmplitudes ?: emptyList(),
+            durationSeconds = message.durationSeconds ?: 0,
+            hasMultipleReactions = hasBothDifferentReactions
+        )
+    }
+
+    val animatedHeights = animatedAmplitudes.map { targetAmplitude ->
+        val animatable = remember { androidx.compose.animation.core.Animatable(0f) }
+
+        LaunchedEffect(targetAmplitude) {
+            animatable.animateTo(
+                targetValue = targetAmplitude,
+                animationSpec = androidx.compose.animation.core.tween(
+                    durationMillis = 400,
+                    easing = LinearOutSlowInEasing
+                )
+            )
+        }
+        animatable.value
+    }
+
     BoxWithConstraints(
         contentAlignment = if (isMine) Alignment.CenterEnd else Alignment.CenterStart,
         modifier = Modifier
@@ -240,200 +269,224 @@ fun VoiceWidget(
                 )
                 .padding(
                     horizontal = 10.dp,
-                    vertical = 7.dp
+                )
+                .padding(
+                    top = 7.dp,
+                    bottom = 3.dp
                 )
         ) {
-            Column {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+            Box(
+                modifier = Modifier.fillMaxHeight()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
                 ) {
-                    PlayButton(
-                        isPlaying = isPlaying,
-                        onClick = {
-                            exoPlayer.togglePlay()
-                        },
-                        isMine = isMine,
-                    )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    message.recordingAmplitudes?.let { amplitudes ->
-
-                        val exactWaveformWidth = (amplitudes.size * 4).dp
-
-                        Box(
-                            modifier = Modifier
-                                .widthIn(min = 45.dp, max = exactWaveformWidth)
-                                .wrapContentHeight()
+                    Box {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            val spikeWidthDp = 2.dp
-                            val spikePaddingDp = 2.dp
-                            val minSpikeHeightDp = 2.dp
-                            val maxSpikeHeightDp = 16.dp
+                            PlayButton(
+                                isPlaying = isPlaying,
+                                onClick = {
+                                    exoPlayer.togglePlay()
+                                },
+                                isMine = isMine,
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            message.recordingAmplitudes?.let { _ ->
 
-                            val density = androidx.compose.ui.platform.LocalDensity.current
-                            val spikeWidthPx = with(density) { spikeWidthDp.toPx() }
-                            val spikePaddingPx = with(density) { spikePaddingDp.toPx() }
-                            val minSpikeHeightPx = with(density) { minSpikeHeightDp.toPx() }
-                            val maxSpikeHeightPx = with(density) { maxSpikeHeightDp.toPx() }
+                                val exactWaveformWidth = (animatedAmplitudes.size * 4).dp
 
-                            val exactWaveformWidth =
-                                (amplitudes.size * (spikeWidthDp + spikePaddingDp))
-
-                            val maxRawAmplitude = amplitudes.maxOrNull()?.toFloat() ?: 1f
-
-                            Column(
-                                modifier = Modifier
-                                    .width(exactWaveformWidth)
-                                    .wrapContentHeight()
-                            ) {
-                                Canvas(
+                                Box(
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(maxSpikeHeightDp)
+                                        .widthIn(min = 45.dp, max = exactWaveformWidth)
+                                        .wrapContentHeight()
                                 ) {
-                                    val canvasHeight = size.height
-                                    val progress =
-                                        if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
+                                    val spikeWidthDp = 2.dp
+                                    val spikePaddingDp = 2.dp
+                                    val minSpikeHeightDp = 2.dp
+                                    val maxSpikeHeightDp = 16.dp
 
-                                    val totalWaveformWidthPx =
-                                        amplitudes.size * (spikeWidthPx + spikePaddingPx) - spikePaddingPx
+                                    val density = androidx.compose.ui.platform.LocalDensity.current
+                                    val spikeWidthPx = with(density) { spikeWidthDp.toPx() }
+                                    val spikePaddingPx = with(density) { spikePaddingDp.toPx() }
+                                    val minSpikeHeightPx = with(density) { minSpikeHeightDp.toPx() }
+                                    val maxSpikeHeightPx = with(density) { maxSpikeHeightDp.toPx() }
 
-                                    val cornerRadiusPx = 1.dp.toPx()
+                                    val maxRawAmplitude = animatedAmplitudes.maxOrNull() ?: 1f
 
-                                    val waveColor = if (isMine) Color(0xFF97D187) else Color.Gray
-                                    val playedColor = if (isMine) Color(0xFF42C23A) else Blue
-
-                                    val sharpProgressGradient = Brush.linearGradient(
-                                        colorStops = arrayOf(
-                                            0.0f to playedColor,
-                                            progress to playedColor,
-                                            (progress + 0.001f).coerceAtMost(1f) to waveColor,
-                                            1.0f to waveColor
-                                        ),
-                                        start = androidx.compose.ui.geometry.Offset(0f, 0f),
-                                        end = androidx.compose.ui.geometry.Offset(
-                                            totalWaveformWidthPx,
-                                            0f
-                                        )
-                                    )
-
-                                    amplitudes.forEachIndexed { index, amplitude ->
-                                        val rawProgress = amplitude / maxRawAmplitude
-                                        val spikeHeight =
-                                            minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
-
-                                        val spikeLeftX = index * (spikeWidthPx + spikePaddingPx)
-                                        val y = canvasHeight - spikeHeight
-
-                                        drawRoundRect(
-                                            brush = sharpProgressGradient,
-                                            topLeft = androidx.compose.ui.geometry.Offset(
-                                                spikeLeftX,
-                                                y
-                                            ),
-                                            size = androidx.compose.ui.geometry.Size(
-                                                spikeWidthPx,
-                                                spikeHeight
-                                            ),
-                                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(
-                                                cornerRadiusPx
-                                            )
-                                        )
-                                    }
-                                }
-
-
-
-                                Spacer(modifier = Modifier.height(5.dp))
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    val displayTimeMs =
-                                        if (isPlaying) currentPosition else totalDurationMs
-                                    val minutes = (displayTimeMs / 1000) / 60
-                                    val seconds = (displayTimeMs / 1000) % 60
-
-                                    Text(
-                                        text = String.format(
-                                            LocalLocale.current.platformLocale,
-                                            "%02d:%02d",
-                                            minutes,
-                                            seconds
-                                        ),
-                                        fontFamily = SfProText,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 11.sp,
-                                        letterSpacing = -(0.43).sp,
-                                        color = if (isMine) Color(0xFF42C23A) else Color.Gray,
-                                    )
-                                    Spacer(modifier = Modifier.width(5.dp))
-                                    if (message.status != "read") {
-                                        Box(
+                                    Column(
+                                        modifier = Modifier
+                                            .width(exactWaveformWidth)
+                                            .wrapContentHeight()
+                                    ) {
+                                        Canvas(
                                             modifier = Modifier
-                                                .size(4.dp)
-                                                .clip(CircleShape)
-                                                .background(color = if (isMine) Color(0xFF42C23A) else Blue)
-                                        )
+                                                .fillMaxWidth()
+                                                .height(maxSpikeHeightDp)
+                                        ) {
+                                            val canvasHeight = size.height
+                                            val progress =
+                                                if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
+
+                                            val totalWaveformWidthPx = animatedAmplitudes.size * (spikeWidthPx +
+                                                    spikePaddingPx) - spikePaddingPx
+
+                                            val cornerRadiusPx = 1.dp.toPx()
+
+                                            val waveColor =
+                                                if (isMine) Color(0xFF97D187) else Color.Gray
+                                            val playedColor =
+                                                if (isMine) Color(0xFF42C23A) else Blue
+
+                                            val sharpProgressGradient = Brush.linearGradient(
+                                                colorStops = arrayOf(
+                                                    0.0f to playedColor,
+                                                    progress to playedColor,
+                                                    (progress + 0.001f).coerceAtMost(1f) to waveColor,
+                                                    1.0f to waveColor
+                                                ),
+                                                start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                                end = androidx.compose.ui.geometry.Offset(
+                                                    totalWaveformWidthPx,
+                                                    0f
+                                                )
+                                            )
+
+                                            animatedHeights.forEachIndexed { index, amplitude ->
+                                                val rawProgress = amplitude / maxRawAmplitude
+                                                val spikeHeight =
+                                                    minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
+
+                                                val spikeLeftX =
+                                                    index * (spikeWidthPx + spikePaddingPx)
+                                                val y = canvasHeight - spikeHeight
+
+                                                drawRoundRect(
+                                                    brush = sharpProgressGradient,
+                                                    topLeft = androidx.compose.ui.geometry.Offset(
+                                                        spikeLeftX,
+                                                        y
+                                                    ),
+                                                    size = androidx.compose.ui.geometry.Size(
+                                                        spikeWidthPx,
+                                                        spikeHeight
+                                                    ),
+                                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                                                        cornerRadiusPx
+                                                    )
+                                                )
+                                            }
+                                        }
+
+
+
+                                        Spacer(modifier = Modifier.height(5.dp))
+
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            val displayTimeMs =
+                                                if (isPlaying) currentPosition else totalDurationMs
+                                            val minutes = (displayTimeMs / 1000) / 60
+                                            val seconds = (displayTimeMs / 1000) % 60
+
+                                            Text(
+                                                text = String.format(
+                                                    LocalLocale.current.platformLocale,
+                                                    "%02d:%02d",
+                                                    minutes,
+                                                    seconds
+                                                ),
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 11.sp,
+                                                letterSpacing = -(0.43).sp,
+                                                color = if (isMine) Color(0xFF42C23A) else Color.Gray,
+                                            )
+                                            Spacer(modifier = Modifier.width(5.dp))
+                                            if (message.status != "read") {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(4.dp)
+                                                        .clip(CircleShape)
+                                                        .background(
+                                                            color = if (isMine) Color(
+                                                                0xFF42C23A
+                                                            ) else Blue
+                                                        )
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                AnimatedVisibility(
-                    visible = haveReaction,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically(),
-                ) {
-                    val hasBothDifferentReactions = reactions?.mineReaction != null &&
-                            reactions.penpalReaction != null &&
-                            reactions.mineReaction != reactions.penpalReaction
-                    if (hasBothDifferentReactions) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = if (haveReaction) Arrangement.SpaceBetween else Arrangement.End,
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        AnimatedVisibility(
+                            visible = haveReaction,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
                         ) {
-                            ReactionWidget(
-                                reactions = MessageReactions(
-                                    mineReaction = reactions.mineReaction,
-                                    penpalReaction = null
-                                ),
-                                color = Color(0xFF40C13B),
-                                onReactionClick = {
-                                    messageCallbacks.onReactionClick()
-                                },
-                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            ReactionWidget(
-                                reactions = MessageReactions(
-                                    mineReaction = null,
-                                    penpalReaction = reactions.penpalReaction
-                                ),
-                                color = Green,
-                                onReactionClick = {
-                                    messageCallbacks.onReactionClick()
-                                },
-                                mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                            )
+                            val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                                    reactions.penpalReaction != null &&
+                                    reactions.mineReaction != reactions.penpalReaction
+                            if (hasBothDifferentReactions) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = reactions.mineReaction,
+                                            penpalReaction = null
+                                        ),
+                                        color = Color(0xFF40C13B),
+                                        onReactionClick = {
+                                            messageCallbacks.onReactionClick()
+                                        },
+                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = null,
+                                            penpalReaction = reactions.penpalReaction
+                                        ),
+                                        color = Green,
+                                        onReactionClick = {
+                                            messageCallbacks.onReactionClick()
+                                        },
+                                        mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                    )
+                                }
+                            } else {
+                                ReactionWidget(
+                                    reactions = reactions,
+                                    color = Color(0xFF40C13B),
+                                    onReactionClick = {
+                                        messageCallbacks.onReactionClick()
+                                    },
+                                    mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                    penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                )
+                            }
                         }
-                    } else {
-                        ReactionWidget(
-                            reactions = reactions,
-                            color = Color(0xFF40C13B),
-                            onReactionClick = {
-                                messageCallbacks.onReactionClick()
-                            },
-                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                        )
                     }
                 }
                 Row(
-                    modifier = Modifier
-                        .align(Alignment.End)  // прижимаем к правому краю
-                        .padding(top = 4.dp),
-                    horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(y = 3.dp)
                 ) {
                     Text(
                         text = formattedTime,
@@ -473,6 +526,59 @@ fun ExoPlayer.togglePlay() {
         play()
     }
 }
+
+private fun getTelegramStyleAmplitudes(
+    rawAmplitudes: List<Float>,
+    durationSeconds: Int,
+    hasMultipleReactions: Boolean
+): List<Float> {
+    if (rawAmplitudes.isEmpty()) return emptyList()
+
+    val trimmed = rawAmplitudes.dropWhile { it <= 1f }.dropLastWhile { it <= 1f }
+    val dataToProcess = if (trimmed.size >= 5) trimmed else rawAmplitudes
+
+    val targetSpikesCount = if (hasMultipleReactions) {
+        when {
+            durationSeconds <= 5 -> 34
+            durationSeconds <= 10 -> 34
+            else -> 38
+        }
+    } else {
+        when {
+            durationSeconds <= 1 -> 17
+            durationSeconds <= 2 -> 17
+            durationSeconds <= 3 -> 20
+            durationSeconds <= 5 -> 23
+            durationSeconds <= 10 -> 25
+            else -> 28
+        }
+    }
+
+    val compressed = mutableListOf<Float>()
+    val step = dataToProcess.size.toFloat() / targetSpikesCount
+
+    for (i in 0 until targetSpikesCount) {
+        val startIdx = (i * step).toInt().coerceIn(0, dataToProcess.lastIndex)
+        val endIdx = ((i + 1) * step).toInt().coerceIn(0, dataToProcess.lastIndex)
+
+        val subList = dataToProcess.subList(startIdx, (endIdx + 1).coerceAtMost(dataToProcess.size))
+        val maxVal = subList.maxOrNull() ?: 1f
+
+        compressed.add(maxVal)
+    }
+
+    val smoothed = mutableListOf<Float>()
+    for (i in compressed.indices) {
+        val prev = if (i > 0) compressed[i - 1] else compressed[i]
+        val curr = compressed[i]
+        val next = if (i < compressed.lastIndex) compressed[i + 1] else compressed[i]
+
+        smoothed.add((prev + curr + next) / 3f)
+    }
+
+    return smoothed
+}
+
 
 @Composable
 private fun PlayButton(
