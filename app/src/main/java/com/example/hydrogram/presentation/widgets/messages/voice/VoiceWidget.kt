@@ -697,6 +697,9 @@ fun VoiceReplyWidget(
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
+        val replyBgColor = if(!isMine) Color(0xFFFFEBD6) else Color(0xFFE2F7CA)
+        val replyMainColor = if(!isMine) Color(0xFFFDB86F) else Color(0xFF42C23A)
+
         Box(
             modifier = Modifier
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
@@ -754,7 +757,7 @@ fun VoiceReplyWidget(
                                         shape = RoundedCornerShape(4.dp)
                                     )
                                     .background(
-                                        color = Color(0xFFE2F7CA)
+                                        color = replyBgColor
                                     )
                                     .clickable {
                                         messageCallbacks.onReplyMessageClick(
@@ -770,7 +773,7 @@ fun VoiceReplyWidget(
                                         .width(3.dp)
                                         .height(41.dp)
                                         .background(
-                                            color = Color(0xFF42C23A),
+                                            color = replyMainColor,
                                         )
                                 )
                                 Spacer(modifier = Modifier.width(7.dp))
@@ -783,7 +786,7 @@ fun VoiceReplyWidget(
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 15.sp,
                                             letterSpacing = -(0.23).sp,
-                                            color = Color(0xFF42C23A),
+                                            color = replyMainColor,
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )
@@ -808,7 +811,7 @@ fun VoiceReplyWidget(
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFF42C23A),
+                                                color = replyMainColor,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -834,7 +837,7 @@ fun VoiceReplyWidget(
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFF42C23A),
+                                                color = replyMainColor,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -844,7 +847,7 @@ fun VoiceReplyWidget(
                                                 fontWeight = FontWeight.Normal,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFF42C23A),
+                                                color = replyMainColor,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -897,7 +900,7 @@ fun VoiceReplyWidget(
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFF42C23A),
+                                                color = replyMainColor,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -907,7 +910,7 @@ fun VoiceReplyWidget(
                                                 fontWeight = FontWeight.Normal,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFF42C23A),
+                                                color = replyMainColor,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )

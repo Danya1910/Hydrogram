@@ -815,7 +815,7 @@ fun PenpalStickerReplyMessage(
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                ReplyStikerMessageHelper(
+                ReplyPenpalStikerMessageHelper(
                     replyName = replyName,
                     replyData = sticker.replyData,
                     modifier = Modifier.wrapContentWidth(),
@@ -907,37 +907,39 @@ fun ReplyStikerMessageHelper(
                     .fillMaxHeight()
                     .width(3.dp)
                     .background(
-                        color = Color(0xFF9EDB4E),
+                        color = Color(0xFF42C23A),
                     )
             )
             Spacer(modifier = Modifier.width(7.dp))
-            if (replyData?.type == "sticker") {
-                Column(
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Text(
-                        text = replyName,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 15.sp,
-                        letterSpacing = -(0.23).sp,
-                        color = Color(0xFF9EDB4E),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = "Стикер",
-                        fontFamily = SfProText,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 15.sp,
-                        letterSpacing = -(0.23).sp,
-                        color = Color.Black,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+            when (replyData?.type) {
+                "sticker" -> {
+                    Column(
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = replyName,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFF42C23A),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = "Стикер",
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color.Black,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
-            } else if (replyData?.type == "text") {
-                replyData?.content.let {
-                    if (it != null) {
+
+                "text" -> {
+                    replyData.content.let {
                         Column(
                             verticalArrangement = Arrangement.Center
                         ) {
@@ -946,7 +948,7 @@ fun ReplyStikerMessageHelper(
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 15.sp,
                                 letterSpacing = -(0.23).sp,
-                                color = Color(0xFF9EDB4E),
+                                color = Color(0xFF42C23A),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -963,8 +965,8 @@ fun ReplyStikerMessageHelper(
                         }
                     }
                 }
-            } else if (replyData?.type == "voice") {
-                replyData.content.let {
+
+                "voice" -> {
                     Column(
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -973,7 +975,7 @@ fun ReplyStikerMessageHelper(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
                             letterSpacing = -(0.23).sp,
-                            color = Color(0xFF9EDB4E),
+                            color = Color(0xFF42C23A),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
@@ -983,52 +985,119 @@ fun ReplyStikerMessageHelper(
                             fontWeight = FontWeight.Normal,
                             fontSize = 15.sp,
                             letterSpacing = -(0.23).sp,
-                            color = Color(0xFF9EDB4E),
+                            color = Color(0xFF42C23A),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val replyContent = replyData?.content
-                    val isBase64 = remember(replyContent) {
-                        !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
-                    }
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(
-                                shape = RoundedCornerShape(4.dp)
-                            )
-                    ) {
-                        if (isBase64) {
-                            val bitmap = remember(replyContent) {
-                                decodeBase64Image(replyContent)
-                            }
 
-                            if (bitmap != null) {
-                                Image(
-                                    bitmap = bitmap.asImageBitmap(),
+                else -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val replyContent = replyData?.content
+                        val isBase64 = remember(replyContent) {
+                            !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        ) {
+                            if (isBase64) {
+                                val bitmap = remember(replyContent) {
+                                    decodeBase64Image(replyContent)
+                                }
+
+                                if (bitmap != null) {
+                                    Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Превью изображения в ответе",
+                                        contentScale = ContentScale.Crop,
+                                    )
+                                } else {
+                                    PlaceholderContent()
+                                }
+                            } else {
+                                AsyncImage(
+                                    model = replyContent,
                                     contentDescription = "Превью изображения в ответе",
                                     contentScale = ContentScale.Crop,
+                                    placeholder = painterResource(R.drawable.ic_avatar),
+                                    error = painterResource(R.drawable.ic_avatar),
                                 )
-                            } else {
-                                PlaceholderContent()
                             }
-                        } else {
-                            AsyncImage(
-                                model = replyContent,
-                                contentDescription = "Превью изображения в ответе",
-                                contentScale = ContentScale.Crop,
-                                placeholder = painterResource(R.drawable.ic_avatar),
-                                error = painterResource(R.drawable.ic_avatar),
+                        }
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = replyName,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFF9EDB4E),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = "Фотография",
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFF8FC748),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
-                    Spacer(modifier = Modifier.width(5.dp))
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun ReplyPenpalStikerMessageHelper(
+    replyName: String,
+    replyData: ReplyData?,
+    modifier: Modifier,
+    onReplyMessageClick: () -> Unit,
+) {
+    Box(
+        modifier = modifier
+            .height(41.dp)
+            .clip(
+                shape = RoundedCornerShape(4.dp)
+            )
+            .background(
+                color = Color(0xFFFFEBD6)
+            )
+            .clickable {
+                onReplyMessageClick()
+            }
+            .padding(end = 5.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(3.dp)
+                    .background(
+                        color = Color(0xFFFDB86F),
+                    )
+            )
+            Spacer(modifier = Modifier.width(7.dp))
+            when (replyData?.type) {
+                "sticker" -> {
                     Column(
                         verticalArrangement = Arrangement.Center
                     ) {
@@ -1037,20 +1106,140 @@ fun ReplyStikerMessageHelper(
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 15.sp,
                             letterSpacing = -(0.23).sp,
-                            color = Color(0xFF9EDB4E),
+                            color = Color(0xFFFDB86F),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
-                            text = "Фотография",
+                            text = "Стикер",
                             fontFamily = SfProText,
                             fontWeight = FontWeight.Normal,
                             fontSize = 15.sp,
                             letterSpacing = -(0.23).sp,
-                            color = Color(0xFF8FC748),
+                            color = Color.Black,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                    }
+                }
+
+                "text" -> {
+                    replyData.content.let {
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = replyName,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFFFDB86F),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = it,
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color.Black,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+
+                "voice" -> {
+                    Column(
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = replyName,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFFFDB86F),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = "Голосовое сообщение",
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFFFDB86F),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+
+                else -> {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val replyContent = replyData?.content
+                        val isBase64 = remember(replyContent) {
+                            !replyContent.isNullOrBlank() && replyContent.startsWith("data:image/jpeg;base64,")
+                        }
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        ) {
+                            if (isBase64) {
+                                val bitmap = remember(replyContent) {
+                                    decodeBase64Image(replyContent)
+                                }
+
+                                if (bitmap != null) {
+                                    Image(
+                                        bitmap = bitmap.asImageBitmap(),
+                                        contentDescription = "Превью изображения в ответе",
+                                        contentScale = ContentScale.Crop,
+                                    )
+                                } else {
+                                    PlaceholderContent()
+                                }
+                            } else {
+                                AsyncImage(
+                                    model = replyContent,
+                                    contentDescription = "Превью изображения в ответе",
+                                    contentScale = ContentScale.Crop,
+                                    placeholder = painterResource(R.drawable.ic_avatar),
+                                    error = painterResource(R.drawable.ic_avatar),
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(5.dp))
+                        Column(
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = replyName,
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFFFDB86F),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = "Фотография",
+                                fontFamily = SfProText,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 15.sp,
+                                letterSpacing = -(0.23).sp,
+                                color = Color(0xFFFDB86F),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
             }

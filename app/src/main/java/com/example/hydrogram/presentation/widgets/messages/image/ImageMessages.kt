@@ -1204,7 +1204,9 @@ fun MineReplyImageMessage(
                                 modifier = Modifier
                                     .width(3.dp)
                                     .height(41.dp)
-                                    .background(color = Color(0xFFFDB86F))
+                                    .background(
+                                        color = Color(0xFF42C23A)
+                                    )
                             )
                             Spacer(modifier = Modifier.width(7.dp))
 
@@ -1221,7 +1223,7 @@ fun MineReplyImageMessage(
                                             fontWeight = FontWeight.SemiBold,
                                             fontSize = 15.sp,
                                             letterSpacing = -(0.23).sp,
-                                            color = Color(0xFFFDB86F),
+                                            color = Color(0xFF42C23A),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
                                         )
@@ -1236,32 +1238,30 @@ fun MineReplyImageMessage(
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                     }
-                                } else if (message.replyData?.type == "text") {
-                                    message.replyData?.content.let {
-                                        if (it != null) {
-                                            Column(
-                                                verticalArrangement = Arrangement.Center
-                                            ) {
-                                                Text(
-                                                    text = replyName,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 15.sp,
-                                                    letterSpacing = -(0.23).sp,
-                                                    color = Color(0xFFFDB86F),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                                Text(
-                                                    text = it,
-                                                    fontFamily = SfProText,
-                                                    fontWeight = FontWeight.Normal,
-                                                    fontSize = 15.sp,
-                                                    letterSpacing = -(0.23).sp,
-                                                    color = Color.Black,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                            }
+                                } else if (message.replyData.type == "text") {
+                                    message.replyData.content.let {
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFF42C23A),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = it,
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color.Black,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
                                         }
                                     }
                                 } else if (message.replyData.type == "voice") {
@@ -1274,7 +1274,7 @@ fun MineReplyImageMessage(
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFFFDB86F),
+                                                color = Color(0xFF42C23A),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -1284,7 +1284,7 @@ fun MineReplyImageMessage(
                                                 fontWeight = FontWeight.Normal,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFFFDB86F),
+                                                color = Color(0xFF42C23A),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -1306,7 +1306,7 @@ fun MineReplyImageMessage(
                                                 fontWeight = FontWeight.SemiBold,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFFFDB86F),
+                                                color = Color(0xFF42C23A),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
@@ -1316,7 +1316,7 @@ fun MineReplyImageMessage(
                                                 fontWeight = FontWeight.Normal,
                                                 fontSize = 15.sp,
                                                 letterSpacing = -(0.23).sp,
-                                                color = Color(0xFFEFB578),
+                                                color = Color(0xFF42C23A),
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
                                             )
