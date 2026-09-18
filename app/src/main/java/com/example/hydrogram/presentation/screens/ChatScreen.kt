@@ -816,11 +816,19 @@ private fun Content(
                                                 }
                                             },
                                             onReactionClick = {
-                                                chatViewModel.toggleReaction(
-                                                    reaction = null,
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
+                                                if (message.reactions?.get(mineId) == null) {
+                                                    chatViewModel.toggleReaction(
+                                                        reaction = message.reactions?.get(penpalData?.uid),
+                                                        chatId = chatId,
+                                                        messageId = message.messageId,
+                                                    )
+                                                } else {
+                                                    chatViewModel.toggleReaction(
+                                                        reaction = null,
+                                                        chatId = chatId,
+                                                        messageId = message.messageId,
+                                                    )
+                                                }
                                             },
                                             onReplyMessageClick = {},
                                         ),
@@ -874,11 +882,19 @@ private fun Content(
                                                 }
                                             },
                                             onReactionClick = {
-                                                chatViewModel.toggleReaction(
-                                                    reaction = null,
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
+                                                if (message.reactions?.get(mineId) == null) {
+                                                    chatViewModel.toggleReaction(
+                                                        reaction = message.reactions?.get(penpalData?.uid),
+                                                        chatId = chatId,
+                                                        messageId = message.messageId,
+                                                    )
+                                                } else {
+                                                    chatViewModel.toggleReaction(
+                                                        reaction = null,
+                                                        chatId = chatId,
+                                                        messageId = message.messageId,
+                                                    )
+                                                }
                                             },
                                             onReplyMessageClick = { messageId ->
                                                 scrollToMessage(messageId)
@@ -1078,11 +1094,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                         onReplyMessageClick = {},
                                     ),
@@ -1141,11 +1165,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                         mineId = mineId,
                                         mineAvatar = mineData?.avatarUrl ?: "",
@@ -1210,11 +1242,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                         mineId = mineId,
                                         mineAvatar = mineData?.avatarUrl ?: "",
@@ -1333,11 +1373,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                     ),
                                     messageData = MessageData(
@@ -1540,11 +1588,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                         onReplyMessageClick = {},
                                     ),
@@ -1603,11 +1659,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                         mineId = mineId,
                                         mineAvatar = mineData?.avatarUrl ?: "",
@@ -1672,11 +1736,19 @@ private fun Content(
                                             }
                                         },
                                         onReactionClick = {
-                                            chatViewModel.toggleReaction(
-                                                reaction = null,
-                                                chatId = chatId,
-                                                messageId = message.messageId,
-                                            )
+                                            if (message.reactions?.get(mineId) == null) {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = message.reactions?.get(penpalData?.uid),
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            } else {
+                                                chatViewModel.toggleReaction(
+                                                    reaction = null,
+                                                    chatId = chatId,
+                                                    messageId = message.messageId,
+                                                )
+                                            }
                                         },
                                         mineId = mineId,
                                         mineAvatar = mineData?.avatarUrl ?: "",
