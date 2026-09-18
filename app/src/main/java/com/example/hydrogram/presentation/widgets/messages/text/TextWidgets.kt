@@ -712,6 +712,32 @@ fun MineReplyTextMessage(
                                 }
                             }
                         }
+                    } else if (message.replyData?.type == "voice") {
+                        message.replyData.content.let {
+                            Column(
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = messageData.replyName,
+                                    fontWeight = FontWeight.SemiBold,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color(0xFF9EDB4E),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = "Голосовое сообщение",
+                                    fontFamily = SfProText,
+                                    fontWeight = FontWeight.Normal,
+                                    fontSize = 15.sp,
+                                    letterSpacing = -(0.23).sp,
+                                    color = Color(0xFF9EDB4E),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                     } else {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
@@ -1121,6 +1147,32 @@ fun PenpalReplyTextMessage(
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                     }
+                                }
+                            }
+                        } else if (message.replyData?.type == "voice") {
+                            message.replyData.content.let {
+                                Column(
+                                    verticalArrangement = Arrangement.Center
+                                ) {
+                                    Text(
+                                        text = messageData.replyName,
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color(0xFF9EDB4E),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Text(
+                                        text = "Голосовое сообщение",
+                                        fontFamily = SfProText,
+                                        fontWeight = FontWeight.Normal,
+                                        fontSize = 15.sp,
+                                        letterSpacing = -(0.23).sp,
+                                        color = Color(0xFF9EDB4E),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
                                 }
                             }
                         } else {

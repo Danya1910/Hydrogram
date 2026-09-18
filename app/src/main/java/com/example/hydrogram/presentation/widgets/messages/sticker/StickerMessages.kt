@@ -41,7 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -235,7 +234,7 @@ fun PenpalStickerMessage(
                         )
                     }
                 } else {
-                    if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                    if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
                         ReactionWidget(
                             reactions = reactions,
                             color = Color(0xFFCCE3F8),
@@ -586,7 +585,7 @@ fun MineStickerReplyMessage(
                         }
                     )
             ) {
-                MineReplyMessageHelper(
+                ReplyStikerMessageHelper(
                     replyName = replyName,
                     replyData = sticker.replyData,
                     modifier = Modifier.wrapContentWidth(),
@@ -656,7 +655,7 @@ fun MineStickerReplyMessage(
                         )
                     }
                 } else {
-                    if(reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                    if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
                         ReactionWidget(
                             reactions = reactions,
                             color = Color(0xFFCCE3F8),
@@ -816,7 +815,7 @@ fun PenpalStickerReplyMessage(
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                MineReplyMessageHelper(
+                ReplyStikerMessageHelper(
                     replyName = replyName,
                     replyData = sticker.replyData,
                     modifier = Modifier.wrapContentWidth(),
@@ -880,7 +879,7 @@ fun PenpalStickerReplyMessage(
 }
 
 @Composable
-fun MineReplyMessageHelper(
+fun ReplyStikerMessageHelper(
     replyName: String,
     replyData: ReplyData?,
     modifier: Modifier,
@@ -962,6 +961,32 @@ fun MineReplyMessageHelper(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
+                    }
+                }
+            } else if (replyData?.type == "voice") {
+                replyData.content.let {
+                    Column(
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = replyName,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFF9EDB4E),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = "Голосовое сообщение",
+                            fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 15.sp,
+                            letterSpacing = -(0.23).sp,
+                            color = Color(0xFF9EDB4E),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             } else {
