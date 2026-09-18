@@ -266,7 +266,7 @@ class ChatViewModel @Inject constructor(
         if(durationSeconds >= 1) {
             viewModelScope.launch {
 
-                val finalAmplitudes = getTelegramStyleAmplitudes(voiceMessageAmplitudes, durationSeconds)
+                val finalAmplitudes = voiceMessageAmplitudes
 
                 Log.d("Recording", "recording sending")
 
@@ -485,46 +485,5 @@ class ChatViewModel @Inject constructor(
                 }
         }
     }
-
-    private fun getTelegramStyleAmplitudes(rawAmplitudes: List<Float>, durationSeconds: Int): List<Float> {
-        if (rawAmplitudes.isEmpty()) return emptyList()
-
-        val trimmed = rawAmplitudes.dropWhile { it <= 1f }.dropLastWhile { it <= 1f }
-        val dataToProcess = if (trimmed.size >= 5) trimmed else rawAmplitudes
-
-        val targetSpikesCount = when {
-            durationSeconds <= 1 -> 8
-            durationSeconds <= 2 -> 12
-            durationSeconds <= 3 -> 15
-            durationSeconds <= 5 -> 20
-            durationSeconds <= 10 -> 26
-            else -> 35
-        }
-
-        val compressed = mutableListOf<Float>()
-        val step = dataToProcess.size.toFloat() / targetSpikesCount
-
-        for (i in 0 until targetSpikesCount) {
-            val startIdx = (i * step).toInt().coerceIn(0, dataToProcess.lastIndex)
-            val endIdx = ((i + 1) * step).toInt().coerceIn(0, dataToProcess.lastIndex)
-
-            val subList = dataToProcess.subList(startIdx, (endIdx + 1).coerceAtMost(dataToProcess.size))
-            val maxVal = subList.maxOrNull() ?: 1f
-
-            compressed.add(maxVal)
-        }
-
-        val smoothed = mutableListOf<Float>()
-        for (i in compressed.indices) {
-            val prev = if (i > 0) compressed[i - 1] else compressed[i]
-            val curr = compressed[i]
-            val next = if (i < compressed.lastIndex) compressed[i + 1] else compressed[i]
-
-            smoothed.add((prev + curr + next) / 3f)
-        }
-
-        return smoothed
-    }
-
 
 }
