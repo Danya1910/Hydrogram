@@ -1086,7 +1086,12 @@ private fun Content(
                                         },
                                         onReplyMessageClick = {},
                                     ),
-                                    mineId = mineId,
+                                    messageData = MessageData(
+                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
+                                    ),
                                 )
                             } else {
                                 if (message.replyData == null) {
@@ -1543,7 +1548,12 @@ private fun Content(
                                         },
                                         onReplyMessageClick = {},
                                     ),
-                                    mineId = mineId,
+                                    messageData = MessageData(
+                                        replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+                                        mineId = mineId,
+                                        mineAvatar = mineData?.avatarUrl ?: "",
+                                        penpalAvatar = penpalData?.avatarUrl ?: "",
+                                    ),
                                 )
                             } else {
                                 if (message.replyData == null) {
