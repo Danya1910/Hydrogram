@@ -24,6 +24,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -49,8 +50,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
@@ -65,14 +68,19 @@ import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.times
+import coil3.compose.AsyncImage
+import com.example.hydrogram.presentation.screens.PlaceholderContent
+import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
 import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
 import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Green
+import com.example.hydrogram.ui.theme.LightGreen
 import java.util.Date
 import kotlin.math.roundToInt
 
@@ -182,13 +190,14 @@ fun VoiceWidget(
             reactions.penpalReaction != null &&
             reactions.mineReaction != reactions.penpalReaction
 
-    val animatedAmplitudes = remember(message.recordingAmplitudes, message.durationSeconds, hasBothDifferentReactions) {
-        getTelegramStyleAmplitudes(
-            rawAmplitudes = message.recordingAmplitudes ?: emptyList(),
-            durationSeconds = message.durationSeconds ?: 0,
-            hasMultipleReactions = hasBothDifferentReactions
-        )
-    }
+    val animatedAmplitudes =
+        remember(message.recordingAmplitudes, message.durationSeconds, hasBothDifferentReactions) {
+            getTelegramStyleAmplitudes(
+                rawAmplitudes = message.recordingAmplitudes ?: emptyList(),
+                durationSeconds = message.durationSeconds ?: 0,
+                hasMultipleReactions = hasBothDifferentReactions
+            )
+        }
 
     val animatedHeights = animatedAmplitudes.map { targetAmplitude ->
         val animatable = remember { androidx.compose.animation.core.Animatable(0f) }
@@ -252,7 +261,7 @@ fun VoiceWidget(
                     shape = RoundedCornerShape(17.dp)
                 )
                 .background(
-                    color = if (isMine) Color(0xFFE3FFC6) else Color.White
+                    color = if (isMine) LightGreen else Color.White
                 )
                 .combinedClickable(
                     onClick = {},
@@ -330,8 +339,9 @@ fun VoiceWidget(
                                             val progress =
                                                 if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
 
-                                            val totalWaveformWidthPx = animatedAmplitudes.size * (spikeWidthPx +
-                                                    spikePaddingPx) - spikePaddingPx
+                                            val totalWaveformWidthPx =
+                                                animatedAmplitudes.size * (spikeWidthPx +
+                                                        spikePaddingPx) - spikePaddingPx
 
                                             val cornerRadiusPx = 1.dp.toPx()
 
@@ -417,6 +427,636 @@ fun VoiceWidget(
                                                             ) else Blue
                                                         )
                                                 )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = if (haveReaction) Arrangement.SpaceBetween else Arrangement.End,
+                        verticalAlignment = Alignment.Bottom,
+                    ) {
+                        AnimatedVisibility(
+                            visible = haveReaction,
+                            enter = fadeIn() + expandVertically(),
+                            exit = fadeOut() + shrinkVertically(),
+                        ) {
+                            val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                                    reactions.penpalReaction != null &&
+                                    reactions.mineReaction != reactions.penpalReaction
+                            if (hasBothDifferentReactions) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = reactions.mineReaction,
+                                            penpalReaction = null
+                                        ),
+                                        color = Color(0xFF40C13B),
+                                        onReactionClick = {
+                                            messageCallbacks.onReactionClick()
+                                        },
+                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    ReactionWidget(
+                                        reactions = MessageReactions(
+                                            mineReaction = null,
+                                            penpalReaction = reactions.penpalReaction
+                                        ),
+                                        color = Green,
+                                        onReactionClick = {
+                                            messageCallbacks.onReactionClick()
+                                        },
+                                        mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                    )
+                                }
+                            } else {
+                                ReactionWidget(
+                                    reactions = reactions,
+                                    color = Color(0xFF40C13B),
+                                    onReactionClick = {
+                                        messageCallbacks.onReactionClick()
+                                    },
+                                    mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                    penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                                )
+                            }
+                        }
+                    }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .offset(y = 3.dp)
+                ) {
+                    Text(
+                        text = formattedTime,
+                        fontFamily = SfProText,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 11.sp,
+                        color = if (isMine) Color(0xFF42C23A) else Color.Gray,
+                    )
+                    if (isMine) {
+                        Spacer(modifier = Modifier.width(3.dp))
+                        if (message.status == "read") {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_read_status),
+                                contentDescription = null,
+                                tint = Color(0xFF42C23A),
+                            )
+                        } else {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sent_status),
+                                contentDescription = null,
+                                tint = Color(0xFF42C23A),
+                                modifier = Modifier.size(15.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+@Composable
+fun VoiceReplyWidget(
+    message: Message,
+    isMine: Boolean,
+    context: Context,
+    messageCallbacks: MessageCallbacks,
+    messageData: MessageData,
+) {
+
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            val mediaItem = MediaItem.fromUri((message as Message.Voice).audioUrl ?: "")
+            setMediaItem(mediaItem)
+            prepare()
+        }
+    }
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == messageData.mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
+        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
+    }
+
+
+    var isPlaying by remember { mutableStateOf(false) }
+    var currentPosition by remember { mutableStateOf(0L) }
+
+    val totalDurationMs = remember((message as Message.Voice).durationSeconds) {
+        (message.durationSeconds ?: 0) * 1000L
+    }
+
+    val formattedTime = DateFormat.format(
+        "HH:mm", Date(message.timestamp)
+    ).toString()
+
+    DisposableEffect(exoPlayer) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) {
+                    isPlaying = false
+                    currentPosition = 0L
+                    exoPlayer.seekTo(0)
+                    exoPlayer.pause()
+                }
+            }
+
+            override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
+                isPlaying = isPlayingChanged
+            }
+        }
+        exoPlayer.addListener(listener)
+
+        onDispose {
+            exoPlayer.removeListener(listener)
+            exoPlayer.release()
+        }
+    }
+
+    LaunchedEffect(isPlaying) {
+        while (isPlaying) {
+            currentPosition = exoPlayer.currentPosition
+            delay(100L)
+        }
+    }
+
+    val configuration = LocalConfiguration.current
+    val maxCardWidth = (configuration.screenWidthDp * 0.8f).dp
+
+    val hasBothDifferentReactions = reactions?.mineReaction != null &&
+            reactions.penpalReaction != null &&
+            reactions.mineReaction != reactions.penpalReaction
+
+    val animatedAmplitudes =
+        remember(message.recordingAmplitudes, message.durationSeconds, hasBothDifferentReactions) {
+            getTelegramStyleAmplitudes(
+                rawAmplitudes = message.recordingAmplitudes ?: emptyList(),
+                durationSeconds = message.durationSeconds ?: 0,
+                hasMultipleReactions = hasBothDifferentReactions
+            )
+        }
+
+    val animatedHeights = animatedAmplitudes.map { targetAmplitude ->
+        val animatable = remember { androidx.compose.animation.core.Animatable(0f) }
+
+        LaunchedEffect(targetAmplitude) {
+            animatable.animateTo(
+                targetValue = targetAmplitude,
+                animationSpec = androidx.compose.animation.core.tween(
+                    durationMillis = 400,
+                    easing = LinearOutSlowInEasing
+                )
+            )
+        }
+        animatable.value
+    }
+
+    BoxWithConstraints(
+        contentAlignment = if (isMine) Alignment.CenterEnd else Alignment.CenterStart,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(
+                horizontal = 16.dp
+            )
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            messageCallbacks.onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            },
+    ) {
+        val maxBubbleWidth = maxWidth * 0.85f
+
+        Box(
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                .heightIn(min = 63.dp)
+                .widthIn(max = maxCardWidth)
+                .clip(
+                    shape = RoundedCornerShape(17.dp)
+                )
+                .background(
+                    color = if (isMine) LightGreen else Color.White
+                )
+                .combinedClickable(
+                    onClick = {},
+                    onDoubleClick = {
+                        messageCallbacks.onDoubleClick(
+                            message.reactions?.get(messageData.mineId) != null
+                        )
+                    },
+                    onLongClick = {
+                        messageCallbacks.onLongClick(
+                            false
+                        )
+                    }
+                )
+                .padding(
+                    horizontal = 10.dp,
+                )
+                .padding(
+                    top = 7.dp,
+                    bottom = 3.dp
+                )
+        ) {
+            Box(
+                modifier = Modifier.fillMaxHeight()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .width(IntrinsicSize.Max)
+                ) {
+                    Box {
+                        Column(
+                            modifier = Modifier
+                                .width(IntrinsicSize.Max)
+                                .widthIn(min = 120.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .padding(
+                                        bottom = 9.dp,
+                                    )
+                                    .fillMaxWidth()
+                                    .height(41.dp)
+                                    .clip(
+                                        shape = RoundedCornerShape(4.dp)
+                                    )
+                                    .background(
+                                        color = Color(0xFFE2F7CA)
+                                    )
+                                    .clickable {
+                                        messageCallbacks.onReplyMessageClick(
+                                            message.replyData?.messageId ?: ""
+                                        )
+                                    }
+                                    .padding(
+                                        end = 8.dp
+                                    )
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(3.dp)
+                                        .height(41.dp)
+                                        .background(
+                                            color = Color(0xFF42C23A),
+                                        )
+                                )
+                                Spacer(modifier = Modifier.width(7.dp))
+                                if (message.replyData?.type == "sticker") {
+                                    Column(
+                                        verticalArrangement = Arrangement.Center
+                                    ) {
+                                        Text(
+                                            text = messageData.replyName,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp,
+                                            letterSpacing = -(0.23).sp,
+                                            color = Color(0xFF42C23A),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Text(
+                                            text = "Стикер",
+                                            fontFamily = SfProText,
+                                            fontWeight = FontWeight.Normal,
+                                            fontSize = 15.sp,
+                                            letterSpacing = -(0.23).sp,
+                                            color = Color.Black,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                } else if (message.replyData?.type == "text") {
+                                    message.replyData.content.let {
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = messageData.replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFF42C23A),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = it,
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color.Black,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                } else if (message.replyData?.type == "voice") {
+                                    message.replyData.content.let {
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = messageData.replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFF42C23A),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = "Голосовое сообщение",
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFF42C23A),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        val replyContent = message.replyData?.content
+                                        val isBase64 = remember(replyContent) {
+                                            !replyContent.isNullOrBlank() && replyContent.startsWith(
+                                                "data:image/jpeg;base64,"
+                                            )
+                                        }
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                        ) {
+                                            if (isBase64) {
+                                                val bitmap = remember(replyContent) {
+                                                    decodeBase64Image(replyContent)
+                                                }
+
+                                                if (bitmap != null) {
+                                                    Image(
+                                                        bitmap = bitmap.asImageBitmap(),
+                                                        contentDescription = "Превью изображения в ответе",
+                                                        contentScale = ContentScale.Crop,
+                                                    )
+                                                } else {
+                                                    PlaceholderContent()
+                                                }
+                                            } else {
+                                                AsyncImage(
+                                                    model = replyContent,
+                                                    contentDescription = "Превью изображения в ответе",
+                                                    contentScale = ContentScale.Crop,
+                                                    placeholder = painterResource(R.drawable.ic_avatar),
+                                                    error = painterResource(R.drawable.ic_avatar),
+                                                )
+                                            }
+                                        }
+                                        Spacer(modifier = Modifier.width(5.dp))
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = messageData.replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFF42C23A),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = "Фотография",
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFF42C23A),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                PlayButton(
+                                    isPlaying = isPlaying,
+                                    onClick = {
+                                        exoPlayer.togglePlay()
+                                    },
+                                    isMine = isMine,
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                message.recordingAmplitudes?.let { _ ->
+
+                                    val exactWaveformWidth = (animatedAmplitudes.size * 4).dp
+
+                                    Box(
+                                        modifier = Modifier
+                                            .widthIn(min = 45.dp, max = exactWaveformWidth)
+                                            .wrapContentHeight()
+                                    ) {
+                                        val spikeWidthDp = 2.dp
+                                        val spikePaddingDp = 2.dp
+                                        val minSpikeHeightDp = 2.dp
+                                        val maxSpikeHeightDp = 16.dp
+
+                                        val density =
+                                            androidx.compose.ui.platform.LocalDensity.current
+                                        val spikeWidthPx = with(density) { spikeWidthDp.toPx() }
+                                        val spikePaddingPx = with(density) { spikePaddingDp.toPx() }
+                                        val minSpikeHeightPx =
+                                            with(density) { minSpikeHeightDp.toPx() }
+                                        val maxSpikeHeightPx =
+                                            with(density) { maxSpikeHeightDp.toPx() }
+
+                                        val maxRawAmplitude = animatedAmplitudes.maxOrNull() ?: 1f
+
+                                        Column(
+                                            modifier = Modifier
+                                                .width(exactWaveformWidth)
+                                                .wrapContentHeight()
+                                        ) {
+                                            Canvas(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(maxSpikeHeightDp)
+                                            ) {
+                                                val canvasHeight = size.height
+                                                val progress =
+                                                    if (totalDurationMs > 0) currentPosition.toFloat() / totalDurationMs else 0f
+
+                                                val totalWaveformWidthPx =
+                                                    animatedAmplitudes.size * (spikeWidthPx +
+                                                            spikePaddingPx) - spikePaddingPx
+
+                                                val cornerRadiusPx = 1.dp.toPx()
+
+                                                val waveColor =
+                                                    if (isMine) Color(0xFF97D187) else Color.Gray
+                                                val playedColor =
+                                                    if (isMine) Color(0xFF42C23A) else Blue
+
+                                                val sharpProgressGradient = Brush.linearGradient(
+                                                    colorStops = arrayOf(
+                                                        0.0f to playedColor,
+                                                        progress to playedColor,
+                                                        (progress + 0.001f).coerceAtMost(1f) to waveColor,
+                                                        1.0f to waveColor
+                                                    ),
+                                                    start = androidx.compose.ui.geometry.Offset(
+                                                        0f,
+                                                        0f
+                                                    ),
+                                                    end = androidx.compose.ui.geometry.Offset(
+                                                        totalWaveformWidthPx,
+                                                        0f
+                                                    )
+                                                )
+
+                                                animatedHeights.forEachIndexed { index, amplitude ->
+                                                    val rawProgress = amplitude / maxRawAmplitude
+                                                    val spikeHeight =
+                                                        minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
+
+                                                    val spikeLeftX =
+                                                        index * (spikeWidthPx + spikePaddingPx)
+                                                    val y = canvasHeight - spikeHeight
+
+                                                    drawRoundRect(
+                                                        brush = sharpProgressGradient,
+                                                        topLeft = androidx.compose.ui.geometry.Offset(
+                                                            spikeLeftX,
+                                                            y
+                                                        ),
+                                                        size = androidx.compose.ui.geometry.Size(
+                                                            spikeWidthPx,
+                                                            spikeHeight
+                                                        ),
+                                                        cornerRadius = androidx.compose.ui.geometry.CornerRadius(
+                                                            cornerRadiusPx
+                                                        )
+                                                    )
+                                                }
+                                            }
+
+
+
+                                            Spacer(modifier = Modifier.height(5.dp))
+
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                val displayTimeMs =
+                                                    if (isPlaying) currentPosition else totalDurationMs
+                                                val minutes = (displayTimeMs / 1000) / 60
+                                                val seconds = (displayTimeMs / 1000) % 60
+
+                                                Text(
+                                                    text = String.format(
+                                                        LocalLocale.current.platformLocale,
+                                                        "%02d:%02d",
+                                                        minutes,
+                                                        seconds
+                                                    ),
+                                                    fontFamily = SfProText,
+                                                    fontWeight = FontWeight.Normal,
+                                                    fontSize = 11.sp,
+                                                    letterSpacing = -(0.43).sp,
+                                                    color = if (isMine) Color(0xFF42C23A) else Color.Gray,
+                                                )
+                                                Spacer(modifier = Modifier.width(5.dp))
+                                                if (message.status != "read") {
+                                                    Box(
+                                                        modifier = Modifier
+                                                            .size(4.dp)
+                                                            .clip(CircleShape)
+                                                            .background(
+                                                                color = if (isMine) Color(
+                                                                    0xFF42C23A
+                                                                ) else Blue
+                                                            )
+                                                    )
+                                                }
                                             }
                                         }
                                     }
