@@ -543,7 +543,7 @@ private fun EditMessageData(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            (editMessage as Message.Text).text?.let {
+            editMessage.text?.let {
                 Text(
                     text = it,
                     fontFamily = SfProText,
@@ -636,7 +636,31 @@ private fun ReplyMessageData(
                     )
                 }
             }
-
+            "voice" -> {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        text = replyName,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp,
+                        letterSpacing = -(0.23).sp,
+                        color = Blue,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = "Голосовое сообщение",
+                        fontFamily = SfProText,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 15.sp,
+                        letterSpacing = -(0.23).sp,
+                        color = Color.Black,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
             "text" -> {
                 Column(
                     verticalArrangement = Arrangement.Center
