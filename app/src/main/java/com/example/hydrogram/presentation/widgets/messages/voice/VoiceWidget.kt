@@ -16,13 +16,18 @@ import androidx.compose.material3.Icon
 import android.content.Context
 import android.text.format.DateFormat
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
@@ -697,8 +702,8 @@ fun VoiceReplyWidget(
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
 
-        val replyBgColor = if(!isMine) Color(0xFFFFEBD6) else Color(0xFFE2F7CA)
-        val replyMainColor = if(!isMine) Color(0xFFFDB86F) else Color(0xFF42C23A)
+        val replyBgColor = if (!isMine) Color(0xFFFFEBD6) else Color(0xFFE2F7CA)
+        val replyMainColor = if (!isMine) Color(0xFFFDB86F) else Color(0xFF42C23A)
 
         Box(
             modifier = Modifier
@@ -1243,11 +1248,23 @@ private fun PlayButton(
                 onClick()
             }
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_play),
-            contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.padding(start = 3.dp),
-        )
+        AnimatedContent(
+            targetState = isPlaying,
+            transitionSpec = {
+                (fadeIn(animationSpec = tween(220)) + scaleIn(initialScale = 0.6f)) togetherWith
+                        (fadeOut(animationSpec = tween(220)) + scaleOut(targetScale = 0.6f))
+            },
+            label = "PlayPauseAnimation"
+        ) { pause ->
+
+            Icon(
+                painter = painterResource(
+                    if (pause) R.drawable.ic_pause else R.drawable.ic_play
+                ),
+                contentDescription = null,
+                tint = Color.White,
+                modifier = Modifier.padding(start = if (isPlaying) 0.dp else 3.dp),
+            )
+        }
     }
 }
