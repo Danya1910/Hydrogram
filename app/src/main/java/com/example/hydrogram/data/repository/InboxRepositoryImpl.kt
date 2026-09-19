@@ -81,6 +81,7 @@ class InboxRepositoryImpl @Inject constructor(
                                                 "text" -> lastMsgDoc?.getString("text") ?: ""
                                                 "image" -> "Фотография"
                                                 "sticker" -> "Стикер"
+                                                "voice" -> "Голосовое сообщение"
                                                 else -> "Сообщение"
                                             }
 
