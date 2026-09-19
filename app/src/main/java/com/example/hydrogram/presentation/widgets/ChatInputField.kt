@@ -3,8 +3,10 @@ package com.example.hydrogram.presentation.widgets
 import android.util.Log
 import androidx.collection.buildLongLongMap
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -46,8 +48,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
@@ -59,6 +64,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.presentation.util.BlueGlassBackground
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.Blue
@@ -210,6 +216,42 @@ private fun SendButton(
     onRecordCancel: () -> Unit,
 ) {
 
+    val scaleAnimation by animateFloatAsState(
+        targetValue = if(isRecording) 1.5f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+
+    val animatedColorStart by animateColorAsState(
+        targetValue =
+            if (isRecording)  Blue.copy(alpha = 0.95f)
+            else Color(0xFFDDDDDD).copy(alpha = 1f),
+        animationSpec = tween(durationMillis = 200),
+        label = "GradientStart"
+    )
+
+    val animatedColorCenter by animateColorAsState(
+        targetValue =
+            if (isRecording) Blue.copy(alpha = 0.75f)
+            else Color(0xFFF7F7F7).copy(alpha = 1f),
+        animationSpec = tween(durationMillis = 200),
+        label = "GradientEnd"
+    )
+
+    val animatedColorEnd by animateColorAsState(
+        targetValue =
+            if (isRecording) Blue.copy(alpha = 0.88f)
+            else Color(0xFFFFFFFF).copy(alpha = 0.65f),
+        animationSpec = tween(durationMillis = 200),
+        label = "GradientEnd"
+    )
+
+    val dynamicBrush = Brush.linearGradient(
+        colors = listOf(animatedColorStart, animatedColorCenter, animatedColorEnd)
+    )
+
     if (isTextMessage) {
         Box(
             contentAlignment = Alignment.Center,
@@ -249,63 +291,57 @@ private fun SendButton(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
+                .graphicsLayer(
+                    scaleX = scaleAnimation, scaleY = scaleAnimation,
+                )
                 .size(42.dp)
                 .shadow(
                     elevation = 4.dp,
                     shape = CircleShape,
-                    clip = true,
+                    clip = false,
                     ambientColor = Color.Black.copy(alpha = 0.5f),
                     spotColor = Color.Black.copy(alpha = 0.4f),
                 )
-                .background(
-                    brush = GlassBackground,
-                    shape = CircleShape,
-                )
+                .drawBehind {
+                    drawCircle(brush = dynamicBrush)
+                }
                 .border(
                     width = 1.dp,
                     brush = GlassBorder,
                     shape = CircleShape,
                 )
                 .pointerInput(Unit) {
-                    // Используем корутины для отслеживания сырых касаний экрана
                     awaitEachGesture {
-                        // 1. Ожидаем, пока пользователь прикоснется к кнопке
                         val down = awaitFirstDown(requireUnconsumed = false)
 
-                        // Переключаем стейт в интерфейсе и стартуем физический рекордер
                         changeRecordState(true)
                         onRecordStart()
 
                         var isCanceled = false
 
-                        // 2. Запускаем цикл отслеживания пальца, пока он нажат
                         while (true) {
                             val event = awaitPointerEvent()
 
-                            // Если палец двигается, проверяем свайп отмены влево
                             if (event.type == PointerEventType.Move) {
                                 val pointer = event.changes.firstOrNull()
                                 if (pointer != null) {
-                                    // Координата X ушла влево дальше чем на 150 пикселей от кнопки
                                     if (pointer.position.x < -150f) {
                                         isCanceled = true
                                         changeRecordState(false)
-                                        onRecordCancel() // Вызываем отмену во ViewModel
-                                        break // Выходим из цикла, запись прервана
+                                        onRecordCancel()
+                                        break
                                     }
                                 }
                             }
 
-                            // ПАЛЕЦ ПОДНЯЛСЯ (Пользователь отпустил кнопку в любом месте экрана)
                             if (event.type == PointerEventType.Release) {
-                                break // Выходим из цикла, переходим к отправке
+                                break
                             }
                         }
 
-                        // 3. Финал: если запись не была отменена свайпом, отправляем её
                         if (!isCanceled) {
                             changeRecordState(false)
-                            onRecordStop() // ЭТОТ МЕТОД ТЕПЕРЬ ГАРАНТИРОВАННО ВЫЗОВЕТСЯ!
+                            onRecordStop()
                         }
                     }
                 },
