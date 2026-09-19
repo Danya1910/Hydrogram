@@ -694,6 +694,11 @@ private fun Content(
 
     var isRecording by remember { mutableStateOf(false) }
 
+    val bottomBarExtraPadding by animateDpAsState(
+        targetValue = if(isRecording) 12.dp else 0.dp,
+        animationSpec = tween(durationMillis = 200)
+    )
+
 
     Box(
         modifier = Modifier
@@ -2032,6 +2037,9 @@ private fun Content(
                             backgroundColor = Color.White.copy(alpha = 0.01f),
                             blurRadius = 6.dp
                         )
+                    )
+                    .padding(
+                        top = bottomBarExtraPadding,
                     )
                     .background(
                         brush = Brush.verticalGradient(
