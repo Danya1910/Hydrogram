@@ -840,7 +840,7 @@ private fun RecordingIndicator(
 
     val alpha by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 0.2f,
+        targetValue = 0.0f,
         animationSpec = infiniteRepeatable(
             animation = tween(durationMillis = 500, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
