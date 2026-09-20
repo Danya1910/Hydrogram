@@ -4,9 +4,14 @@ import android.util.Log
 import androidx.collection.buildLongLongMap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -21,6 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,12 +46,16 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -70,7 +80,10 @@ import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.LightBlack
+import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
+import kotlinx.coroutines.isActive
+import java.util.Locale
 
 
 @Composable
@@ -96,6 +109,31 @@ fun ChatInputField(
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
+
+    var elapsedTime by remember { mutableLongStateOf(0L) }
+
+    LaunchedEffect(isRecording) {
+        if (isRecording) {
+            val startTime = System.currentTimeMillis() - elapsedTime
+            while (isActive) {
+                withFrameMillis { frameTimeMillis ->
+                    elapsedTime = System.currentTimeMillis() - startTime
+                }
+            }
+        } else {
+            elapsedTime = 0L
+        }
+    }
+
+    val formattedTime = remember(elapsedTime) {
+        val minutes = (elapsedTime / 60000) % 60
+        val seconds = (elapsedTime / 1000) % 60
+        val millis = (elapsedTime % 1000) / 10
+
+        val minutesFormat = if (minutes < 10) "%1d" else "%02d"
+
+        String.format(Locale.US, "$minutesFormat:%02d,%02d", minutes, seconds, millis)
+    }
 
     Log.d("ChatInput", "currentEditingMessage: $editingMessage, replyMessage: $replyMessage")
 
@@ -139,6 +177,8 @@ fun ChatInputField(
                 onCancelEditClick = {
                     onCancelEditClick()
                 },
+                isRecording = isRecording,
+                formattedTime = formattedTime,
             )
             Spacer(modifier = Modifier.width(6.dp))
             SendButton(
@@ -217,7 +257,7 @@ private fun SendButton(
 ) {
 
     val scaleAnimation by animateFloatAsState(
-        targetValue = if(isRecording) 1.5f else 1f,
+        targetValue = if (isRecording) 1.5f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -226,7 +266,7 @@ private fun SendButton(
 
     val animatedColorStart by animateColorAsState(
         targetValue =
-            if (isRecording)  Blue.copy(alpha = 0.95f)
+            if (isRecording) Blue.copy(alpha = 0.95f)
             else Color(0xFFDDDDDD).copy(alpha = 1f),
         animationSpec = tween(durationMillis = 200),
         label = "GradientStart"
@@ -370,6 +410,8 @@ private fun MessageInputField(
     onReplyMessageClick: (String) -> Unit,
     editingMessage: Message?,
     onCancelEditClick: () -> Unit,
+    isRecording: Boolean,
+    formattedTime: String,
 ) {
 
 
@@ -403,130 +445,145 @@ private fun MessageInputField(
                 shape = RoundedCornerShape(21.dp)
             )
     ) {
-        Column(
-            verticalArrangement = Arrangement.SpaceAround,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    vertical = 4.dp
-                )
-        ) {
-
-            AnimatedVisibility(
-                visible = isEditing && editingMessage is Message.Text,
-                enter = fadeIn(
-                    animationSpec = tween(300, delayMillis = 50)
-                ) + slideInVertically(
-                    initialOffsetY = { -it / 2 },
-                    animationSpec = tween(300, delayMillis = 50)
-                ) + scaleIn(
-                    initialScale = 0.9f,
-                    animationSpec = tween(300, delayMillis = 50)
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(200)
-                ) + slideOutVertically(
-                    targetOffsetY = { -it / 2 },
-                    animationSpec = tween(200)
-                ) + scaleOut(
-                    targetScale = 0.9f,
-                    animationSpec = tween(200)
-                )
-            ) {
-                Log.d("ChatInput", "editingMessage: $editingMessage")
-                EditMessageData(
-                    editMessage = editingMessage,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .padding(bottom = 6.dp),
-                    onCancelEditClick = { onCancelEditClick() },
-                )
-            }
-
-            AnimatedVisibility(
-                visible = isExpanded,
-                enter = fadeIn(
-                    animationSpec = tween(300, delayMillis = 50)
-                ) + slideInVertically(
-                    initialOffsetY = { -it / 2 },
-                    animationSpec = tween(300, delayMillis = 50)
-                ) + scaleIn(
-                    initialScale = 0.9f,
-                    animationSpec = tween(300, delayMillis = 50)
-                ),
-                exit = fadeOut(
-                    animationSpec = tween(200)
-                ) + slideOutVertically(
-                    targetOffsetY = { -it / 2 },
-                    animationSpec = tween(200)
-                ) + scaleOut(
-                    targetScale = 0.9f,
-                    animationSpec = tween(200)
-                )
-            ) {
-                Log.d("ChatInput", "replyMessage: $replyMessage")
-                ReplyMessageData(
-                    replyMessage = replyMessage,
-                    replyName = replyName,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .padding(bottom = 6.dp),
-                    onCancelClick = { onCancelClick() },
-                    onReplyMessageClick = { messageId ->
-                        onReplyMessageClick(messageId)
-                    }
-                )
-            }
-            BasicTextField(
-                value = inputText,
-                onValueChange = onValueChange,
-                textStyle = TextStyle(
-                    fontFamily = SfProText,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Normal,
-                    color = Color.Black
-                ),
-                decorationBox = { innerTextField ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                        ) {
-                            if (inputText.isEmpty()) {
-                                Text(
-                                    text = "Сообщение",
-                                    fontFamily = SfProText,
-                                    fontSize = 17.sp,
-                                    color = Color.Gray.copy(alpha = 0.8f)
-                                )
-                            }
-                            innerTextField()
-                        }
-                        Icon(
-                            painter = painterResource(R.drawable.ic_sticker),
-                            contentDescription = null,
-                            tint = Gray,
-                            modifier = Modifier
-                                .clickable {
-                                    onStickerClick()
-                                }
-                        )
-                    }
-                },
+        if (isRecording) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .shadow(
-                        elevation = 4.dp,
-                        shape = CircleShape,
-                        clip = true,
-                        ambientColor = Color.Black.copy(alpha = 0.5f),
-                        spotColor = Color.Black.copy(alpha = 0.4f),
+                    .fillMaxSize()
+                    .padding(horizontal = 10.dp)
+            ) {
+                RecordingIndicator()
+                Spacer(modifier = Modifier.width(25.dp))
+                RecordingTime(
+                    formattedTime = formattedTime,
+                )
+            }
+        } else {
+            Column(
+                verticalArrangement = Arrangement.SpaceAround,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        vertical = 4.dp
+                    )
+            ) {
+
+                AnimatedVisibility(
+                    visible = isEditing && editingMessage is Message.Text,
+                    enter = fadeIn(
+                        animationSpec = tween(300, delayMillis = 50)
+                    ) + slideInVertically(
+                        initialOffsetY = { -it / 2 },
+                        animationSpec = tween(300, delayMillis = 50)
+                    ) + scaleIn(
+                        initialScale = 0.9f,
+                        animationSpec = tween(300, delayMillis = 50)
                     ),
-            )
+                    exit = fadeOut(
+                        animationSpec = tween(200)
+                    ) + slideOutVertically(
+                        targetOffsetY = { -it / 2 },
+                        animationSpec = tween(200)
+                    ) + scaleOut(
+                        targetScale = 0.9f,
+                        animationSpec = tween(200)
+                    )
+                ) {
+                    Log.d("ChatInput", "editingMessage: $editingMessage")
+                    EditMessageData(
+                        editMessage = editingMessage,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .padding(bottom = 6.dp),
+                        onCancelEditClick = { onCancelEditClick() },
+                    )
+                }
+
+                AnimatedVisibility(
+                    visible = isExpanded,
+                    enter = fadeIn(
+                        animationSpec = tween(300, delayMillis = 50)
+                    ) + slideInVertically(
+                        initialOffsetY = { -it / 2 },
+                        animationSpec = tween(300, delayMillis = 50)
+                    ) + scaleIn(
+                        initialScale = 0.9f,
+                        animationSpec = tween(300, delayMillis = 50)
+                    ),
+                    exit = fadeOut(
+                        animationSpec = tween(200)
+                    ) + slideOutVertically(
+                        targetOffsetY = { -it / 2 },
+                        animationSpec = tween(200)
+                    ) + scaleOut(
+                        targetScale = 0.9f,
+                        animationSpec = tween(200)
+                    )
+                ) {
+                    Log.d("ChatInput", "replyMessage: $replyMessage")
+                    ReplyMessageData(
+                        replyMessage = replyMessage,
+                        replyName = replyName,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .padding(bottom = 6.dp),
+                        onCancelClick = { onCancelClick() },
+                        onReplyMessageClick = { messageId ->
+                            onReplyMessageClick(messageId)
+                        }
+                    )
+                }
+                BasicTextField(
+                    value = inputText,
+                    onValueChange = onValueChange,
+                    textStyle = TextStyle(
+                        fontFamily = SfProText,
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.Normal,
+                        color = Color.Black
+                    ),
+                    decorationBox = { innerTextField ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                            ) {
+                                if (inputText.isEmpty()) {
+                                    Text(
+                                        text = "Сообщение",
+                                        fontFamily = SfProText,
+                                        fontSize = 17.sp,
+                                        color = Color.Gray.copy(alpha = 0.8f)
+                                    )
+                                }
+                                innerTextField()
+                            }
+                            Icon(
+                                painter = painterResource(R.drawable.ic_sticker),
+                                contentDescription = null,
+                                tint = Gray,
+                                modifier = Modifier
+                                    .clickable {
+                                        onStickerClick()
+                                    }
+                            )
+                        }
+                    },
+                    modifier = Modifier
+                        .shadow(
+                            elevation = 4.dp,
+                            shape = CircleShape,
+                            clip = true,
+                            ambientColor = Color.Black.copy(alpha = 0.5f),
+                            spotColor = Color.Black.copy(alpha = 0.4f),
+                        ),
+                )
+            }
         }
     }
 }
@@ -672,6 +729,7 @@ private fun ReplyMessageData(
                     )
                 }
             }
+
             "voice" -> {
                 Column(
                     verticalArrangement = Arrangement.Center,
@@ -697,6 +755,7 @@ private fun ReplyMessageData(
                     )
                 }
             }
+
             "text" -> {
                 Column(
                     verticalArrangement = Arrangement.Center
@@ -767,4 +826,48 @@ private fun ReplyMessageData(
                 }
         )
     }
+}
+
+@Composable
+private fun RecordingIndicator(
+) {
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val alpha by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 0.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    Box(
+        modifier = Modifier
+            .size(10.dp)
+            .clip(
+                shape = CircleShape
+            )
+            .alpha(
+                alpha = alpha,
+            )
+            .background(
+                color = Red,
+            )
+    )
+}
+
+@Composable
+private fun RecordingTime(
+    formattedTime: String,
+) {
+
+    Text(
+        text = formattedTime,
+        fontWeight = FontWeight.Normal,
+        fontSize = 15.sp,
+        fontFamily = SfProText,
+        color = LightBlack,
+    )
+
 }
