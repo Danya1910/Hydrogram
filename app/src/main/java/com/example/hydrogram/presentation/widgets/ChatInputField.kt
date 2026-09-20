@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.collection.buildLongLongMap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -40,6 +41,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -65,6 +67,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -457,6 +460,8 @@ private fun MessageInputField(
                 RecordingTime(
                     formattedTime = formattedTime,
                 )
+                Spacer(modifier = Modifier.width(16.dp))
+                HelpText()
             }
         } else {
             Column(
@@ -869,5 +874,49 @@ private fun RecordingTime(
         fontFamily = SfProText,
         color = LightBlack,
     )
+
+}
+
+
+@Composable
+private fun HelpText() {
+
+    val infiniteTransition = rememberInfiniteTransition()
+
+    val animation by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(
+                durationMillis = 1500,
+                easing = FastOutSlowInEasing,
+            ),
+            repeatMode = RepeatMode.Reverse,
+        )
+    )
+
+    val density = LocalDensity.current
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .graphicsLayer{
+                translationX = animation * density.density
+            }
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_arrow_left),
+            contentDescription = null,
+            tint = LightBlack,
+        )
+        Spacer(modifier = Modifier.width(7.dp))
+        Text(
+            text = "Влево - отмена",
+            fontFamily = SfProText,
+            fontWeight = FontWeight.Normal,
+            fontSize = 15.sp,
+            color = LightBlack,
+        )
+    }
 
 }
