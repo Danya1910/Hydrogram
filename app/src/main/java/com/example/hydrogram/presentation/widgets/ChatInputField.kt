@@ -71,6 +71,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
@@ -194,24 +195,46 @@ fun ChatInputField(
                 formattedTime = formattedTime,
                 isTextMessage = isTextMessage,
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            SendButton(
-                onSendClick = onSendClick,
-                isTextMessage = isTextMessage,
-                isRecording = isRecording,
-                changeRecordState = {
-                    changeRecordState(it)
-                },
-                onRecordStart = {
-                    onRecordStart()
-                },
-                onRecordStop = {
-                    onRecordStop()
-                },
-                onRecordCancel = {
-                    onRecordCancel()
-                },
-            )
+            AnimatedVisibility(
+                visible = !isTextMessage,
+                enter = expandHorizontally(
+                    expandFrom = Alignment.Start,
+                    animationSpec = tween(200, easing = FastOutSlowInEasing)
+                ) + scaleIn(
+                    initialScale = 0.7f,
+                    transformOrigin = TransformOrigin(0f, 0.5f),  // растёт от левого края
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow
+                    )
+                ) + fadeIn(tween(150)),
+                exit = shrinkHorizontally(
+                    shrinkTowards = Alignment.Start,
+                    animationSpec = tween(150)
+                ) + scaleOut(
+                    targetScale = 0.7f,
+                    transformOrigin = TransformOrigin(0f, 0.5f),
+                    animationSpec = tween(150)
+                ) + fadeOut(tween(100)),
+            ) {
+                SendButton(
+                    onSendClick = onSendClick,
+                    isTextMessage = isTextMessage,
+                    isRecording = isRecording,
+                    changeRecordState = {
+                        changeRecordState(it)
+                    },
+                    onRecordStart = {
+                        onRecordStart()
+                    },
+                    onRecordStop = {
+                        onRecordStop()
+                    },
+                    onRecordCancel = {
+                        onRecordCancel()
+                    },
+                )
+            }
         }
     }
 
@@ -277,13 +300,6 @@ private fun SendButton(
         )
     )
 
-    val boxWidthAnimation by animateDpAsState(
-        targetValue = if (isTextMessage) 44.dp else 42.dp,
-        spring(
-            Spring.DampingRatioMediumBouncy,
-        )
-    )
-
     val animatedColorStart by animateColorAsState(
         targetValue =
             if (isRecording) Blue.copy(alpha = 0.95f)
@@ -340,6 +356,7 @@ private fun SendButton(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
+            .padding(start = 8.dp)
             .graphicsLayer(
                 scaleX = finalScale,
                 scaleY = finalScale,
@@ -599,21 +616,24 @@ private fun MessageInputField(
                             AnimatedVisibility(
                                 visible = isTextMessage,
                                 enter = expandHorizontally(
-                                    expandFrom = Alignment.Start,
+                                    expandFrom = Alignment.End,
+                                    animationSpec = tween(200, easing = FastOutSlowInEasing)
+                                ) + scaleIn(
+                                    initialScale = 0.8f,
                                     animationSpec = spring(
                                         dampingRatio = Spring.DampingRatioMediumBouncy,
                                         stiffness = Spring.StiffnessLow
                                     )
-                                ) + fadeIn(animationSpec = tween(150)),
+                                ) + fadeIn(tween(150)),
                                 exit = shrinkHorizontally(
-                                    shrinkTowards = Alignment.Start,
+                                    shrinkTowards = Alignment.End,
                                     animationSpec = tween(150)
                                 ) + fadeOut(animationSpec = tween(100)),
                             ) {
-                                Spacer(modifier = Modifier.width(8.dp))
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier
+                                        .padding(start = 8.dp)
                                         .width(44.dp)
                                         .height(36.dp)
                                         .clip(
