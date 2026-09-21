@@ -1,5 +1,6 @@
 package com.example.hydrogram.presentation.viewModel
 
+import android.content.Context
 import android.net.Uri
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
@@ -18,6 +19,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +37,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val getUserByIdUseCase: GetUserByIdUseCase,
     private val saveUserProfileUseCase: SaveUserProfileUseCase,
     private val getCurrentUserIdUseCase: GetCurrentUserIdUseCase,
@@ -231,21 +234,38 @@ class UserViewModel @Inject constructor(
         if (_isSaving.value) return
         viewModelScope.launch {
 
+
             _isSaving.value = true
             _isLoading.value = true
             _isSuccess.value = false
 
-            val result = changeAvatarUseCase(
-                uid = uid,
-                imageUri = imageUri
-            )
+            try {
+                val type = context.contentResolver.getType(imageUri) ?: "image/jpeg"
 
-            _isSaving.value = false
-            _isLoading.value = false
+                val imageBytes =
+                    context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+                        inputStream.readBytes()
+                    } ?: throw Exception("Не удалось прочитать файл")
 
-            result
-                .onSuccess { _isSuccess.value = true }
-                .onFailure { _errorMessage.value = "Ошибка обновления аватара" }
+                val result = changeAvatarUseCase(
+                    imageBytes = imageBytes,
+                    uid = uid,
+                    type = type,
+                )
+
+                _isSaving.value = false
+                _isLoading.value = false
+
+                result
+                    .onSuccess { _isSuccess.value = true }
+                    .onFailure { _errorMessage.value = "Ошибка обновления аватара" }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _errorMessage.value = "Не удалось обработать выбранное изображение"
+            } finally {
+                _isSaving.value = false
+                _isLoading.value = false
+            }
         }
     }
 
