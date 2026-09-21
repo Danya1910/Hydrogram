@@ -204,7 +204,7 @@ fun ChatInputField(
                     initialScale = 0.7f,
                     transformOrigin = TransformOrigin(0f, 0.5f),  // растёт от левого края
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        dampingRatio = Spring.DampingRatioLowBouncy,
                         stiffness = Spring.StiffnessLow
                     )
                 ) + fadeIn(tween(150)),
