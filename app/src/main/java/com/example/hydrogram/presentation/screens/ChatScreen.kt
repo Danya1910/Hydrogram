@@ -695,7 +695,7 @@ private fun Content(
     var isRecording by remember { mutableStateOf(false) }
 
     val bottomBarExtraPadding by animateDpAsState(
-        targetValue = if(isRecording) 12.dp else 0.dp,
+        targetValue = if(isRecording) 17.dp else 0.dp,
         animationSpec = tween(durationMillis = 200)
     )
 

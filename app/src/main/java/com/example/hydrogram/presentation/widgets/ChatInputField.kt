@@ -290,7 +290,7 @@ private fun SendButton(
 ) {
 
     val scaleAnimation by animateFloatAsState(
-        targetValue = if (isRecording) 1.5f else 1f,
+        targetValue = if (isRecording) 1.62f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
