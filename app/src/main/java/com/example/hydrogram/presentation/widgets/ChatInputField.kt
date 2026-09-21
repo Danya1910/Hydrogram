@@ -9,6 +9,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -218,8 +219,6 @@ fun ChatInputField(
                 ) + fadeOut(tween(100)),
             ) {
                 SendButton(
-                    onSendClick = onSendClick,
-                    isTextMessage = isTextMessage,
                     isRecording = isRecording,
                     changeRecordState = {
                         changeRecordState(it)
@@ -283,8 +282,6 @@ private fun AttachButton(
 
 @Composable
 private fun SendButton(
-    onSendClick: () -> Unit,
-    isTextMessage: Boolean,
     isRecording: Boolean,
     changeRecordState: (Boolean) -> Unit,
     onRecordStart: () -> Unit,
@@ -298,6 +295,11 @@ private fun SendButton(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
         )
+    )
+
+    val animatedIconColor by animateColorAsState(
+        targetValue = if(isRecording) Color.White else LightBlack,
+        animationSpec = tween(durationMillis = 200),
     )
 
     val animatedColorStart by animateColorAsState(
@@ -431,7 +433,7 @@ private fun SendButton(
         Icon(
             painter = painterResource(R.drawable.ic_microphone),
             contentDescription = null,
-            tint = Color.Black,
+            tint = animatedIconColor,
         )
     }
 }
@@ -647,6 +649,9 @@ private fun MessageInputField(
                                             brush = BlueGlassBorder,
                                             shape = CircleShape,
                                         )
+                                        .clickable{
+                                            onSendClick()
+                                        }
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.ic_send_plane),
