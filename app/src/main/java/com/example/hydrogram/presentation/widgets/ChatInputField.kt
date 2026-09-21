@@ -309,10 +309,6 @@ private fun SendButton(
     val haptic = LocalHapticFeedback.current
     var isHapticTriggered by remember { mutableStateOf(false) }
 
-    val dragProgress = if(cancelThresholdPx != 0f) {
-        (dragOffset / cancelThresholdPx + criticalLevelOfDecreasePx).coerceIn(0f,1f)
-    } else 0f
-
     val animatedOffset by animateFloatAsState(
         targetValue = dragOffset,
         animationSpec = if (dragOffset == 0f) {
@@ -322,7 +318,11 @@ private fun SendButton(
         },
     )
 
-    val finalScale = scaleAnimation + (1f - scaleAnimation) * dragProgress
+    val dragProgress = if (criticalLevelOfDecreasePx != 0f) {
+        (animatedOffset / criticalLevelOfDecreasePx).coerceIn(0f, 1f)
+    } else 0f
+
+    val finalScale = scaleAnimation + (0.9f - scaleAnimation) * dragProgress
 
     if (isTextMessage) {
         Box(
@@ -403,7 +403,6 @@ private fun SendButton(
                                     dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
 
                                     if (dragOffset <= cancelThresholdPx) {
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         isCanceled = true
                                         change.consume()
                                         break
@@ -424,6 +423,7 @@ private fun SendButton(
                         if (isCanceled) {
                             changeRecordState(false)
                             onRecordCancel()
+                            haptic.performHapticFeedback(HapticFeedbackType.Reject)
                         } else {
                             changeRecordState(false)
                             onRecordStop()
