@@ -11,52 +11,29 @@ import java.io.ByteArrayOutputStream
 import javax.inject.Inject
 import android.net.Uri
 import android.util.Base64
+import com.example.hydrogram.domain.repository.StorageRepository
 
 class ChangeAvatarUseCase @Inject constructor(
-    @ApplicationContext private val context: Context,
     private val userRepository: UserRepository,
+    private val storageRepository: StorageRepository,
 ) {
 
     suspend operator fun invoke(
+        imageBytes: ByteArray,
         uid: String,
-        imageUri: Uri,
+        type: String,
     ) : Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val inputStream = context.contentResolver.openInputStream(imageUri)
-            val originalBitmap = BitmapFactory.decodeStream(inputStream)
-            inputStream?.close()
 
-            if (originalBitmap == null) {
-                return@withContext Result.failure(Exception("Не удалось прочитать изображение"))
-            }
+            val imageUrl = storageRepository.uploadAvatar(
+                imageBytes = imageBytes,
+                userId = uid,
+                type = type,
+            )
 
-            val maxSideTarget = 1280f
-            val width = originalBitmap.width
-            val height = originalBitmap.height
+            userRepository.changeAvatar(uid = uid, avatarString = imageUrl)
 
-            val scaleFactor = if (width > height) {
-                maxSideTarget / width
-            } else {
-                maxSideTarget / height
-            }
-
-            val finalWidth = if (scaleFactor < 1f) (width * scaleFactor).toInt() else width
-            val finalHeight = if (scaleFactor < 1f) (height * scaleFactor).toInt() else height
-
-            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
-            val outputStream = ByteArrayOutputStream()
-
-            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
-            val byteArray = outputStream.toByteArray()
-
-            originalBitmap.recycle()
-            scaledBitmap.recycle()
-
-            val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-            val finalAvatarDataString = "data:image/jpeg;base64,$base64String"
-
-            userRepository.changeAvatar(uid = uid, avatarString = finalAvatarDataString)
-
+            Result.success(Unit)
 
         } catch (e: Exception) {
             e.printStackTrace()
