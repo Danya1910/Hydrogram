@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.collection.buildLongLongMap
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -271,6 +272,13 @@ private fun SendButton(
         )
     )
 
+    val boxWidthAnimation by animateDpAsState(
+        targetValue = if(isTextMessage) 44.dp else 42.dp,
+        spring(
+            Spring.DampingRatioMediumBouncy,
+        )
+    )
+
     val animatedColorStart by animateColorAsState(
         targetValue =
             if (isRecording) Blue.copy(alpha = 0.95f)
@@ -328,7 +336,7 @@ private fun SendButton(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .width(44.dp)
+                .width(boxWidthAnimation)
                 .height(42.dp)
                 .shadow(
                     elevation = 4.dp,
