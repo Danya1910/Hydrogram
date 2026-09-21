@@ -27,6 +27,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,9 +67,11 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -295,6 +299,31 @@ private fun SendButton(
         colors = listOf(animatedColorStart, animatedColorCenter, animatedColorEnd)
     )
 
+    val density = LocalDensity.current
+
+    val cancelThresholdPx = with(density) { (-100).dp.toPx() }
+    val criticalLevelOfDecreasePx = with(density) { (-80).dp.toPx() }
+
+    var dragOffset by remember { mutableFloatStateOf(0f) }
+
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val dragProgress = if(cancelThresholdPx != 0f) {
+        (dragOffset / cancelThresholdPx + criticalLevelOfDecreasePx).coerceIn(0f,1f)
+    } else 0f
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = dragOffset,
+        animationSpec = if (dragOffset == 0f) {
+            spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow)
+        } else {
+            tween(durationMillis = 0)
+        },
+    )
+
+    val finalScale = scaleAnimation + (1f - scaleAnimation) * dragProgress
+
     if (isTextMessage) {
         Box(
             contentAlignment = Alignment.Center,
@@ -335,7 +364,9 @@ private fun SendButton(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .graphicsLayer(
-                    scaleX = scaleAnimation, scaleY = scaleAnimation,
+                    scaleX = finalScale,
+                    scaleY = finalScale,
+                    translationX = animatedOffset,
                 )
                 .size(42.dp)
                 .shadow(
@@ -355,7 +386,7 @@ private fun SendButton(
                 )
                 .pointerInput(Unit) {
                     awaitEachGesture {
-                        val down = awaitFirstDown(requireUnconsumed = false)
+                        awaitFirstDown(requireUnconsumed = false)
 
                         changeRecordState(true)
                         onRecordStart()
@@ -364,28 +395,42 @@ private fun SendButton(
 
                         while (true) {
                             val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull() ?: break
 
-                            if (event.type == PointerEventType.Move) {
-                                val pointer = event.changes.firstOrNull()
-                                if (pointer != null) {
-                                    if (pointer.position.x < -150f) {
+                            when (event.type) {
+                                PointerEventType.Move -> {
+                                    val delta = change.position.x - change.previousPosition.x
+                                    dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
+
+                                    if (dragOffset <= cancelThresholdPx) {
+                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                         isCanceled = true
-                                        changeRecordState(false)
-                                        onRecordCancel()
+                                        change.consume()
                                         break
                                     }
-                                }
-                            }
 
-                            if (event.type == PointerEventType.Release) {
-                                break
+                                    change.consume()
+                                }
+
+                                PointerEventType.Release -> {
+                                    if (dragOffset <= cancelThresholdPx) {
+                                        isCanceled = true
+                                    }
+                                    break
+                                }
                             }
                         }
 
-                        if (!isCanceled) {
+                        if (isCanceled) {
+                            changeRecordState(false)
+                            onRecordCancel()
+                        } else {
                             changeRecordState(false)
                             onRecordStop()
                         }
+
+                        dragOffset = 0f
+                        isHapticTriggered = false
                     }
                 },
         ) {
