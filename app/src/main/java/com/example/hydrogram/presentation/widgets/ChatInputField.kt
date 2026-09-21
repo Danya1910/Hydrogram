@@ -16,10 +16,12 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
@@ -60,11 +62,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameMillis
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.autofill.contentType
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -83,6 +87,7 @@ import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.util.BlueGlassBackground
+import com.example.hydrogram.presentation.util.BlueGlassBorder
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.ui.theme.Blue
@@ -187,6 +192,7 @@ fun ChatInputField(
                 },
                 isRecording = isRecording,
                 formattedTime = formattedTime,
+                isTextMessage = isTextMessage,
             )
             Spacer(modifier = Modifier.width(6.dp))
             SendButton(
@@ -194,7 +200,6 @@ fun ChatInputField(
                 isTextMessage = isTextMessage,
                 isRecording = isRecording,
                 changeRecordState = {
-                    it
                     changeRecordState(it)
                 },
                 onRecordStart = {
@@ -273,7 +278,7 @@ private fun SendButton(
     )
 
     val boxWidthAnimation by animateDpAsState(
-        targetValue = if(isTextMessage) 44.dp else 42.dp,
+        targetValue = if (isTextMessage) 44.dp else 42.dp,
         spring(
             Spring.DampingRatioMediumBouncy,
         )
@@ -332,122 +337,85 @@ private fun SendButton(
 
     val finalScale = scaleAnimation + (0.9f - scaleAnimation) * dragProgress
 
-    if (isTextMessage) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .width(boxWidthAnimation)
-                .height(42.dp)
-                .shadow(
-                    elevation = 4.dp,
-                    shape = CircleShape,
-                    clip = true,
-                    ambientColor = Color.Black.copy(alpha = 0.5f),
-                    spotColor = Color.Black.copy(alpha = 0.4f),
-                )
-                .background(
-                    color = Blue,
-                    shape = CircleShape,
-                )
-                .border(
-                    width = 1.dp,
-                    color = Blue,
-                    shape = CircleShape,
-                )
-                .clip(
-                    shape = CircleShape
-                )
-                .clickable {
-                    onSendClick()
-                },
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_send_plane),
-                contentDescription = null,
-                tint = Color.White,
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .graphicsLayer(
+                scaleX = finalScale,
+                scaleY = finalScale,
+                translationX = animatedOffset,
             )
-        }
-    } else {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .graphicsLayer(
-                    scaleX = finalScale,
-                    scaleY = finalScale,
-                    translationX = animatedOffset,
-                )
-                .size(42.dp)
-                .shadow(
-                    elevation = 4.dp,
-                    shape = CircleShape,
-                    clip = false,
-                    ambientColor = Color.Black.copy(alpha = 0.5f),
-                    spotColor = Color.Black.copy(alpha = 0.4f),
-                )
-                .drawBehind {
-                    drawCircle(brush = dynamicBrush)
-                }
-                .border(
-                    width = 1.dp,
-                    brush = GlassBorder,
-                    shape = CircleShape,
-                )
-                .pointerInput(Unit) {
-                    awaitEachGesture {
-                        awaitFirstDown(requireUnconsumed = false)
+            .size(42.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = CircleShape,
+                clip = false,
+                ambientColor = Color.Black.copy(alpha = 0.5f),
+                spotColor = Color.Black.copy(alpha = 0.4f),
+            )
+            .drawBehind {
+                drawCircle(brush = dynamicBrush)
+            }
+            .border(
+                width = 1.dp,
+                brush = GlassBorder,
+                shape = CircleShape,
+            )
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
 
-                        changeRecordState(true)
-                        onRecordStart()
+                    changeRecordState(true)
+                    onRecordStart()
 
-                        var isCanceled = false
+                    var isCanceled = false
 
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            val change = event.changes.firstOrNull() ?: break
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull() ?: break
 
-                            when (event.type) {
-                                PointerEventType.Move -> {
-                                    val delta = change.position.x - change.previousPosition.x
-                                    dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
+                        when (event.type) {
+                            PointerEventType.Move -> {
+                                val delta = change.position.x - change.previousPosition.x
+                                dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
 
-                                    if (dragOffset <= cancelThresholdPx) {
-                                        isCanceled = true
-                                        change.consume()
-                                        break
-                                    }
-
+                                if (dragOffset <= cancelThresholdPx) {
+                                    isCanceled = true
                                     change.consume()
-                                }
-
-                                PointerEventType.Release -> {
-                                    if (dragOffset <= cancelThresholdPx) {
-                                        isCanceled = true
-                                    }
                                     break
                                 }
+
+                                change.consume()
+                            }
+
+                            PointerEventType.Release -> {
+                                if (dragOffset <= cancelThresholdPx) {
+                                    isCanceled = true
+                                }
+                                break
                             }
                         }
-
-                        if (isCanceled) {
-                            changeRecordState(false)
-                            onRecordCancel()
-                            haptic.performHapticFeedback(HapticFeedbackType.Reject)
-                        } else {
-                            changeRecordState(false)
-                            onRecordStop()
-                        }
-
-                        dragOffset = 0f
-                        isHapticTriggered = false
                     }
-                },
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_microphone),
-                contentDescription = null,
-                tint = Color.Black,
-            )
-        }
+
+                    if (isCanceled) {
+                        changeRecordState(false)
+                        onRecordCancel()
+                        haptic.performHapticFeedback(HapticFeedbackType.Reject)
+                    } else {
+                        changeRecordState(false)
+                        onRecordStop()
+                    }
+
+                    dragOffset = 0f
+                    isHapticTriggered = false
+                }
+            },
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_microphone),
+            contentDescription = null,
+            tint = Color.Black,
+        )
     }
 }
 
@@ -468,8 +436,8 @@ private fun MessageInputField(
     onCancelEditClick: () -> Unit,
     isRecording: Boolean,
     formattedTime: String,
+    isTextMessage: Boolean,
 ) {
-
 
     val inputHeight by animateDpAsState(
         targetValue = when {
@@ -480,12 +448,10 @@ private fun MessageInputField(
         animationSpec = tween(durationMillis = 300),
     )
 
-
     Log.d(
         "ChatInput",
         "currentEditingMessage: $editingMessage, replyMessage: $replyMessage, isEditing: $isEditing"
     )
-
 
     Box(
         contentAlignment = Alignment.CenterStart,
@@ -630,6 +596,45 @@ private fun MessageInputField(
                                         onStickerClick()
                                     }
                             )
+                            AnimatedVisibility(
+                                visible = isTextMessage,
+                                enter = expandHorizontally(
+                                    expandFrom = Alignment.Start,
+                                    animationSpec = spring(
+                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                        stiffness = Spring.StiffnessLow
+                                    )
+                                ) + fadeIn(animationSpec = tween(150)),
+                                exit = shrinkHorizontally(
+                                    shrinkTowards = Alignment.Start,
+                                    animationSpec = tween(150)
+                                ) + fadeOut(animationSpec = tween(100)),
+                            ) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .width(44.dp)
+                                        .height(36.dp)
+                                        .clip(
+                                            shape = CircleShape
+                                        )
+                                        .background(
+                                            brush = BlueGlassBackground
+                                        )
+                                        .border(
+                                            width = 1.dp,
+                                            brush = BlueGlassBorder,
+                                            shape = CircleShape,
+                                        )
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_send_plane),
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                    )
+                                }
+                            }
                         }
                     },
                     modifier = Modifier
@@ -953,7 +958,7 @@ private fun HelpText() {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
-            .graphicsLayer{
+            .graphicsLayer {
                 translationX = animation * density.density
             }
     ) {
