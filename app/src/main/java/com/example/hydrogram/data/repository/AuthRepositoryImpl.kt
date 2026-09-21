@@ -1,9 +1,9 @@
 package com.example.hydrogram.data.repository
 
 import android.util.Log
-import com.example.hydrogram.data.Util.generateAvatarBitmap
-import com.example.hydrogram.domain.model.User
+import com.example.hydrogram.data.Util.generateAvatarBytes
 import com.example.hydrogram.domain.repository.AuthRepository
+import com.example.hydrogram.domain.repository.StorageRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
@@ -12,7 +12,8 @@ import javax.inject.Inject
 
 class AuthRepositoryImpl @Inject constructor(
     private val auth: FirebaseAuth,
-    private val firestore: FirebaseFirestore
+    private val firestore: FirebaseFirestore,
+    private val storageRepository: StorageRepository,
 ) : AuthRepository {
 
     override suspend fun signIn(email: String, password: String): Result<Unit> = runCatching {
@@ -58,14 +59,21 @@ class AuthRepositoryImpl @Inject constructor(
         val authResult = auth.createUserWithEmailAndPassword(email, password).await()
         val uid = authResult.user?.uid ?: throw Exception("User creation failed")
 
-        val generatedAvatar = generateAvatarBitmap(name = name)
-        Log.d("AuthRepository", "Аватар сгенерирован: $generatedAvatar")
+        val generatedAvatarBytes = generateAvatarBytes(name = name)
+
+        val avatarUrl = storageRepository.uploadAvatar(
+            imageBytes = generatedAvatarBytes,
+            userId = uid,
+            type =  "image/png",
+        )
+
+        Log.d("AuthRepository", "Аватар сгенерирован: $avatarUrl")
 
         val userMap = mapOf(
             "uid" to uid,
             "name" to name,
             "email" to email,
-            "avatarUrl" to generatedAvatar,
+            "avatarUrl" to avatarUrl,
             "isOnline" to true,
             "createdAt" to System.currentTimeMillis(),
             "phone" to phone,
