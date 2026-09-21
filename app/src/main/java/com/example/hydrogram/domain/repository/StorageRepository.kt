@@ -9,4 +9,10 @@ interface StorageRepository {
         messageId: String,
     ) : String
 
+    suspend fun uploadAvatar(
+        imageBytes: ByteArray,
+        userId: String,
+        type: String,
+    ) : String
+
 }
