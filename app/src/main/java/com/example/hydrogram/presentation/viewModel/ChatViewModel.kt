@@ -160,21 +160,37 @@ class ChatViewModel @Inject constructor(
         Log.d("ChatVM", "sent image message called")
         viewModelScope.launch {
             _isSending.value = true
-            val result = sendMessageUseCase(
-                senderId = senderId,
-                chatId = chatId,
-                messageType = "image",
-                imageUri = imageUri,
-                replyData = replyData,
-                targetUserId = targetUserId,
-                senderName = senderName,
-                senderAvatar = senderAvatar,
-            )
-            _isSending.value = false
-            Log.d("ChatVM", "sent image message result: $result")
-            result
-                .onSuccess { _isSuccess.value = true }
-                .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+            try {
+                val type = context.contentResolver.getType(imageUri) ?: "image/jpeg"
+
+                val imageBytes =
+                    context.contentResolver.openInputStream(imageUri)?.use { inputStream ->
+                        inputStream.readBytes()
+                    } ?: throw Exception("Не удалось прочитать файл")
+
+
+                val result = sendMessageUseCase(
+                    senderId = senderId,
+                    chatId = chatId,
+                    messageType = "image",
+                    imageBytes = imageBytes,
+                    type = type,
+                    replyData = replyData,
+                    targetUserId = targetUserId,
+                    senderName = senderName,
+                    senderAvatar = senderAvatar,
+                )
+                _isSending.value = false
+                Log.d("ChatVM", "sent image message result: $result")
+                result
+                    .onSuccess { _isSuccess.value = true }
+                    .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _errorMessage.value = "Не удалось обработать выбранное изображение"
+            } finally {
+                _isSending.value = false
+            }
         }
     }
 
