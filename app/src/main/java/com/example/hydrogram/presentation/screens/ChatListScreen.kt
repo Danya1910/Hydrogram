@@ -68,8 +68,6 @@ import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.InboxUiState
 import com.example.hydrogram.presentation.states.UserState
-import com.example.hydrogram.presentation.util.GlassBackground
-import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.viewModel.InboxViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
