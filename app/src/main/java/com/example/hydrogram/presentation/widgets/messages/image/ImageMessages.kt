@@ -44,15 +44,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -60,7 +58,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.screens.PlaceholderContent
@@ -96,42 +95,16 @@ fun PenpalImageMessage(
     val haptic = LocalHapticFeedback.current
     var isHapticTriggered by remember { mutableStateOf(false) }
 
-    val animatedOffset by animateFloatAsState(
-        targetValue = if (dragAmount == 0f) 0f else dragAmount,
-        label = "SwipeOffset"
-    )
 
-    val isBase64 = remember(message.image) {
-        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
-    }
-
-    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
-
-    LaunchedEffect(message.image) {
-        if (isBase64) {
-            val bitmap = withContext(Dispatchers.IO) {
-                decodeBase64Image(message.image)
-            }
-            imageSize = if (bitmap != null) {
-                bitmap.width to bitmap.height
-            } else {
-                null to null
-            }
-        } else {
-            imageSize = null to null
-        }
-    }
 
 
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
 
-    var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
-    var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
     var reactions: MessageReactions? = null
@@ -139,11 +112,9 @@ fun PenpalImageMessage(
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == mineId) {
-            mineReactionId = entry.key
             mineReactionEmoji = entry.value
 
         } else {
-            penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
         reactions = MessageReactions(
@@ -152,38 +123,10 @@ fun PenpalImageMessage(
         )
     }
 
-
-    val (imageWidth, imageHeight) = imageSize ?: (null to null)
-
-    val maxWidth = 300.dp
-    val maxHeight = 400.dp
-
-    val containerModifier =
-        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
-
-            val widthLimit = maxWidth.value
-            val heightLimit = maxHeight.value
-
-            var finalWidth = widthLimit
-            var finalHeight = widthLimit / aspectRatio
-
-            if (finalHeight > heightLimit) {
-                finalHeight = heightLimit
-                finalWidth = heightLimit * aspectRatio
-            }
-
-            Modifier
-                .widthIn(max = maxWidth)
-                .height(finalHeight.dp)
-                .clickable { /* Открыть в полном размере */ }
-        } else {
-            Modifier
-                .widthIn(max = maxWidth)
-                .heightIn(max = maxHeight)
-                .aspectRatio(1f)
-                .clickable { /* Открыть в полном размере */ }
-        }
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
+    val maxHeight = 360.dp
 
     Box(
         modifier = Modifier
@@ -219,17 +162,16 @@ fun PenpalImageMessage(
             },
         contentAlignment = Alignment.CenterStart
     ) {
-        Column {
+        Column(
+            horizontalAlignment = Alignment.Start,
+        ) {
             Card(
-                modifier = containerModifier
-                    .offset { IntOffset(animatedOffset.roundToInt(), 0) },
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -244,32 +186,25 @@ fun PenpalImageMessage(
                             }
                         )
                 ) {
-                    if (isBase64) {
-                        val bitmap = remember(message.image) {
-                            decodeBase64Image(message.image)
-                        }
-
-                        if (bitmap != null) {
-                            Image(
-                                bitmap = bitmap.asImageBitmap(),
-                                contentDescription = "Изображение в чате",
-                                contentScale = ContentScale.FillBounds,
-                                modifier = Modifier.fillMaxSize()
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(message.image)
+                            .crossfade(true)
+                            .listener(
+                                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка началась: ${message.image}") },
+                                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "Успешно загружено в Coil!") },
+                                onError = { _, result ->
+                                    Log.e("COIL_ERROR_DEBUG", "ОШИБКА COIL: ", result.throwable)
+                                }
                             )
-                        } else {
-                            PlaceholderContent()
-                        }
-                    } else {
-                        AsyncImage(
-                            model = message.image,
-                            contentDescription = "Изображение в чате",
-                            contentScale = ContentScale.FillBounds,
-                            modifier = Modifier.fillMaxSize(),
-                            placeholder = painterResource(R.drawable.ic_avatar),
-                            error = painterResource(R.drawable.ic_avatar),
-                        )
-                    }
-
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            .widthIn(min = 120.dp, max = maxWidth)
+                            .heightIn(min = 120.dp, max = maxHeight)
+                            .clip(RoundedCornerShape(12.dp)),
+                    )
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -660,10 +595,17 @@ fun PenpalReplyImageMessage(
                             .fillMaxWidth()
                             .height(finalHeight)
                     ) {
-                        Base64Image(
-                            imageData = message.image,
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(message.image)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .widthIn(min = 150.dp, max = 260.dp)
+                                .heightIn(min = 150.dp, max = 320.dp)
+                                .clip(RoundedCornerShape(16.dp))
                         )
 
                         Box(
@@ -779,54 +721,27 @@ fun MineImageMessage(
         label = "SwipeOffset"
     )
 
-    val isBase64 = remember(message.image) {
-        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
-    }
-
-    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
-
-    LaunchedEffect(message.image) {
-        if (isBase64) {
-            val bitmap = withContext(Dispatchers.IO) {
-                decodeBase64Image(message.image)
-            }
-            imageSize = if (bitmap != null) {
-                bitmap.width to bitmap.height
-            } else {
-                null to null
-            }
-        } else {
-            imageSize = null to null
-        }
-    }
-
-    val (imageWidth, imageHeight) = imageSize ?: (null to null)
-
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
+    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
+    val maxHeight = 360.dp
 
-    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(300.dp)
-    val maxHeight = 400.dp
 
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
 
-    var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
-    var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
     var reactions: MessageReactions? = null
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == mineId) {
-            mineReactionId = entry.key
             mineReactionEmoji = entry.value
         } else {
-            penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
         reactions = MessageReactions(
@@ -834,32 +749,6 @@ fun MineImageMessage(
             penpalReaction = penpalReactionEmoji,
         )
     }
-
-    val containerModifier =
-        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
-
-            var finalWidth = maxWidth.value
-            var finalHeight = maxWidth.value / aspectRatio
-
-            if (finalHeight > maxHeight.value) {
-                finalHeight = maxHeight.value
-                finalWidth = maxHeight.value * aspectRatio
-            }
-
-            Modifier
-                .width(finalWidth.dp)
-                .height(finalHeight.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { /* Открыть в полном размере */ }
-        } else {
-            Modifier
-                .width(maxWidth)
-                .heightIn(max = maxHeight)
-                .aspectRatio(1f)
-                .clip(RoundedCornerShape(12.dp))
-                .clickable { /* Открыть в полном размере */ }
-        }
 
     Box(
         modifier = Modifier
@@ -901,14 +790,12 @@ fun MineImageMessage(
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
         ) {
             Card(
-                modifier = containerModifier,
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.White)
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -921,10 +808,28 @@ fun MineImageMessage(
                             }
                         )
                 ) {
-                    Base64Image(
-                        imageData = message.image,
-                        contentScale = ContentScale.FillBounds,
-                        modifier = Modifier.fillMaxSize()
+                    Log.d("CHAT_UI", "Отрисовка MineImageMessage для ссылки: ${message.image}")
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(message.image)
+                            .crossfade(true)
+                            .listener(
+                                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка началась: ${message.image}") },
+                                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "Успешно загружено в Coil!") },
+                                onError = { _, result ->
+                                    // Этот лог покажет точную причину в Logcat!
+                                    Log.e("COIL_ERROR_DEBUG", "ОШИБКА COIL: ", result.throwable)
+                                }
+                            )
+                            .build(),
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier
+                            // ИСПРАВЛЕНИЕ 3: Переносим ограничения размеров прямо на картинку.
+                            // Теперь она сама выберет исходный размер, но не выйдет за эти рамки.
+                            .widthIn(min = 120.dp, max = maxWidth)
+                            .heightIn(min = 120.dp, max = maxHeight)
+                            .clip(RoundedCornerShape(12.dp)),
                     )
 
                     Box(
@@ -1332,10 +1237,17 @@ fun MineReplyImageMessage(
                             .fillMaxWidth()
                             .height(finalHeight)
                     ) {
-                        Base64Image(
-                            imageData = message.image,
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(message.image)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize()
+                            modifier = Modifier
+                                .widthIn(min = 150.dp, max = 260.dp)
+                                .heightIn(min = 150.dp, max = 320.dp)
+                                .clip(RoundedCornerShape(16.dp))
                         )
 
                         Box(
