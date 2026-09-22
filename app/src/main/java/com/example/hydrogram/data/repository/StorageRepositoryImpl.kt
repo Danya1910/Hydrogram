@@ -40,6 +40,33 @@ class StorageRepositoryImpl @Inject constructor(
 
         }
 
+    override suspend fun uploadImageMessage(
+        imageBytes: ByteArray,
+        type: String,
+        userId: String,
+        chatId: String
+    ): String = withContext(Dispatchers.IO) {
+
+        if (imageBytes.isEmpty()) throw IllegalArgumentException("Массив байт пуст")
+
+        val extension = type.substringAfter("/", "jpg")
+
+        val timestamp = System.currentTimeMillis()
+        val s3Key = "chats/$chatId/${userId}_$timestamp.$extension"
+
+        val metadata = ObjectMetadata().apply {
+            contentType = type
+            contentLength = imageBytes.size.toLong()
+        }
+
+        val inputStream = ByteArrayInputStream(imageBytes)
+
+        val request = PutObjectRequest(bucketName, s3Key, inputStream, metadata)
+        s3Client.putObject(request)
+
+        return@withContext "https://storage.yandexcloud.net/$bucketName/$s3Key"
+    }
+
     override suspend fun uploadAvatar(
         imageBytes: ByteArray,
         userId: String,

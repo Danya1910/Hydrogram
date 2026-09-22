@@ -7,12 +7,19 @@ interface StorageRepository {
     suspend fun uploadVoiceMessage(
         localFile: File?,
         messageId: String,
-    ) : String
+    ): String
+
+    suspend fun uploadImageMessage(
+        imageBytes: ByteArray,
+        type: String,
+        userId: String,
+        chatId: String,
+    ): String
 
     suspend fun uploadAvatar(
         imageBytes: ByteArray,
         userId: String,
         type: String,
-    ) : String
+    ): String
 
 }
