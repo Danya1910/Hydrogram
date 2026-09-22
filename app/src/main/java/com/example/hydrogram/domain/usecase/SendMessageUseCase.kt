@@ -32,7 +32,8 @@ class SendMessageUseCase @Inject constructor(
         audio: File? = null,
         voiceDuration: Int? = 0,
         messageType: String,
-        imageUri: Uri? = null,
+        imageBytes: ByteArray? = null,
+        type: String? = null,
         replyData: ReplyData? = null,
         targetUserId: String,
         senderName: String,
@@ -72,17 +73,20 @@ class SendMessageUseCase @Inject constructor(
                 }
 
                 "image" -> {
-                    val uri = imageUri ?: return@withContext Result.failure(
-                        Exception("URI изображения не передан")
-                    )
-
-                    val imageData = convertImageToOptimizedBase64(uri)
+                    val imageUrl = imageBytes?.let {
+                        storageRepository.uploadImageMessage(
+                            imageBytes = it,
+                            type = type ?: "",
+                            userId = senderId,
+                            chatId = chatId
+                        )
+                    }
 
                     Message.Image(
                         senderId = senderId,
                         status = "sent",
                         timestamp = System.currentTimeMillis(),
-                        image = imageData,
+                        image = imageUrl,
                         replyData = replyData,
                     )
                 }
@@ -139,60 +143,6 @@ class SendMessageUseCase @Inject constructor(
 
         } catch (e: Exception) {
             return@withContext Result.failure(e)
-        }
-    }
-
-    private fun convertImageToOptimizedBase64(imageUri: Uri): String {
-        val inputStream = context.contentResolver.openInputStream(imageUri)
-            ?: throw Exception("Не удалось открыть поток изображения")
-
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)
-        inputStream.close()
-
-        if (originalBitmap == null) {
-            throw Exception("Не удалось декодировать изображение")
-        }
-
-        try {
-            val maxSideTarget = 800f
-            val width = originalBitmap.width
-            val height = originalBitmap.height
-
-            val scaleFactor = if (width > height) {
-                maxSideTarget / width
-            } else {
-                maxSideTarget / height
-            }
-
-            val bitmapToCompress = if (scaleFactor < 1f) {
-                val finalWidth = (width * scaleFactor).toInt()
-                val finalHeight = (height * scaleFactor).toInt()
-                Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
-            } else {
-                originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
-            }
-
-            originalBitmap.recycle()
-
-            if (bitmapToCompress == null || bitmapToCompress.isRecycled) {
-                throw Exception("Не удалось создать изображение для сжатия")
-            }
-
-            val outputStream = ByteArrayOutputStream()
-            bitmapToCompress.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
-            val byteArray = outputStream.toByteArray()
-            outputStream.close()
-
-            bitmapToCompress.recycle()
-
-            val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
-            return "data:image/jpeg;base64,$base64String"
-
-        } catch (e: Exception) {
-            if (!originalBitmap.isRecycled) {
-                originalBitmap.recycle()
-            }
-            throw e
         }
     }
 }
