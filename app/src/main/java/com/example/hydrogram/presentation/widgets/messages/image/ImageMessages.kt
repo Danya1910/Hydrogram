@@ -777,12 +777,6 @@ fun MineImageMessage(
         label = "SwipeOffset"
     )
 
-    val configuration = LocalConfiguration.current
-    val screenWidthDp = configuration.screenWidthDp.dp
-    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
-    val maxHeight = 360.dp
-
-
     val validReactions = message.reactions
         ?.filterValues { true }
         ?: emptyMap()
@@ -805,6 +799,62 @@ fun MineImageMessage(
             penpalReaction = penpalReactionEmoji,
         )
     }
+
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
+    val maxHeight = 360.dp
+
+    val density = LocalDensity.current
+
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(message.image)
+            .crossfade(true)
+            .listener(
+                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка: ${message.image}") },
+                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "OK") },
+                onError = { _, r -> Log.e("COIL_ERROR_DEBUG", "ERR", r.throwable) },
+            )
+            .build()
+    )
+
+    val intrinsic = painter.intrinsicSize
+    val hasIntrinsic = intrinsic.isSpecified &&
+            !intrinsic.isUnspecified &&
+            intrinsic.width > 0f &&
+            intrinsic.height > 0f
+
+    // Натуральные размеры картинки, вписанные в maxWidth × maxHeight
+    val (naturalWidthPx, naturalHeightPx) = remember(intrinsic, maxWidth, maxHeight, density) {
+        if (hasIntrinsic) {
+            val maxW = with(density) { maxWidth.toPx() }
+            val maxH = with(density) { maxHeight.toPx() }
+
+            var w = intrinsic.width
+            var h = intrinsic.height
+
+            if (w > maxW) {
+                h *= maxW / w
+                w = maxW
+            }
+            if (h > maxH) {
+                w *= maxH / h
+                h = maxH
+            }
+            w to h
+        } else {
+            val w = with(density) { maxWidth.toPx() }
+            val h = w * 0.75f
+            w to h
+        }
+    }
+
+
+    val naturalWidthDp = with(density) { naturalWidthPx.toDp() }
+    val naturalHeightDp = with(density) { naturalHeightPx.toDp() }
+
+
 
     Box(
         modifier = Modifier
@@ -852,6 +902,8 @@ fun MineImageMessage(
             ) {
                 Box(
                     modifier = Modifier
+                        .width(naturalWidthDp)
+                        .height(naturalHeightDp)
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -865,27 +917,11 @@ fun MineImageMessage(
                         )
                 ) {
                     Log.d("CHAT_UI", "Отрисовка MineImageMessage для ссылки: ${message.image}")
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(message.image)
-                            .crossfade(true)
-                            .listener(
-                                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка началась: ${message.image}") },
-                                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "Успешно загружено в Coil!") },
-                                onError = { _, result ->
-                                    // Этот лог покажет точную причину в Logcat!
-                                    Log.e("COIL_ERROR_DEBUG", "ОШИБКА COIL: ", result.throwable)
-                                }
-                            )
-                            .build(),
+                    Image(
+                        painter = painter,
                         contentDescription = null,
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            // ИСПРАВЛЕНИЕ 3: Переносим ограничения размеров прямо на картинку.
-                            // Теперь она сама выберет исходный размер, но не выйдет за эти рамки.
-                            .widthIn(min = 120.dp, max = maxWidth)
-                            .heightIn(min = 120.dp, max = maxHeight)
-                            .clip(RoundedCornerShape(12.dp)),
+                        modifier = Modifier.fillMaxSize()
                     )
 
                     Box(
