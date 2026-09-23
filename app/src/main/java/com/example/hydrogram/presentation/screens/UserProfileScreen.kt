@@ -60,7 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.model.UserPresence
