@@ -91,6 +91,14 @@ dependencies {
 
     implementation("com.amazonaws:aws-android-sdk-s3:2.73.0")
 
+    //CameraX
+    val cameraxVersion = "1.4.0" // Используйте актуальную стабильную версию
+    implementation("androidx.camera:camera-core:$cameraxVersion")
+    implementation("androidx.camera:camera-camera2:$cameraxVersion")
+    implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
+    implementation("androidx.camera:camera-video:$cameraxVersion")
+    implementation("androidx.camera:camera-view:$cameraxVersion")
+
     // Dagger Hilt
     implementation("com.google.dagger:hilt-android:2.56")
     implementation(libs.androidx.compose.ui.geometry)
