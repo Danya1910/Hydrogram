@@ -29,6 +29,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -975,6 +977,8 @@ fun MineReplyImageMessage(
     val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
     val maxHeight = 360.dp
 
+
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -1015,6 +1019,7 @@ fun MineReplyImageMessage(
             Card(
                 modifier = Modifier
                     .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                    .wrapContentWidth()
                     .clip(
                         shape = RoundedCornerShape(12.dp)
                     ),
@@ -1023,7 +1028,10 @@ fun MineReplyImageMessage(
             ) {
 
                 Column(
+                    horizontalAlignment = Alignment.End,
                     modifier = Modifier
+                        .wrapContentWidth()
+                        .widthIn(min = 120.dp)
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -1062,7 +1070,8 @@ fun MineReplyImageMessage(
 
                             Column(
                                 verticalArrangement = Arrangement.Center,
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier
+                                    .widthIn(max = maxWidth)
                             ) {
                                 if (message.replyData.type == "sticker") {
                                     Column(
@@ -1178,6 +1187,8 @@ fun MineReplyImageMessage(
                     }
 
                     Box(
+                        modifier = Modifier
+                            .wrapContentWidth()
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
@@ -1192,10 +1203,10 @@ fun MineReplyImageMessage(
                                 )
                                 .build(),
                             contentDescription = null,
-                            contentScale = ContentScale.Fit,
+                            contentScale = ContentScale.FillWidth,
                             modifier = Modifier
-                                .widthIn(min = 120.dp, max = maxWidth)
-                                .heightIn(min = 120.dp, max = maxHeight)
+                                .wrapContentWidth()
+                                .wrapContentHeight()
                                 .clip(RoundedCornerShape(12.dp)),
                         )
 
