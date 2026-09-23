@@ -3,7 +3,6 @@ package com.example.hydrogram.presentation.screens
 import android.graphics.BitmapFactory
 import android.util.Base64
 import android.util.Log
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -41,7 +40,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.navigation.Screen
@@ -319,27 +317,17 @@ private fun UserInfoHat(
                 horizontal = 16.dp,
             )
     ) {
-        if (avatarBitmap != null) {
-            Image(
-                bitmap = avatarBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(shape = CircleShape)
-            )
-        } else {
-            AsyncImage(
-                model = null,
-                contentDescription = null,
-                placeholder = painterResource(R.drawable.ic_avatar),
-                error = painterResource(R.drawable.ic_avatar),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(shape = CircleShape)
-            )
-        }
+
+        AsyncImage(
+            model = user?.avatarUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(104.dp)
+                .clip(shape = CircleShape)
+        )
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = user?.name ?: "Unknown",

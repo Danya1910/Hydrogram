@@ -12,7 +12,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -49,7 +48,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
@@ -403,27 +401,16 @@ private fun ChangeAvatar(
             .fillMaxWidth()
             .padding(top = 74.dp)
     ) {
-        if (avatarBitmap != null) {
-            Image(
-                bitmap = avatarBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(shape = CircleShape)
-            )
-        } else {
-            AsyncImage(
-                model = null,
-                contentDescription = null,
-                placeholder = painterResource(R.drawable.ic_avatar),
-                error = painterResource(R.drawable.ic_avatar),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(104.dp)
-                    .clip(shape = CircleShape)
-            )
-        }
+        AsyncImage(
+            model = user?.avatarUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(104.dp)
+                .clip(shape = CircleShape)
+        )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
             text = "Изменить фотографию",

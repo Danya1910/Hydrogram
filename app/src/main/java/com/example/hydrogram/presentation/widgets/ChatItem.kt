@@ -3,9 +3,8 @@ package com.example.hydrogram.presentation.widgets
 import android.graphics.BitmapFactory
 import android.text.format.DateFormat
 import android.util.Base64
-import androidx.compose.foundation.Image
+import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -42,7 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.model.User
@@ -52,7 +49,6 @@ import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.Green
-import com.example.hydrogram.ui.theme.MineMessageTimeColor
 import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
 import java.util.Date
@@ -92,22 +88,6 @@ fun ChatItem(
         is UserState.Success -> {
             val user = state.user ?: User(name = "Удаленный аккаунт")
 
-            val avatarBitmap = remember(user.avatarUrl) {
-                val url = user.avatarUrl
-                if (url.isNotBlank() && url.startsWith("data:image/jpeg;base64,")) {
-                    try {
-                        val base64String = url.substringAfter("base64,")
-                        val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                        BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        null
-                    }
-                } else {
-                    null
-                }
-            }
-
             Row(
                 verticalAlignment = Alignment.Top,
                 modifier = Modifier
@@ -128,27 +108,21 @@ fun ChatItem(
                     )
                     .padding(vertical = 8.dp)
             ) {
-                if (avatarBitmap != null) {
-                    Image(
-                        bitmap = avatarBitmap.asImageBitmap(),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(62.dp)
-                            .clip(shape = CircleShape)
-                    )
-                } else {
-                    AsyncImage(
-                        model = null,
-                        contentDescription = null,
-                        placeholder = painterResource(R.drawable.ic_avatar),
-                        error = painterResource(R.drawable.ic_avatar),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(62.dp)
-                            .clip(shape = CircleShape)
-                    )
-                }
+
+                AsyncImage(
+                    model = user.avatarUrl,
+                    contentDescription = null,
+                    placeholder = painterResource(R.drawable.ic_avatar),
+                    error = painterResource(R.drawable.ic_avatar),
+                    contentScale = ContentScale.Crop,
+                    onError = { state ->
+                        // Выведет в лог конкретное исключение (например, UnknownHostException, HttpException)
+                        Log.e("CoilError", "Ошибка загрузки: ", state.result.throwable)
+                    },
+                    modifier = Modifier
+                        .size(62.dp)
+                        .clip(shape = CircleShape)
+                )
                 Spacer(modifier = Modifier.width(10.dp))
                 Column(
                     verticalArrangement = Arrangement.Top,
@@ -194,7 +168,7 @@ fun ChatItem(
                                 tint = Green,
                                 modifier = Modifier.size(18.dp)
                             )
-                        } else if(chat.lastMessageStatus == "sent") {
+                        } else if (chat.lastMessageStatus == "sent") {
                             Icon(
                                 painter = painterResource(R.drawable.ic_sent_status),
                                 contentDescription = null,
@@ -222,9 +196,11 @@ fun ChatItem(
 
         else -> {
             // Пока данные конкретного человека грузятся, показываем красивый скелетон-плейсхолдер
-            Row(modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
                 Text(text = "Загрузка...", color = Color.LightGray)
             }
         }

@@ -1,8 +1,8 @@
 package com.example.hydrogram.presentation.widgets
 
 import android.graphics.BitmapFactory
-import android.text.format.DateFormat
 import android.util.Base64
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.model.UserPresence
@@ -48,7 +47,6 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.OfflineStatusColor
 import com.example.hydrogram.ui.theme.SfProText
-import java.util.Date
 
 
 @Composable
@@ -191,27 +189,21 @@ private fun UserIcon(
                 onIconClick()
             }
     ) {
-        if (avatarBitmap != null) {
-            Image(
-                bitmap = avatarBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(shape = CircleShape)
-            )
-        } else {
-            AsyncImage(
-                model = null,
-                contentDescription = null,
-                placeholder = painterResource(R.drawable.ic_avatar),
-                error = painterResource(R.drawable.ic_avatar),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(38.dp)
-                    .clip(shape = CircleShape)
-            )
-        }
+
+        AsyncImage(
+            model = user?.avatarUrl ?: "",
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            onError = { state ->
+                // Выведет в лог конкретное исключение (например, UnknownHostException, HttpException)
+                Log.e("CoilError", "Ошибка загрузки: ", state.result.throwable)
+            },
+            modifier = Modifier
+                .size(38.dp)
+                .clip(shape = CircleShape)
+        )
     }
 }
 

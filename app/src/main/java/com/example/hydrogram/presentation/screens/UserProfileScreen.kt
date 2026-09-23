@@ -1,17 +1,12 @@
 package com.example.hydrogram.presentation.screens
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.paddingFrom
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -47,15 +41,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.LocalConfiguration
@@ -86,9 +77,6 @@ import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.launch
-import kotlin.text.isNotBlank
-import kotlin.text.startsWith
-import kotlin.text.substringAfter
 
 
 @Composable
@@ -532,47 +520,6 @@ private fun UserInfoHat(
                 ).coerceIn(0f, 1f)
 
 
-    val avatarBitmap = remember(user?.avatarUrl) {
-
-        val url = user?.avatarUrl
-
-        if (
-            url != null &&
-            url.isNotBlank() &&
-            url.startsWith(
-                "data:image/jpeg;base64,"
-            )
-        ) {
-
-            try {
-
-                val base64String =
-                    url.substringAfter("base64,")
-
-                val imageBytes =
-                    Base64.decode(
-                        base64String,
-                        Base64.DEFAULT
-                    )
-
-                BitmapFactory.decodeByteArray(
-                    imageBytes,
-                    0,
-                    imageBytes.size
-                )
-
-            } catch (e: Exception) {
-
-                e.printStackTrace()
-
-                null
-            }
-
-        } else {
-            null
-        }
-    }
-
     val formattedLastSeenTime =
         formatLastSeen(
             lastSeenTimestamp = presenceState.lastSeen
@@ -631,30 +578,19 @@ private fun UserInfoHat(
                         )
                     )
 
-            if (avatarBitmap != null) {
 
-                Image(
-                    bitmap = avatarBitmap.asImageBitmap(),
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = avatarModifier,
-                )
-
-            } else {
-
-                AsyncImage(
-                    model = null,
-                    contentDescription = null,
-                    placeholder = painterResource(
-                        R.drawable.ic_avatar
-                    ),
-                    error = painterResource(
-                        R.drawable.ic_avatar
-                    ),
-                    contentScale = ContentScale.Crop,
-                    modifier = avatarModifier,
-                )
-            }
+            AsyncImage(
+                model = user?.avatarUrl,
+                contentDescription = null,
+                placeholder = painterResource(
+                    R.drawable.ic_avatar
+                ),
+                error = painterResource(
+                    R.drawable.ic_avatar
+                ),
+                contentScale = ContentScale.Crop,
+                modifier = avatarModifier,
+            )
         }
 
         Row(
@@ -701,10 +637,8 @@ private fun UserInfoHat(
                 .fillMaxWidth()
                 .graphicsLayer {
                     if (overScrollY == 0f) {
-                        // === СКРОЛЛ ВВЕРХ (СХЛОПЫВАНИЕ ДО ТУЛБАРА) ===
                         translationY = collapseFraction * -145f
                     } else {
-                        // === ОВЕРСКРОЛЛ ВНИЗ (РАСТЯЖЕНИЕ АВЫ) ===
                         translationY = overScrollY
                     }
                 }
@@ -713,12 +647,10 @@ private fun UserInfoHat(
                 modifier = Modifier
                     .fillMaxWidth()
                     .layout { measurable, constraints ->
-                        // .coerceAtLeast(15f) — ЖЕСТКАЯ защита от ухода в минус, который ломал анимацию!
                         val dynamicHeightDp =
                             (165f - (collapseFraction * 150f)).coerceAtLeast(15f).dp
                         val dynamicHeightPx = dynamicHeightDp.roundToPx()
 
-                        // Пересчитываем размеры Spacer под текущий кадр скролла
                         val placeable = measurable.measure(
                             constraints.copy(
                                 minHeight = dynamicHeightPx,

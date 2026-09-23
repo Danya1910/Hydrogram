@@ -14,7 +14,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -60,7 +59,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -75,7 +73,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.RegisteredContact
 import com.example.hydrogram.domain.model.User
@@ -363,22 +361,6 @@ private fun ContactUserCard(
     } ?: Color(0xFF3C3C43).copy(alpha = 0.6f)
 
 
-    val avatarBitmap = remember(contact?.user?.avatarUrl) {
-        val url = contact?.user?.avatarUrl
-        if (url != null && url.isNotBlank() && url.startsWith("data:image/jpeg;base64,")) {
-            try {
-                val base64String = url.substringAfter("base64,")
-                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            null
-        }
-    }
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -389,27 +371,16 @@ private fun ContactUserCard(
                 onUserClick()
             }
     ) {
-        if (avatarBitmap != null) {
-            Image(
-                bitmap = avatarBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(shape = CircleShape)
-            )
-        } else {
-            AsyncImage(
-                model = null,
-                contentDescription = null,
-                placeholder = painterResource(R.drawable.ic_avatar),
-                error = painterResource(R.drawable.ic_avatar),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(shape = CircleShape)
-            )
-        }
+        AsyncImage(
+            model = contact?.user?.avatarUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(42.dp)
+                .clip(shape = CircleShape)
+        )
         Spacer(modifier = Modifier.width(11.dp))
         Column(
             verticalArrangement = Arrangement.Center,
@@ -732,7 +703,10 @@ private fun ContactsMatchingList(
             itemsIndexed(
                 items = sortedContacts,
             ) { index, contact ->
-                Log.d("ContactsData", "В КАРТОЧКЕ: ${contact.contactName} lastSeen: ${contact.user.lastSeen}")
+                Log.d(
+                    "ContactsData",
+                    "В КАРТОЧКЕ: ${contact.contactName} lastSeen: ${contact.user.lastSeen}"
+                )
                 ContactUserCard(
                     contact = contact,
                     onUserClick = {
@@ -839,27 +813,17 @@ private fun GlobalUserCard(
                 onUserClick()
             }
     ) {
-        if (avatarBitmap != null) {
-            Image(
-                bitmap = avatarBitmap.asImageBitmap(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(shape = CircleShape)
-            )
-        } else {
-            AsyncImage(
-                model = null,
-                contentDescription = null,
-                placeholder = painterResource(R.drawable.ic_avatar),
-                error = painterResource(R.drawable.ic_avatar),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(42.dp)
-                    .clip(shape = CircleShape)
-            )
-        }
+
+        AsyncImage(
+            model = user?.avatarUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(42.dp)
+                .clip(shape = CircleShape)
+        )
         Spacer(modifier = Modifier.width(11.dp))
         Column(
             verticalArrangement = Arrangement.Center,

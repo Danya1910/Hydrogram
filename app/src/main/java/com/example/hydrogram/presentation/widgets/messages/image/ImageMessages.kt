@@ -340,26 +340,6 @@ fun PenpalReplyImageMessage(
         }
     }
 
-    val (imageWidth, imageHeight) = imageSize ?: (null to null)
-    val maxWidth = 250.dp
-    val maxHeight = 330.dp
-
-    val (finalWidth, finalHeight) = remember(imageWidth, imageHeight) {
-        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
-            var w = maxWidth.value
-            var h = maxWidth.value / aspectRatio
-
-            if (h > maxHeight.value) {
-                h = maxHeight.value
-                w = maxHeight.value * aspectRatio
-            }
-            w.dp to h.dp
-        } else {
-            maxWidth to maxWidth
-        }
-    }
-
     val validReactions = message.reactions
         ?.filterValues { it != null }
         ?: emptyMap()
@@ -386,6 +366,11 @@ fun PenpalReplyImageMessage(
             penpalReaction = penpalReactionEmoji,
         )
     }
+
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
+    val maxHeight = 360.dp
 
     Box(
         modifier = Modifier
@@ -425,7 +410,6 @@ fun PenpalReplyImageMessage(
             Card(
                 modifier = Modifier
                     .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                    .width(finalWidth)
                     .clip(
                         shape = RoundedCornerShape(12.dp)
                     ),
@@ -435,7 +419,6 @@ fun PenpalReplyImageMessage(
 
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -593,19 +576,25 @@ fun PenpalReplyImageMessage(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(finalHeight)
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(message.image)
                                 .crossfade(true)
+                                .listener(
+                                    onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка началась: ${message.image}") },
+                                    onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "Успешно загружено в Coil!") },
+                                    onError = { _, result ->
+                                        Log.e("COIL_ERROR_DEBUG", "ОШИБКА COIL: ", result.throwable)
+                                    }
+                                )
                                 .build(),
                             contentDescription = null,
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
-                                .widthIn(min = 150.dp, max = 260.dp)
-                                .heightIn(min = 150.dp, max = 320.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .widthIn(min = 120.dp, max = maxWidth)
+                                .heightIn(min = 120.dp, max = maxHeight)
+                                .clip(RoundedCornerShape(12.dp)),
                         )
 
                         Box(
@@ -963,42 +952,7 @@ fun MineReplyImageMessage(
         !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
     }
 
-    var imageSize by remember { mutableStateOf<Pair<Int?, Int?>?>(null) }
 
-    LaunchedEffect(message.image) {
-        if (isBase64) {
-            val bitmap = withContext(Dispatchers.IO) {
-                decodeBase64Image(message.image)
-            }
-            imageSize = if (bitmap != null) {
-                bitmap.width to bitmap.height
-            } else {
-                null to null
-            }
-        } else {
-            imageSize = null to null
-        }
-    }
-
-    val (imageWidth, imageHeight) = imageSize ?: (null to null)
-    val maxWidth = 250.dp
-    val maxHeight = 330.dp
-
-    val (finalWidth, finalHeight) = remember(imageWidth, imageHeight) {
-        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-            val aspectRatio = imageWidth.toFloat() / imageHeight.toFloat()
-            var w = maxWidth.value
-            var h = maxWidth.value / aspectRatio
-
-            if (h > maxHeight.value) {
-                h = maxHeight.value
-                w = maxHeight.value * aspectRatio
-            }
-            w.dp to h.dp
-        } else {
-            maxWidth to maxWidth
-        }
-    }
 
     val validReactions = message.reactions
         ?.filterValues { it != null }
@@ -1026,6 +980,12 @@ fun MineReplyImageMessage(
             penpalReaction = penpalReactionEmoji,
         )
     }
+
+
+    val configuration = LocalConfiguration.current
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
+    val maxHeight = 360.dp
 
     Box(
         modifier = Modifier
@@ -1067,7 +1027,6 @@ fun MineReplyImageMessage(
             Card(
                 modifier = Modifier
                     .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                    .width(finalWidth)
                     .clip(
                         shape = RoundedCornerShape(12.dp)
                     ),
@@ -1077,7 +1036,6 @@ fun MineReplyImageMessage(
 
                 Column(
                     modifier = Modifier
-                        .fillMaxWidth()
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -1235,19 +1193,25 @@ fun MineReplyImageMessage(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(finalHeight)
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
                                 .data(message.image)
                                 .crossfade(true)
+                                .listener(
+                                    onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка началась: ${message.image}") },
+                                    onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "Успешно загружено в Coil!") },
+                                    onError = { _, result ->
+                                        Log.e("COIL_ERROR_DEBUG", "ОШИБКА COIL: ", result.throwable)
+                                    }
+                                )
                                 .build(),
                             contentDescription = null,
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
-                                .widthIn(min = 150.dp, max = 260.dp)
-                                .heightIn(min = 150.dp, max = 320.dp)
-                                .clip(RoundedCornerShape(16.dp))
+                                .widthIn(min = 120.dp, max = maxWidth)
+                                .heightIn(min = 120.dp, max = maxHeight)
+                                .clip(RoundedCornerShape(12.dp)),
                         )
 
                         Box(
