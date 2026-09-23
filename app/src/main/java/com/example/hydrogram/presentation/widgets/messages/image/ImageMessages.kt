@@ -95,8 +95,10 @@ fun PenpalImageMessage(
     val haptic = LocalHapticFeedback.current
     var isHapticTriggered by remember { mutableStateOf(false) }
 
-
-
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
 
     val validReactions = message.reactions
         ?.filterValues { true }
@@ -164,6 +166,8 @@ fun PenpalImageMessage(
     ) {
         Column(
             horizontalAlignment = Alignment.Start,
+            modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
         ) {
             Card(
                 shape = RoundedCornerShape(12.dp),
@@ -346,19 +350,15 @@ fun PenpalReplyImageMessage(
 
     val haveReaction = validReactions.isNotEmpty()
 
-    var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
-    var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
     var reactions: MessageReactions? = null
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == mineId) {
-            mineReactionId = entry.key
             mineReactionEmoji = entry.value
         } else {
-            penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
         reactions = MessageReactions(
@@ -458,7 +458,7 @@ fun PenpalReplyImageMessage(
                                 verticalArrangement = Arrangement.Center,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                if (message.replyData?.type == "sticker") {
+                                if (message.replyData.type == "sticker") {
                                     Column(
                                         verticalArrangement = Arrangement.Center
                                     ) {
@@ -482,32 +482,30 @@ fun PenpalReplyImageMessage(
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                     }
-                                } else if (message.replyData?.type == "text") {
-                                    message.replyData?.content.let {
-                                        if (it != null) {
-                                            Column(
-                                                verticalArrangement = Arrangement.Center
-                                            ) {
-                                                Text(
-                                                    text = replyName,
-                                                    fontWeight = FontWeight.SemiBold,
-                                                    fontSize = 15.sp,
-                                                    letterSpacing = -(0.23).sp,
-                                                    color = Color(0xFFFDB86F),
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                                Text(
-                                                    text = it,
-                                                    fontFamily = SfProText,
-                                                    fontWeight = FontWeight.Normal,
-                                                    fontSize = 15.sp,
-                                                    letterSpacing = -(0.23).sp,
-                                                    color = Color.Black,
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Ellipsis,
-                                                )
-                                            }
+                                } else if (message.replyData.type == "text") {
+                                    message.replyData.content.let {
+                                        Column(
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = replyName,
+                                                fontWeight = FontWeight.SemiBold,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color(0xFFFDB86F),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = it,
+                                                fontFamily = SfProText,
+                                                fontWeight = FontWeight.Normal,
+                                                fontSize = 15.sp,
+                                                letterSpacing = -(0.23).sp,
+                                                color = Color.Black,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
                                         }
                                     }
                                 } else if (message.replyData.type == "voice") {
@@ -541,7 +539,7 @@ fun PenpalReplyImageMessage(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         ReplyImagePreview(
-                                            content = message.replyData?.content
+                                            content = message.replyData.content
                                         )
                                         Spacer(modifier = Modifier.width(5.dp))
                                         Column(
@@ -948,31 +946,21 @@ fun MineReplyImageMessage(
         label = "SwipeOffset"
     )
 
-    val isBase64 = remember(message.image) {
-        !message.image.isNullOrBlank() && message.image.startsWith("data:image/jpeg;base64,")
-    }
-
-
-
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
 
-    var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
-    var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
     var reactions: MessageReactions? = null
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == mineId) {
-            mineReactionId = entry.key
             mineReactionEmoji = entry.value
         } else {
-            penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
         reactions = MessageReactions(
@@ -1054,7 +1042,6 @@ fun MineReplyImageMessage(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .padding(start = 8.dp, end = 8.dp, top = 8.dp, bottom = 4.dp)
-                                .fillMaxWidth()
                                 .height(41.dp)
                                 .clip(shape = RoundedCornerShape(4.dp))
                                 .background(color = Color(0xFFFFEBD6))
@@ -1077,7 +1064,7 @@ fun MineReplyImageMessage(
                                 verticalArrangement = Arrangement.Center,
                                 modifier = Modifier.weight(1f)
                             ) {
-                                if (message.replyData?.type == "sticker") {
+                                if (message.replyData.type == "sticker") {
                                     Column(
                                         verticalArrangement = Arrangement.Center
                                     ) {
@@ -1158,7 +1145,7 @@ fun MineReplyImageMessage(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         ReplyImagePreview(
-                                            content = message.replyData?.content
+                                            content = message.replyData.content
                                         )
                                         Spacer(modifier = Modifier.width(5.dp))
                                         Column(
@@ -1191,8 +1178,6 @@ fun MineReplyImageMessage(
                     }
 
                     Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
                     ) {
                         AsyncImage(
                             model = ImageRequest.Builder(LocalContext.current)
@@ -1348,7 +1333,6 @@ private fun ReplyImagePreview(content: String?) {
                     modifier = Modifier.fillMaxSize()
                 )
             } else if (isLoading) {
-                // Показываем плейсхолдер загрузки
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -1367,58 +1351,5 @@ private fun ReplyImagePreview(content: String?) {
                 error = painterResource(R.drawable.ic_avatar),
             )
         }
-    }
-}
-
-@Composable
-fun Base64Image(
-    imageData: String?,
-    contentScale: ContentScale = ContentScale.FillBounds,
-    modifier: Modifier = Modifier,
-    placeholder: @Composable (() -> Unit)? = null,
-) {
-    val isBase64 = remember(imageData) {
-        !imageData.isNullOrBlank() && imageData.startsWith("data:image/jpeg;base64,")
-    }
-
-    var bitmap by remember { mutableStateOf<Bitmap?>(null) }
-    var isLoading by remember { mutableStateOf(true) }
-
-    LaunchedEffect(imageData) {
-        isLoading = true
-        if (isBase64) {
-            bitmap = withContext(Dispatchers.IO) {
-                decodeBase64Image(imageData)
-            }
-        } else {
-            bitmap = null
-        }
-        isLoading = false
-    }
-
-    if (isBase64) {
-        if (bitmap != null) {
-            Image(
-                bitmap = bitmap!!.asImageBitmap(),
-                contentDescription = null,
-                contentScale = contentScale,
-                modifier = modifier
-            )
-        } else if (isLoading && placeholder != null) {
-            placeholder()
-        } else if (placeholder != null) {
-            placeholder()
-        } else {
-            PlaceholderContent()
-        }
-    } else {
-        AsyncImage(
-            model = imageData,
-            contentDescription = null,
-            contentScale = contentScale,
-            modifier = modifier,
-            placeholder = painterResource(R.drawable.ic_avatar),
-            error = painterResource(R.drawable.ic_avatar),
-        )
     }
 }
