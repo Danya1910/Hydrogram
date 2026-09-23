@@ -19,18 +19,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -48,13 +43,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.geometry.isUnspecified
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -71,6 +64,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
@@ -97,9 +91,7 @@ fun PenpalImageMessage(
     penpalAvatar: String,
 ) {
 
-    val formattedTime = DateFormat.format(
-        "HH:mm", Date(message.timestamp)
-    ).toString()
+    val formattedTime = DateFormat.format("HH:mm", Date(message.timestamp)).toString()
 
     var dragAmount by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
@@ -121,11 +113,9 @@ fun PenpalImageMessage(
 
     var reactions: MessageReactions? = null
 
-
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == mineId) {
             mineReactionEmoji = entry.value
-
         } else {
             penpalReactionEmoji = entry.value
         }
@@ -139,6 +129,49 @@ fun PenpalImageMessage(
     val screenWidthDp = configuration.screenWidthDp.dp
     val maxWidth = (screenWidthDp * 0.7f).coerceAtMost(280.dp)
     val maxHeight = 360.dp
+
+    val density = LocalDensity.current
+
+    val painter = rememberAsyncImagePainter(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(message.image)
+            .crossfade(true)
+            .build()
+    )
+
+    val intrinsic = painter.intrinsicSize
+    val hasIntrinsic = intrinsic.isSpecified &&
+            !intrinsic.isUnspecified &&
+            intrinsic.width > 0f &&
+            intrinsic.height > 0f
+
+    // Натуральные размеры картинки, вписанные в maxWidth × maxHeight
+    val (naturalWidthPx, naturalHeightPx) = remember(intrinsic, maxWidth, maxHeight, density) {
+        if (hasIntrinsic) {
+            val maxW = with(density) { maxWidth.toPx() }
+            val maxH = with(density) { maxHeight.toPx() }
+
+            var w = intrinsic.width
+            var h = intrinsic.height
+
+            if (w > maxW) {
+                h *= maxW / w
+                w = maxW
+            }
+            if (h > maxH) {
+                w *= maxH / h
+                h = maxH
+            }
+            w to h
+        } else {
+            val w = with(density) { maxWidth.toPx() }
+            val h = w * 0.75f
+            w to h
+        }
+    }
+
+    val naturalWidthDp = with(density) { naturalWidthPx.toDp() }
+    val naturalHeightDp = with(density) { naturalHeightPx.toDp() }
 
     Box(
         modifier = Modifier
@@ -186,6 +219,9 @@ fun PenpalImageMessage(
             ) {
                 Box(
                     modifier = Modifier
+                        .width(naturalWidthDp)
+                        .height(naturalHeightDp)
+                        .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
                             onClick = {},
                             onDoubleClick = {
@@ -194,31 +230,17 @@ fun PenpalImageMessage(
                                 )
                             },
                             onLongClick = {
-                                onLongClick(
-                                    false
-                                )
+                                onLongClick(false)
                             }
                         )
                 ) {
-                    AsyncImage(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(message.image)
-                            .crossfade(true)
-                            .listener(
-                                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка началась: ${message.image}") },
-                                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "Успешно загружено в Coil!") },
-                                onError = { _, result ->
-                                    Log.e("COIL_ERROR_DEBUG", "ОШИБКА COIL: ", result.throwable)
-                                }
-                            )
-                            .build(),
+                    Image(
+                        painter = painter,
                         contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .widthIn(min = 120.dp, max = maxWidth)
-                            .heightIn(min = 120.dp, max = maxHeight)
-                            .clip(RoundedCornerShape(12.dp)),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
+
                     Box(
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -240,16 +262,18 @@ fun PenpalImageMessage(
                     }
                 }
             }
+
             Spacer(modifier = Modifier.height(5.dp))
+
             AnimatedVisibility(
                 visible = haveReaction,
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically(),
             ) {
-                Log.d("MineTextMessage", "mineAvatar: $mineAvatar")
                 val hasBothDifferentReactions = reactions?.mineReaction != null &&
                         reactions.penpalReaction != null &&
                         reactions.mineReaction != reactions.penpalReaction
+
                 if (hasBothDifferentReactions) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
@@ -269,7 +293,7 @@ fun PenpalImageMessage(
                         ReactionWidget(
                             reactions = MessageReactions(
                                 mineReaction = null,
-                                penpalReaction = reactions.penpalReaction
+                                penpalReaction = reactions!!.penpalReaction
                             ),
                             color = Color(0xFFCCE3F8),
                             onReactionClick = {
@@ -353,7 +377,7 @@ fun PenpalReplyImageMessage(
     }
 
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
@@ -386,11 +410,6 @@ fun PenpalReplyImageMessage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(message.image)
             .crossfade(true)
-            .listener(
-                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка: ${message.image}") },
-                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "OK") },
-                onError = { _, r -> Log.e("COIL_ERROR_DEBUG", "ERR", r.throwable) },
-            )
             .build()
     )
 
@@ -400,7 +419,6 @@ fun PenpalReplyImageMessage(
             intrinsic.width > 0f &&
             intrinsic.height > 0f
 
-    // Натуральные размеры картинки, вписанные в maxWidth × maxHeight
     val (naturalWidthPx, naturalHeightPx) = remember(intrinsic, maxWidth, maxHeight, density) {
         if (hasIntrinsic) {
             val maxW = with(density) { maxWidth.toPx() }
@@ -500,9 +518,9 @@ fun PenpalReplyImageMessage(
                         )
                 ) {
 
-                    message.replyData?.let { reply ->
+                    message.replyData?.let {
                         PenpalReplyBlockContent(
-                            reply = message,
+                            reply = message.replyData,
                             replyName = replyName,
                             onReplyMessageClick = onReplyMessageClick,
                         )
@@ -561,7 +579,7 @@ fun PenpalReplyImageMessage(
                     ) {
                         ReactionWidget(
                             reactions = MessageReactions(
-                                mineReaction = reactions!!.mineReaction,
+                                mineReaction = reactions.mineReaction,
                                 penpalReaction = null
                             ),
                             color = Blue,
@@ -574,7 +592,7 @@ fun PenpalReplyImageMessage(
                         ReactionWidget(
                             reactions = MessageReactions(
                                 mineReaction = null,
-                                penpalReaction = reactions!!.penpalReaction
+                                penpalReaction = reactions.penpalReaction
                             ),
                             color = Color(0xFFCCE3F8),
                             onReactionClick = {
@@ -613,12 +631,10 @@ fun PenpalReplyImageMessage(
 
 @Composable
 private fun PenpalReplyBlockContent(
-    reply: Message,
+    reply: ReplyData,
     replyName: String,
     onReplyMessageClick: (String) -> Unit,
 ) {
-
-    val reply = reply.replyData
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -629,7 +645,7 @@ private fun PenpalReplyBlockContent(
             .clip(shape = RoundedCornerShape(4.dp))
             .background(color = Color(0xFFFFEBD6))
             .clickable {
-                onReplyMessageClick(reply?.messageId ?: "")
+                onReplyMessageClick(reply.messageId)
             }
             .padding(end = 8.dp)
     ) {
@@ -647,7 +663,7 @@ private fun PenpalReplyBlockContent(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            when (reply?.type) {
+            when (reply.type) {
                 "sticker" -> {
                     Text(
                         text = replyName,
@@ -719,7 +735,7 @@ private fun PenpalReplyBlockContent(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ReplyImagePreview(content = reply?.content)
+                        ReplyImagePreview(content = reply.content)
                         Spacer(modifier = Modifier.width(5.dp))
                         Column(
                             verticalArrangement = Arrangement.Center,
@@ -811,11 +827,6 @@ fun MineImageMessage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(message.image)
             .crossfade(true)
-            .listener(
-                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка: ${message.image}") },
-                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "OK") },
-                onError = { _, r -> Log.e("COIL_ERROR_DEBUG", "ERR", r.throwable) },
-            )
             .build()
     )
 
@@ -1076,11 +1087,6 @@ fun MineReplyImageMessage(
         model = ImageRequest.Builder(LocalContext.current)
             .data(message.image)
             .crossfade(true)
-            .listener(
-                onStart = { Log.d("COIL_ERROR_DEBUG", "Загрузка: ${message.image}") },
-                onSuccess = { _, _ -> Log.d("COIL_ERROR_DEBUG", "OK") },
-                onError = { _, r -> Log.e("COIL_ERROR_DEBUG", "ERR", r.throwable) },
-            )
             .build()
     )
 
@@ -1090,7 +1096,6 @@ fun MineReplyImageMessage(
             intrinsic.width > 0f &&
             intrinsic.height > 0f
 
-    // Натуральные размеры картинки, вписанные в maxWidth × maxHeight
     val (naturalWidthPx, naturalHeightPx) = remember(intrinsic, maxWidth, maxHeight, density) {
         if (hasIntrinsic) {
             val maxW = with(density) { maxWidth.toPx() }
@@ -1120,12 +1125,8 @@ fun MineReplyImageMessage(
 
     val hasReply = message.replyData != null
 
-    // Ширина Card:
-    //  - если есть replyData → maxWidth (replyData задаёт ширину, картинка растягивается)
-    //  - иначе → натуральная ширина картинки
     val cardWidthDp: Dp = if (hasReply) maxWidth else naturalWidthDp
 
-    // Высота картинки под итоговую ширину Card, с сохранением пропорций
     val imageHeightDp: Dp = if (hasIntrinsic) {
         cardWidthDp / aspectRatio
     } else {
@@ -1188,9 +1189,8 @@ fun MineReplyImageMessage(
 
                     message.replyData?.let { reply ->
                         ReplyBlockContent(
-                            reply = message,
+                            reply = reply,
                             replyName = replyName,
-                            maxWidth = maxWidth,
                             onReplyMessageClick = onReplyMessageClick,
                         )
                     }
@@ -1209,7 +1209,6 @@ fun MineReplyImageMessage(
                             modifier = Modifier.fillMaxSize()
                         )
 
-                        // Оверлей: время + статус
                         Box(
                             modifier = Modifier
                                 .align(Alignment.BottomEnd)
@@ -1272,7 +1271,7 @@ fun MineReplyImageMessage(
                             ReactionWidget(
                                 reactions = MessageReactions(
                                     mineReaction = null,
-                                    penpalReaction = reactions!!.penpalReaction
+                                    penpalReaction = reactions.penpalReaction
                                 ),
                                 color = Green,
                                 onReactionClick = { onReactionClick() },
@@ -1296,13 +1295,11 @@ fun MineReplyImageMessage(
 
 @Composable
 private fun ReplyBlockContent(
-    reply: Message,
+    reply: ReplyData,
     replyName: String,
-    maxWidth: Dp,
     onReplyMessageClick: (String) -> Unit,
 ) {
 
-    val reply = reply.replyData
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -1312,7 +1309,7 @@ private fun ReplyBlockContent(
             .clip(shape = RoundedCornerShape(4.dp))
             .background(color = Color(0xFFFFEBD6))
             .clickable {
-                onReplyMessageClick(reply?.messageId ?: "")
+                onReplyMessageClick(reply.messageId)
             }
             .padding(end = 8.dp)
     ) {
@@ -1330,7 +1327,7 @@ private fun ReplyBlockContent(
                 .weight(1f)
                 .fillMaxWidth()
         ) {
-            when (reply?.type) {
+            when (reply.type) {
                 "sticker" -> {
                     Text(
                         text = replyName,
@@ -1364,7 +1361,7 @@ private fun ReplyBlockContent(
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        text = reply.content.orEmpty(),
+                        text = reply.content,
                         fontFamily = SfProText,
                         fontWeight = FontWeight.Normal,
                         fontSize = 15.sp,
@@ -1402,7 +1399,7 @@ private fun ReplyBlockContent(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        ReplyImagePreview(content = reply?.content)
+                        ReplyImagePreview(content = reply.content)
                         Spacer(modifier = Modifier.width(5.dp))
                         Column(
                             verticalArrangement = Arrangement.Center,
