@@ -43,6 +43,7 @@ import java.io.File
 @Composable
 fun VideoMessageRecorder(
     isRecordingTriggered: Boolean,
+    isCanceled: Boolean,
     onVideoRecorded: (Uri) -> Unit,
 ) {
     val context = LocalContext.current
@@ -51,6 +52,9 @@ fun VideoMessageRecorder(
     val previewView = remember { PreviewView(context) }
     val videoCaptureState = remember { mutableStateOf<VideoCapture<Recorder>?>(null) }
     var currentRecording by remember { mutableStateOf<Recording?>(null) }
+
+    var currentOutputFile by remember { mutableStateOf<File?>(null) }
+    var wasCanceledByProp by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val cameraProviderProvider = ProcessCameraProvider.getInstance(context)
@@ -86,14 +90,24 @@ fun VideoMessageRecorder(
     val videoCapture = videoCaptureState.value
 
     @SuppressLint("MissingPermission")
-    LaunchedEffect(isRecordingTriggered, videoCapture) {
+    LaunchedEffect(isRecordingTriggered, isCanceled, videoCapture) {
         if (videoCapture == null) return@LaunchedEffect
 
+        if (isCanceled && currentRecording != null) {
+            wasCanceledByProp = true
+            currentRecording?.stop()
+            return@LaunchedEffect
+        }
+
         if (isRecordingTriggered && currentRecording == null) {
+            wasCanceledByProp = false
+
             val outputFile = File(
                 context.cacheDir,
                 "circle_video_${System.currentTimeMillis()}.mp4"
             )
+            currentOutputFile = outputFile
+
             val outputOptions = FileOutputOptions.Builder(outputFile).build()
 
             val hasAudio = ContextCompat.checkSelfPermission(
@@ -110,16 +124,23 @@ fun VideoMessageRecorder(
             currentRecording = pending.start(ContextCompat.getMainExecutor(context)) { event ->
                 if (event is VideoRecordEvent.Finalize) {
                     currentRecording = null
-                    if (!event.hasError()) {
+
+                    if (wasCanceledByProp) {
+                        currentOutputFile?.delete()
+                        currentOutputFile = null
+                        Log.d("VideoRecorder", "Запись отменена пользователем, файл удален.")
+                    } else if (!event.hasError()) {
                         onVideoRecorded(Uri.fromFile(outputFile))
                     } else {
                         Log.e("VideoRecorder", "Ошибка записи: ${event.error}")
+                        currentOutputFile?.delete()
+                        currentOutputFile = null
                     }
                 }
             }
-        } else if (!isRecordingTriggered && currentRecording != null) {
+        }
+        else if (!isRecordingTriggered && currentRecording != null) {
             currentRecording?.stop()
-            // НЕ обнуляем здесь — обнулим в Finalize
         }
     }
 
