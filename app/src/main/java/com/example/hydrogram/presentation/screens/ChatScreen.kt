@@ -126,6 +126,7 @@ import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
 import com.example.hydrogram.presentation.widgets.MessageActionMenu
+import com.example.hydrogram.presentation.widgets.VideoMessageRecorder
 import com.example.hydrogram.presentation.widgets.messages.image.MineImageMessage
 import com.example.hydrogram.presentation.widgets.messages.image.MineReplyImageMessage
 import com.example.hydrogram.presentation.widgets.messages.image.PenpalImageMessage
@@ -145,6 +146,7 @@ import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -358,15 +360,16 @@ private fun Content(
 
     val micPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
 
+    var isVideoRecording by remember {mutableStateOf(false)}
+
+    LaunchedEffect(isVideoRecording) {
+        Log.d("Video", "isVideoRecording: $isVideoRecording")
+    }
 
     val gifImageLoader = remember(context) {
         ImageLoader.Builder(context)
             .components {
-                if (SDK_INT >= 28) {
-                    add(AnimatedImageDecoder.Factory())
-                } else {
-                    add(GifDecoder.Factory())
-                }
+                add(AnimatedImageDecoder.Factory())
             }
             .build()
     }
@@ -695,7 +698,7 @@ private fun Content(
     var isRecording by remember { mutableStateOf(false) }
 
     val bottomBarExtraPadding by animateDpAsState(
-        targetValue = if(isRecording) 17.dp else 0.dp,
+        targetValue = if (isRecording) 17.dp else 0.dp,
         animationSpec = tween(durationMillis = 200)
     )
 
@@ -1059,7 +1062,7 @@ private fun Content(
                                     )
                                 }
                             } else if (message.type == "voice") {
-                                if(message.replyData == null) {
+                                if (message.replyData == null) {
                                     VoiceWidget(
                                         message = message,
                                         isMine = true,
@@ -1186,7 +1189,7 @@ private fun Content(
                                                     )
                                                 }
                                             },
-                                            onReplyMessageClick = {messageId ->
+                                            onReplyMessageClick = { messageId ->
                                                 scrollToMessage(messageId)
                                             },
                                         ),
@@ -1625,7 +1628,7 @@ private fun Content(
                                     )
                                 }
                             } else if (message.type == "voice") {
-                                if(message.replyData == null) {
+                                if (message.replyData == null) {
                                     VoiceWidget(
                                         message = message,
                                         isMine = false,
@@ -2201,6 +2204,9 @@ private fun Content(
                     },
                     onRecordCancel = {
                         chatViewModel.cancelRecording()
+                    },
+                    videoRecordingToggle = {
+                        isVideoRecording = it
                     },
                 )
             }
