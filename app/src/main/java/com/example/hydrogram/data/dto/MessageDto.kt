@@ -16,6 +16,7 @@ data class MessageDto(
     val stickerPath: String? = null,
     val image: String? = null,
     val audioUrl: String? = "",
+    val videoUrl: String? = "",
     val durationSeconds: Int? = 0,
     val recordingAmplitudes: List<Float>? = emptyList(),
 )
