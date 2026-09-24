@@ -9,6 +9,11 @@ interface StorageRepository {
         messageId: String,
     ): String
 
+    suspend fun uploadCircleVideoMessage(
+        localFile: File?,
+        messageId: String,
+    ) : String
+
     suspend fun uploadImageMessage(
         imageBytes: ByteArray,
         type: String,
