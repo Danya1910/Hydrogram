@@ -54,28 +54,28 @@ class PresenceRepositoryImpl @Inject constructor(
 
     }
 
-    override fun observeUserPresence(userId: String): Flow<UserPresence> {
-        return callbackFlow {
-            val userStatusRef = rtdb.getReference("/status/$userId")
+        override fun observeUserPresence(userId: String): Flow<UserPresence> {
+            return callbackFlow {
+                val userStatusRef = rtdb.getReference("/status/$userId")
 
-            val listener = object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val isOnline = snapshot.child("isOnline").getValue(Boolean::class.java) ?: false
-                    val lastSeen = snapshot.child("lastSeen").getValue(Long::class.java) ?: 0L
+                val listener = object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val isOnline = snapshot.child("isOnline").getValue(Boolean::class.java) ?: false
+                        val lastSeen = snapshot.child("lastSeen").getValue(Long::class.java) ?: 0L
 
-                    trySend(UserPresence(isOnline = isOnline, lastSeen = lastSeen))
+                        trySend(UserPresence(isOnline = isOnline, lastSeen = lastSeen))
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        close()
+                    }
                 }
+                userStatusRef.addValueEventListener(listener)
 
-                override fun onCancelled(error: DatabaseError) {
-                    close(error.toException())
-                }
+                awaitClose { userStatusRef.removeEventListener(listener) }
+
             }
-            userStatusRef.addValueEventListener(listener)
-
-            awaitClose { userStatusRef.removeEventListener(listener) }
-
         }
-    }
 
     override fun observeMultiplePresence(uids: List<String>): Flow<Map<String, UserPresence>> =
         callbackFlow {
