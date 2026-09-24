@@ -66,6 +66,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -358,9 +359,24 @@ private fun Content(
 
     var textState by remember { mutableStateOf("") }
 
-    val micPermissionState = rememberPermissionState(Manifest.permission.RECORD_AUDIO)
+    val mediaPermissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO
+        )
+    )
 
     var isVideoRecording by remember {mutableStateOf(false)}
+
+    var isCancelVideo by remember {mutableStateOf(false)}
+
+    var isVideoButton by remember { mutableStateOf(false) }
+
+    LaunchedEffect(mediaPermissionsState.allPermissionsGranted, isVideoRecording) {
+        if (!mediaPermissionsState.allPermissionsGranted && isVideoRecording) {
+            mediaPermissionsState.launchMultiplePermissionRequest()
+        }
+    }
 
     LaunchedEffect(isVideoRecording) {
         Log.d("Video", "isVideoRecording: $isVideoRecording")
@@ -1989,6 +2005,21 @@ private fun Content(
             }
         }
 
+        if (mediaPermissionsState.allPermissionsGranted) {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .alpha(if (isVideoRecording && !isCancelVideo) 1f else 0f)
+            ) {
+                VideoMessageRecorder(
+                    isRecordingTriggered = isVideoRecording,
+                    isCanceled = isCancelVideo,
+                    onVideoRecorded = { uri -> /* ... */ }
+                )
+            }
+        }
+
         Column(
             horizontalAlignment = Alignment.End,
             modifier = Modifier
@@ -2152,10 +2183,10 @@ private fun Content(
                         isRecording = it
                     },
                     onRecordStart = {
-                        if (micPermissionState.status.isGranted) {
+                        if (mediaPermissionsState.allPermissionsGranted) {
                             chatViewModel.startRecording()
                         } else {
-                            micPermissionState.launchPermissionRequest()
+                            mediaPermissionsState.launchMultiplePermissionRequest()
                         }
                     },
                     onRecordStop = {
@@ -2205,9 +2236,18 @@ private fun Content(
                     onRecordCancel = {
                         chatViewModel.cancelRecording()
                     },
-                    videoRecordingToggle = {
-                        isVideoRecording = it
+                    videoRecordingToggle = { isVideoNow ->
+                        isCancelVideo = false
+                        isVideoRecording = isVideoNow
                     },
+                    cancelVideo = {
+                        isCancelVideo = true
+                        isVideoRecording = false
+                    },
+                    isVideoButton = isVideoButton,
+                    changeButton = {
+                        isVideoButton = !isVideoButton
+                    }
                 )
             }
         }
