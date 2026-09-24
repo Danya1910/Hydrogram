@@ -1,7 +1,10 @@
 package com.example.hydrogram.presentation.widgets
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.util.Log
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -16,6 +19,7 @@ import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -78,27 +83,43 @@ fun VideoMessageRecorder(
         }, ContextCompat.getMainExecutor(context))
     }
 
-    @SuppressLint("MissingPermission")
-    LaunchedEffect(isRecordingTriggered) {
-        val videoCapture = videoCaptureState.value
+    val videoCapture = videoCaptureState.value
 
-        if (isRecordingTriggered && videoCapture != null && currentRecording == null) {
-            val outputFile = File(context.cacheDir, "circle_video_${System.currentTimeMillis()}.mp4")
+    @SuppressLint("MissingPermission")
+    LaunchedEffect(isRecordingTriggered, videoCapture) {
+        if (videoCapture == null) return@LaunchedEffect
+
+        if (isRecordingTriggered && currentRecording == null) {
+            val outputFile = File(
+                context.cacheDir,
+                "circle_video_${System.currentTimeMillis()}.mp4"
+            )
             val outputOptions = FileOutputOptions.Builder(outputFile).build()
 
-            currentRecording = videoCapture.output
+            val hasAudio = ContextCompat.checkSelfPermission(
+                context, Manifest.permission.RECORD_AUDIO
+            ) == PackageManager.PERMISSION_GRANTED
+
+            var pending = videoCapture.output
                 .prepareRecording(context, outputOptions)
-                .withAudioEnabled()
-                .start(ContextCompat.getMainExecutor(context)) { recordEvent ->
-                    if (recordEvent is VideoRecordEvent.Finalize) {
-                        if (!recordEvent.hasError()) {
-                            onVideoRecorded(Uri.fromFile(outputFile))
-                        }
+
+            if (hasAudio) {
+                pending = pending.withAudioEnabled()
+            }
+
+            currentRecording = pending.start(ContextCompat.getMainExecutor(context)) { event ->
+                if (event is VideoRecordEvent.Finalize) {
+                    currentRecording = null
+                    if (!event.hasError()) {
+                        onVideoRecorded(Uri.fromFile(outputFile))
+                    } else {
+                        Log.e("VideoRecorder", "Ошибка записи: ${event.error}")
                     }
                 }
+            }
         } else if (!isRecordingTriggered && currentRecording != null) {
             currentRecording?.stop()
-            currentRecording = null
+            // НЕ обнуляем здесь — обнулим в Finalize
         }
     }
 
@@ -112,6 +133,7 @@ fun VideoMessageRecorder(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
+            .size(200.dp)
             .clip(CircleShape)
             .background(color = LightBlack)
     ) {
