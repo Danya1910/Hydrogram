@@ -44,7 +44,7 @@ import java.io.File
 fun VideoMessageRecorder(
     isRecordingTriggered: Boolean,
     isCanceled: Boolean,
-    onVideoRecorded: (Uri) -> Unit,
+    onVideoRecorded: (File, Long) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -122,7 +122,16 @@ fun VideoMessageRecorder(
             }
 
             currentRecording = pending.start(ContextCompat.getMainExecutor(context)) { event ->
+                if (event is VideoRecordEvent.Status) {
+                    val durationMillis = event.recordingStats.recordedDurationNanos / 1_000_000
+                    //
+                    //
+                    // передвать текущее время записи
+                    //
+                    //
+                }
                 if (event is VideoRecordEvent.Finalize) {
+
                     currentRecording = null
 
                     if (wasCanceledByProp) {
@@ -130,7 +139,8 @@ fun VideoMessageRecorder(
                         currentOutputFile = null
                         Log.d("VideoRecorder", "Запись отменена пользователем, файл удален.")
                     } else if (!event.hasError()) {
-                        onVideoRecorded(Uri.fromFile(outputFile))
+                        val finalDurationMillis = event.recordingStats.recordedDurationNanos / 1_000_000
+                        onVideoRecorded(outputFile, finalDurationMillis)
                     } else {
                         Log.e("VideoRecorder", "Ошибка записи: ${event.error}")
                         currentOutputFile?.delete()
