@@ -366,9 +366,9 @@ private fun Content(
         )
     )
 
-    var isVideoRecording by remember {mutableStateOf(false)}
+    var isVideoRecording by remember { mutableStateOf(false) }
 
-    var isCancelVideo by remember {mutableStateOf(false)}
+    var isCancelVideo by remember { mutableStateOf(false) }
 
     var isVideoButton by remember { mutableStateOf(false) }
 
@@ -1217,6 +1217,8 @@ private fun Content(
                                         ),
                                     )
                                 }
+                            } else if (message.type == "circleVideo") {
+                                Log.d("CircleVideo", message.toString())
                             } else {
                                 if (message.replyData == null) {
                                     MineImageMessage(
@@ -1785,6 +1787,8 @@ private fun Content(
                                         ),
                                     )
                                 }
+                            } else if (message.type == "circleVideo") {
+                                Log.d("CircleVideo", message.toString())
                             } else {
                                 if (message.replyData == null) {
                                     PenpalImageMessage(
@@ -2015,7 +2019,18 @@ private fun Content(
                 VideoMessageRecorder(
                     isRecordingTriggered = isVideoRecording,
                     isCanceled = isCancelVideo,
-                    onVideoRecorded = { uri -> /* ... */ }
+                    onVideoRecorded = { file, duration ->
+                        chatViewModel.sendCircleVideo(
+                            senderId = mineId,
+                            chatId = chatId,
+                            video = file,
+                            videoDuration = (duration / 1000).toInt(),
+                            replyData = null,
+                            targetUserId = penpalData?.uid ?: "",
+                            senderName = mineName,
+                            senderAvatar = mineData?.avatarUrl ?: "",
+                        )
+                    },
                 )
             }
         }
