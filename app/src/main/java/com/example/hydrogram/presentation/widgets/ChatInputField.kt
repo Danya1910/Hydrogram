@@ -27,6 +27,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -110,11 +111,14 @@ fun ChatInputField(
     onRecordStart: () -> Unit,
     onRecordStop: () -> Unit,
     onRecordCancel: () -> Unit,
+    videoRecordingToggle: (Boolean) -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
 
     var elapsedTime by remember { mutableLongStateOf(0L) }
+
+    var isVideoButton by remember { mutableStateOf(false) }
 
     LaunchedEffect(isRecording) {
         if (isRecording) {
@@ -209,6 +213,7 @@ fun ChatInputField(
             ) {
                 SendButton(
                     isRecording = isRecording,
+                    isVideoButton = isVideoButton,
                     changeRecordState = {
                         changeRecordState(it)
                     },
@@ -221,6 +226,9 @@ fun ChatInputField(
                     onRecordCancel = {
                         onRecordCancel()
                     },
+                    videoRecordingToggle = {
+                        videoRecordingToggle(it)
+                    }
                 )
             }
         }
@@ -276,6 +284,8 @@ private fun SendButton(
     onRecordStart: () -> Unit,
     onRecordStop: () -> Unit,
     onRecordCancel: () -> Unit,
+    isVideoButton: Boolean,
+    videoRecordingToggle: (Boolean) -> Unit,
 ) {
 
     val scaleAnimation by animateFloatAsState(
@@ -373,8 +383,9 @@ private fun SendButton(
                 awaitEachGesture {
                     awaitFirstDown(requireUnconsumed = false)
 
-                    changeRecordState(true)
-                    onRecordStart()
+                    //changeRecordState(true)
+                    //onRecordStart()
+                    videoRecordingToggle(true)
 
                     var isCanceled = false
 
@@ -410,8 +421,9 @@ private fun SendButton(
                         onRecordCancel()
                         haptic.performHapticFeedback(HapticFeedbackType.Reject)
                     } else {
-                        changeRecordState(false)
-                        onRecordStop()
+//                        changeRecordState(false)
+//                        onRecordStop()
+                        videoRecordingToggle(false)
                     }
 
                     dragOffset = 0f
@@ -422,7 +434,7 @@ private fun SendButton(
         Icon(
             painter = painterResource(R.drawable.ic_microphone),
             contentDescription = null,
-            tint = animatedIconColor,
+            tint = if(isVideoButton) Color.Red else animatedIconColor,
         )
     }
 }
@@ -638,7 +650,7 @@ private fun MessageInputField(
                                             brush = BlueGlassBorder,
                                             shape = CircleShape,
                                         )
-                                        .clickable{
+                                        .clickable {
                                             onSendClick()
                                         }
                                 ) {
