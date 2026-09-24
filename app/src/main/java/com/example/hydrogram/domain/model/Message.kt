@@ -63,7 +63,7 @@ sealed interface Message {
     data class CircleVideo(
         override val messageId: String = "",
         override val senderId: String = "",
-        override val type: String = "voice",
+        override val type: String = "circleVideo",
         override val status: String = "sent",
         override val timestamp: Long = 0L,
         override val reactions: Map<String, String>? = null,
