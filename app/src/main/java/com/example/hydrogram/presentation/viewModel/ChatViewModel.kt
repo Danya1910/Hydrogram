@@ -194,6 +194,50 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun sendCircleVideo(
+        senderId: String,
+        chatId: String,
+        video: File,
+        videoDuration: Int,
+        replyData: ReplyData? = null,
+        targetUserId: String,
+        senderName: String,
+        senderAvatar: String,
+    ) {
+        if (_isSending.value) {
+            return
+        }
+        Log.d("ChatVM", "sent circle video message called")
+        viewModelScope.launch {
+            _isSending.value = true
+            try {
+
+                val result = sendMessageUseCase(
+                    senderId = senderId,
+                    chatId = chatId,
+                    messageType = "circleVideo",
+                    video = video,
+                    videoDuration = videoDuration,
+                    type = "circleVideo",
+                    replyData = replyData,
+                    targetUserId = targetUserId,
+                    senderName = senderName,
+                    senderAvatar = senderAvatar,
+                )
+                _isSending.value = false
+                Log.d("ChatVM", "sent circle video message result: $result")
+                result
+                    .onSuccess { _isSuccess.value = true }
+                    .onFailure { _errorMessage.value = it.localizedMessage ?: "Ошибка отправки" }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _errorMessage.value = "Не удалось обработать снятое видео"
+            } finally {
+                _isSending.value = false
+            }
+        }
+    }
+
     fun startRecording() {
         try {
             voiceMessageAmplitudes.clear()
