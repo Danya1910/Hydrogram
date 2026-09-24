@@ -112,13 +112,15 @@ fun ChatInputField(
     onRecordStop: () -> Unit,
     onRecordCancel: () -> Unit,
     videoRecordingToggle: (Boolean) -> Unit,
+    cancelVideo: () -> Unit,
+    isVideoButton: Boolean,
+    changeButton: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
 
     var elapsedTime by remember { mutableLongStateOf(0L) }
 
-    var isVideoButton by remember { mutableStateOf(false) }
 
     LaunchedEffect(isRecording) {
         if (isRecording) {
@@ -228,6 +230,12 @@ fun ChatInputField(
                     },
                     videoRecordingToggle = {
                         videoRecordingToggle(it)
+                    },
+                    cancelVideo = {
+                        cancelVideo()
+                    },
+                    changeButton = {
+                        changeButton()
                     }
                 )
             }
@@ -284,8 +292,10 @@ private fun SendButton(
     onRecordStart: () -> Unit,
     onRecordStop: () -> Unit,
     onRecordCancel: () -> Unit,
-    isVideoButton: Boolean,
     videoRecordingToggle: (Boolean) -> Unit,
+    cancelVideo: () -> Unit,
+    isVideoButton: Boolean,
+    changeButton: () -> Unit,
 ) {
 
     val scaleAnimation by animateFloatAsState(
@@ -379,51 +389,79 @@ private fun SendButton(
                 brush = GlassBorder,
                 shape = CircleShape,
             )
-            .pointerInput(Unit) {
+            .pointerInput(isVideoButton) {
                 awaitEachGesture {
-                    awaitFirstDown(requireUnconsumed = false)
-
-                    //changeRecordState(true)
-                    //onRecordStart()
-                    videoRecordingToggle(true)
+                    val down = awaitFirstDown(requireUnconsumed = false)
 
                     var isCanceled = false
+                    var isLongPress = false
 
-                    while (true) {
-                        val event = awaitPointerEvent()
-                        val change = event.changes.firstOrNull() ?: break
-
-                        when (event.type) {
-                            PointerEventType.Move -> {
-                                val delta = change.position.x - change.previousPosition.x
-                                dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
-
-                                if (dragOffset <= cancelThresholdPx) {
-                                    isCanceled = true
-                                    change.consume()
-                                    break
-                                }
-
-                                change.consume()
-                            }
-
-                            PointerEventType.Release -> {
-                                if (dragOffset <= cancelThresholdPx) {
-                                    isCanceled = true
-                                }
+                    val longPressTimeout = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            if (event.type == PointerEventType.Release) {
                                 break
                             }
                         }
+                        false
                     }
 
-                    if (isCanceled) {
-                        changeRecordState(false)
-                        onRecordCancel()
-                        haptic.performHapticFeedback(HapticFeedbackType.Reject)
+                    if (longPressTimeout == null) {
+                        isLongPress = true
+
+                        if (isVideoButton) {
+                            videoRecordingToggle(true)
+                        } else {
+                            changeRecordState(true)
+                            onRecordStart()
+                        }
+
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull() ?: break
+
+                            when (event.type) {
+                                PointerEventType.Move -> {
+                                    val delta = change.position.x - change.previousPosition.x
+                                    dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
+
+                                    if (dragOffset <= cancelThresholdPx) {
+                                        isCanceled = true
+                                        change.consume()
+                                        break
+                                    }
+                                    change.consume()
+                                }
+
+                                PointerEventType.Release -> {
+                                    if (dragOffset <= cancelThresholdPx) {
+                                        isCanceled = true
+                                    }
+                                    break
+                                }
+                            }
+                        }
                     } else {
-//                        changeRecordState(false)
-//                        onRecordStop()
-                        videoRecordingToggle(false)
+                        changeButton()
+                    }
+
+                    if (isLongPress) {
+                        if (isCanceled) {
+                            if (isVideoButton) {
+                                cancelVideo()
+                            } else {
+                                changeRecordState(false)
+                                onRecordCancel()
+                            }
+                            haptic.performHapticFeedback(HapticFeedbackType.Reject)
+                        } else {
+                            if (isVideoButton) {
+                                videoRecordingToggle(false)
+                            } else {
+                                changeRecordState(false)
+                                onRecordStop()
+                            }
+                        }
                     }
 
                     dragOffset = 0f
