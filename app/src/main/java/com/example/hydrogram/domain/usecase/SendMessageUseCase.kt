@@ -30,7 +30,9 @@ class SendMessageUseCase @Inject constructor(
         chatId: String,
         content: String = "",
         audio: File? = null,
+        video: File? = null,
         voiceDuration: Int? = 0,
+        videoDuration: Int? = 0,
         messageType: String,
         imageBytes: ByteArray? = null,
         type: String? = null,
@@ -89,6 +91,26 @@ class SendMessageUseCase @Inject constructor(
                         image = imageUrl,
                         replyData = replyData,
                     )
+                }
+
+                "circleVideo" ->  {
+                    val messageId = chatRepository.generateMessageId(chatId = chatId)
+
+                    val videoUrl = storageRepository.uploadCircleVideoMessage(
+                        localFile = video,
+                        messageId = messageId,
+                    )
+
+                    Message.CircleVideo(
+                        messageId = messageId,
+                        senderId = senderId,
+                        status = "sent",
+                        timestamp = System.currentTimeMillis(),
+                        videoUrl = videoUrl,
+                        durationSeconds = voiceDuration,
+                        replyData = replyData,
+                    )
+
                 }
 
                 "voice" -> {
