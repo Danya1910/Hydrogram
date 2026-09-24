@@ -54,7 +54,10 @@ class ChatRepositoryImpl @Inject constructor(
                     "Фото" to "image"
                 }
                 is Message.Voice -> {
-                    "голосовое сообщение" to "voice"
+                    "Голосовое сообщение" to "voice"
+                }
+                is Message.CircleVideo -> {
+                    "Видеосообщение" to "circleVideo"
                 }
             }
 
@@ -112,7 +115,23 @@ class ChatRepositoryImpl @Inject constructor(
                         recordingAmplitudes = message.recordingAmplitudes,
                     )
                 }
+
+                is Message.CircleVideo -> {
+                    MessageDto(
+                        messageId = messageRef.id,
+                        senderId = message.senderId,
+                        timestamp = message.timestamp,
+                        status = message.status,
+                        type = "circleVideo",
+                        reactions = null,
+                        replyData = message.replyData,
+                        durationSeconds = message.durationSeconds,
+                        videoUrl = message.videoUrl,
+                    )
+                }
             }
+
+            Log.d("MessageDto", messageDto.toString())
 
             val chatUpdate = mapOf(
                 "chatId" to chatId,
@@ -242,7 +261,7 @@ class ChatRepositoryImpl @Inject constructor(
 
             val snapshot = docRef.get().await()
             if (!snapshot.exists()) {
-                Log.e("EditDebug", "❌ Сообщение не найдено: $messageId")
+                Log.e("EditDebug", "Сообщение не найдено: $messageId")
                 return Result.failure(Exception("Message not found"))
             }
 
