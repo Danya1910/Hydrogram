@@ -50,6 +50,7 @@ class SendMessageUseCase @Inject constructor(
                 "sticker" -> "Стикер"
                 "image" -> "Фотография"
                 "voice" -> "Голосовое сообщение"
+                "circleVideo" -> "Видеосообщение"
                 else -> "Сообщение"
             }
 
@@ -107,7 +108,7 @@ class SendMessageUseCase @Inject constructor(
                         status = "sent",
                         timestamp = System.currentTimeMillis(),
                         videoUrl = videoUrl,
-                        durationSeconds = voiceDuration,
+                        durationSeconds = videoDuration,
                         replyData = replyData,
                     )
 
