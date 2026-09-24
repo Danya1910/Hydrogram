@@ -42,7 +42,7 @@ class StorageRepositoryImpl @Inject constructor(
 
     override suspend fun uploadCircleVideoMessage(localFile: File?, messageId: String): String =
         withContext(Dispatchers.IO) {
-            val s3Key = "voice_messages/$messageId.mp4"
+            val s3Key = "circle_video_messages/$messageId.mp4"
 
             s3Client.putObject(PutObjectRequest(bucketName, s3Key, localFile))
 
