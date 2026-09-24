@@ -60,6 +60,19 @@ sealed interface Message {
         val recordingAmplitudes: List<Float>? = emptyList(),
     ) : Message
 
+    data class CircleVideo(
+        override val messageId: String = "",
+        override val senderId: String = "",
+        override val type: String = "voice",
+        override val status: String = "sent",
+        override val timestamp: Long = 0L,
+        override val reactions: Map<String, String>? = null,
+        override val replyData: ReplyData? = null,
+        override val isEdited: Boolean = false,
+        val videoUrl: String? = "",
+        val durationSeconds: Int? = 0,
+    ) : Message
+
 
 }
 
