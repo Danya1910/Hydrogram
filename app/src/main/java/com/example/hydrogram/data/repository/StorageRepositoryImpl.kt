@@ -40,6 +40,15 @@ class StorageRepositoryImpl @Inject constructor(
 
         }
 
+    override suspend fun uploadCircleVideoMessage(localFile: File?, messageId: String): String =
+        withContext(Dispatchers.IO) {
+            val s3Key = "voice_messages/$messageId.mp4"
+
+            s3Client.putObject(PutObjectRequest(bucketName, s3Key, localFile))
+
+            return@withContext "https://storage.yandexcloud.net/$bucketName/$s3Key"
+        }
+
     override suspend fun uploadImageMessage(
         imageBytes: ByteArray,
         type: String,
