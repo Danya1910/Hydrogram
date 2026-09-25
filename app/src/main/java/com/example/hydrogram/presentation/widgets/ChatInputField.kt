@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.widgets
 
 import android.util.Log
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -22,6 +23,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -298,6 +300,8 @@ private fun SendButton(
     changeButton: () -> Unit,
 ) {
 
+    var isPressed by remember { mutableStateOf(false) }
+
     val scaleAnimation by animateFloatAsState(
         targetValue = if (isRecording) 1.62f else 1f,
         animationSpec = spring(
@@ -306,8 +310,16 @@ private fun SendButton(
         )
     )
 
+    val pressedAnimation by animateFloatAsState(
+        targetValue = if (isPressed) 1.15f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        )
+    )
+
     val animatedIconColor by animateColorAsState(
-        targetValue = if(isRecording) Color.White else LightBlack,
+        targetValue = if (isRecording) Color.White else LightBlack,
         animationSpec = tween(durationMillis = 200),
     )
 
@@ -362,7 +374,7 @@ private fun SendButton(
         (animatedOffset / criticalLevelOfDecreasePx).coerceIn(0f, 1f)
     } else 0f
 
-    val finalScale = scaleAnimation + (0.9f - scaleAnimation) * dragProgress
+    val finalScale = scaleAnimation * pressedAnimation + (0.9f - scaleAnimation) * dragProgress
 
     Box(
         contentAlignment = Alignment.Center,
@@ -393,18 +405,21 @@ private fun SendButton(
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
 
+                    isPressed = true
+
                     var isCanceled = false
                     var isLongPress = false
 
-                    val longPressTimeout = withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
-                        while (true) {
-                            val event = awaitPointerEvent()
-                            if (event.type == PointerEventType.Release) {
-                                break
+                    val longPressTimeout =
+                        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                            while (true) {
+                                val event = awaitPointerEvent()
+                                if (event.type == PointerEventType.Release) {
+                                    break
+                                }
                             }
+                            false
                         }
-                        false
-                    }
 
                     if (longPressTimeout == null) {
                         isLongPress = true
@@ -423,7 +438,8 @@ private fun SendButton(
                             when (event.type) {
                                 PointerEventType.Move -> {
                                     val delta = change.position.x - change.previousPosition.x
-                                    dragOffset = (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
+                                    dragOffset =
+                                        (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
 
                                     if (dragOffset <= cancelThresholdPx) {
                                         isCanceled = true
@@ -464,16 +480,31 @@ private fun SendButton(
                         }
                     }
 
+                    isPressed = false
                     dragOffset = 0f
                     isHapticTriggered = false
                 }
             },
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_microphone),
-            contentDescription = null,
-            tint = if(isVideoButton) Color.Red else animatedIconColor,
-        )
+        AnimatedContent(
+            targetState = isVideoButton,
+            transitionSpec = {
+                (fadeIn(tween(150)) +
+                        scaleIn(initialScale = 0.7f)) togetherWith
+                        (fadeOut(tween(150)) +
+                                scaleOut(targetScale = 0.7f))
+            },
+            label = "iconSwitch"
+        ) { button ->
+            Icon(
+                painter = painterResource(
+                    if (button) R.drawable.ic_circle_video
+                    else R.drawable.ic_microphone
+                ),
+                contentDescription = null,
+                tint = animatedIconColor,
+            )
+        }
     }
 }
 
