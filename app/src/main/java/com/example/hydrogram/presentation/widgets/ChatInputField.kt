@@ -116,6 +116,7 @@ fun ChatInputField(
     videoRecordingToggle: (Boolean) -> Unit,
     cancelVideo: () -> Unit,
     isVideoButton: Boolean,
+    isVideoRecording: Boolean,
     changeButton: () -> Unit,
 ) {
 
@@ -217,6 +218,7 @@ fun ChatInputField(
             ) {
                 SendButton(
                     isRecording = isRecording,
+                    isVideoRecording = isVideoRecording,
                     isVideoButton = isVideoButton,
                     changeRecordState = {
                         changeRecordState(it)
@@ -295,6 +297,7 @@ private fun SendButton(
     onRecordStop: () -> Unit,
     onRecordCancel: () -> Unit,
     videoRecordingToggle: (Boolean) -> Unit,
+    isVideoRecording: Boolean,
     cancelVideo: () -> Unit,
     isVideoButton: Boolean,
     changeButton: () -> Unit,
@@ -303,7 +306,7 @@ private fun SendButton(
     var isPressed by remember { mutableStateOf(false) }
 
     val scaleAnimation by animateFloatAsState(
-        targetValue = if (isRecording) 1.62f else 1f,
+        targetValue = if (isRecording || isVideoRecording) 1.62f else 1f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioMediumBouncy,
             stiffness = Spring.StiffnessLow
@@ -319,13 +322,13 @@ private fun SendButton(
     )
 
     val animatedIconColor by animateColorAsState(
-        targetValue = if (isRecording) Color.White else LightBlack,
+        targetValue = if (isRecording || isVideoRecording) Color.White else LightBlack,
         animationSpec = tween(durationMillis = 200),
     )
 
     val animatedColorStart by animateColorAsState(
         targetValue =
-            if (isRecording) Blue.copy(alpha = 0.95f)
+            if (isRecording || isVideoRecording) Blue.copy(alpha = 0.95f)
             else Color(0xFFDDDDDD).copy(alpha = 1f),
         animationSpec = tween(durationMillis = 200),
         label = "GradientStart"
@@ -333,7 +336,7 @@ private fun SendButton(
 
     val animatedColorCenter by animateColorAsState(
         targetValue =
-            if (isRecording) Blue.copy(alpha = 0.75f)
+            if (isRecording || isVideoRecording) Blue.copy(alpha = 0.75f)
             else Color(0xFFF7F7F7).copy(alpha = 1f),
         animationSpec = tween(durationMillis = 200),
         label = "GradientEnd"
@@ -341,7 +344,7 @@ private fun SendButton(
 
     val animatedColorEnd by animateColorAsState(
         targetValue =
-            if (isRecording) Blue.copy(alpha = 0.88f)
+            if (isRecording || isVideoRecording) Blue.copy(alpha = 0.88f)
             else Color(0xFFFFFFFF).copy(alpha = 0.65f),
         animationSpec = tween(durationMillis = 200),
         label = "GradientEnd"
@@ -494,7 +497,6 @@ private fun SendButton(
                         (fadeOut(tween(150)) +
                                 scaleOut(targetScale = 0.7f))
             },
-            label = "iconSwitch"
         ) { button ->
             Icon(
                 painter = painterResource(
