@@ -18,7 +18,9 @@ import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -164,7 +166,8 @@ fun VideoMessageRecorder(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .size(200.dp)
+            .fillMaxWidth()
+            .aspectRatio(1f)
             .clip(CircleShape)
             .background(color = LightBlack)
     ) {
