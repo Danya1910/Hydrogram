@@ -93,6 +93,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.permissions.rememberPermissionState
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.request.ImageRequest
@@ -767,7 +768,7 @@ private fun Content(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = PaddingValues(
                     top = 96.dp,
-                    bottom = 47.dp + animatedBottomPadding,
+                    bottom = 47.dp + animatedBottomPadding + bottomBarExtraPadding,
                 ),
                 modifier = Modifier
                     .fillMaxSize()
@@ -2080,6 +2081,8 @@ private fun Content(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
+                .zIndex(1f)
+                .graphicsLayer(clip = false)
         ) {
             AnimatedVisibility(
                 visible = !isScrollToBottomVisible,
@@ -2100,6 +2103,7 @@ private fun Content(
                     .padding(
                         horizontal = 8.dp
                     )
+                    .graphicsLayer(clip = false)
             ) {
                 ScrollToBottomButton(
                     onScrollToBottomClick = {
@@ -2119,6 +2123,7 @@ private fun Content(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .graphicsLayer(clip = false)
                     .hazeChild(
                         state = hazeState,
                         shape = RectangleShape,
@@ -2128,7 +2133,7 @@ private fun Content(
                         )
                     )
                     .padding(
-                        top = bottomBarExtraPadding,
+                        top = if (isRecording) bottomBarExtraPadding else 0.dp,
                     )
                     .background(
                         brush = Brush.verticalGradient(
@@ -2391,9 +2396,7 @@ private fun Content(
                 )
             }
         }
-
     }
-
 }
 
 

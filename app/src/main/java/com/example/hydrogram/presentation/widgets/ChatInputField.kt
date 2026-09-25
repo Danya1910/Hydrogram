@@ -29,7 +29,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -78,6 +77,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.util.BlueGlassBackground
@@ -165,6 +165,7 @@ fun ChatInputField(
         Row(
             verticalAlignment = Alignment.Bottom,
             modifier = Modifier
+                .graphicsLayer(clip = false)
         ) {
             AttachButton(
                 onAttachClick = onAttachClick
@@ -201,7 +202,7 @@ fun ChatInputField(
                     animationSpec = tween(200, easing = FastOutSlowInEasing)
                 ) + scaleIn(
                     initialScale = 0.7f,
-                    transformOrigin = TransformOrigin(0f, 0.5f),  // растёт от левого края
+                    transformOrigin = TransformOrigin(0f, 0.5f),
                     animationSpec = spring(
                         dampingRatio = Spring.DampingRatioLowBouncy,
                         stiffness = Spring.StiffnessLow
@@ -215,6 +216,7 @@ fun ChatInputField(
                     transformOrigin = TransformOrigin(0f, 0.5f),
                     animationSpec = tween(150)
                 ) + fadeOut(tween(100)),
+                modifier = Modifier.graphicsLayer(clip = false)
             ) {
                 SendButton(
                     isRecording = isRecording,
@@ -383,10 +385,12 @@ private fun SendButton(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .padding(start = 8.dp)
+            .zIndex(5f)
             .graphicsLayer(
                 scaleX = finalScale,
                 scaleY = finalScale,
                 translationX = animatedOffset,
+                clip = false
             )
             .size(42.dp)
             .shadow(
