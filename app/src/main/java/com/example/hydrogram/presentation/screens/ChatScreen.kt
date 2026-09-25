@@ -714,7 +714,7 @@ private fun Content(
     var isRecording by remember { mutableStateOf(false) }
 
     val bottomBarExtraPadding by animateDpAsState(
-        targetValue = if (isRecording) 17.dp else 0.dp,
+        targetValue = if (isRecording) 17.dp else 4.dp,
         animationSpec = tween(durationMillis = 200)
     )
 
@@ -2085,7 +2085,7 @@ private fun Content(
                         shape = RectangleShape,
                         style = HazeDefaults.style(
                             backgroundColor = Color.White.copy(alpha = 0.01f),
-                            blurRadius = 4.dp
+                            blurRadius = 2.dp
                         )
                     )
                     .padding(
