@@ -714,7 +714,7 @@ private fun Content(
     var isRecording by remember { mutableStateOf(false) }
 
     val bottomBarExtraPadding by animateDpAsState(
-        targetValue = if (isRecording) 17.dp else 4.dp,
+        targetValue = if (isRecording || isVideoRecording) 17.dp else 4.dp,
         animationSpec = tween(durationMillis = 200)
     )
 
@@ -2195,6 +2195,7 @@ private fun Content(
                         currentEditingMessage = null
                     },
                     isRecording = isRecording,
+                    isVideoRecording = isVideoRecording,
                     changeRecordState = {
                         isRecording = it
                     },
@@ -2263,7 +2264,7 @@ private fun Content(
                     isVideoButton = isVideoButton,
                     changeButton = {
                         isVideoButton = !isVideoButton
-                    }
+                    },
                 )
             }
         }
