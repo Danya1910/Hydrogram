@@ -2014,6 +2014,7 @@ private fun Content(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
+                    .padding(horizontal = 16.dp)
                     .alpha(if (isVideoRecording && !isCancelVideo) 1f else 0f)
             ) {
                 VideoMessageRecorder(
