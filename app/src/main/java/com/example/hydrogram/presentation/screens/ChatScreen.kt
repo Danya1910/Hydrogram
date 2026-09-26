@@ -762,6 +762,29 @@ private fun Content(
                     )
                 }
             }
+            val totalBottomPaddingPx = remember(animatedBottomPadding, bottomBarExtraPadding) {
+                with(density) { (47.dp + animatedBottomPadding + bottomBarExtraPadding).roundToPx() }
+            }
+
+            val messageIndices = remember(groupedMessages, firstUnreadMessageId) {
+                val map = mutableMapOf<String, Int>()
+                var currentIndex = 0
+
+                groupedMessages.forEach { (dayTimestamp, dayMessages) ->
+                    // 1. Учитываем разделитель дат (item занимает 1 позицию в LazyColumn)
+                    currentIndex++
+
+                    dayMessages.forEach { message ->
+                        // 2. Учитываем разделитель непрочитанных (компонент выводится прямо внутри items перед контентом)
+                        // Но так как он выводится ВНУТРИ элемента items, он НЕ сдвигает индекс LazyColumn!
+                        // Индекс сдвигают только вызовы item {} и items ()
+
+                        map[message.messageId] = currentIndex
+                        currentIndex++ // Каждое сообщение занимает 1 позицию
+                    }
+                }
+                map
+            }
 
             LazyColumn(
                 state = listState,
@@ -796,6 +819,8 @@ private fun Content(
                         items = dayMessages,
                         key = { message -> message.messageId }
                     ) { message ->
+
+                        val globalIndex = messageIndices[message.messageId]
 
                         val messageCoordinates =
                             remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -1245,6 +1270,9 @@ private fun Content(
                                     CircleVideoMessage(
                                         isMine = true,
                                         message = message,
+                                        globalIndex = globalIndex,
+                                        lazyListState = listState,
+                                        bottomPaddingPx = totalBottomPaddingPx,
                                         onMessageClick = {
 
                                         }
