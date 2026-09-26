@@ -52,6 +52,7 @@ import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun CircleVideoMessage(
@@ -104,7 +105,7 @@ fun CircleVideoMessage(
 
                     if (isExpanded && globalIndex != null) {
                         coroutineScope.launch {
-                            delay(100)
+                            delay(100.milliseconds)
 
                             val extraMargin = with(density) { 32.dp.roundToPx() }
                             val scrollOffset = -bottomPaddingPx - extraMargin
