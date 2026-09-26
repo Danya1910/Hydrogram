@@ -53,6 +53,18 @@ fun MessageDto.toDomain(): Message {
             audioUrl = audioUrl,
             recordingAmplitudes = recordingAmplitudes,
         )
+        "circleVideo" -> Message.CircleVideo(
+            messageId = messageId,
+            senderId = senderId,
+            timestamp = timestamp,
+            type = type,
+            status = status,
+            reactions = reactions,
+            replyData = replyData,
+            isEdited = isEdited,
+            durationSeconds = durationSeconds,
+            videoUrl = videoUrl,
+        )
 
         else -> {
             Message.Text(

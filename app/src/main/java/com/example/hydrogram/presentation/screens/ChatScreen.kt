@@ -144,6 +144,7 @@ import com.example.hydrogram.presentation.widgets.messages.text.MineReplyTextMes
 import com.example.hydrogram.presentation.widgets.messages.text.MineTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalReplyTextMessage
 import com.example.hydrogram.presentation.widgets.messages.text.PenpalTextMessage
+import com.example.hydrogram.presentation.widgets.messages.video.CircleVideoMessage
 import com.example.hydrogram.presentation.widgets.messages.voice.VoiceReplyWidget
 import com.example.hydrogram.presentation.widgets.messages.voice.VoiceWidget
 import com.example.hydrogram.ui.theme.Blue
@@ -1241,7 +1242,13 @@ private fun Content(
                                         )
                                     }
                                 } else if (message.type == "circleVideo") {
-                                    Log.d("CircleVideo", message.toString())
+                                    CircleVideoMessage(
+                                        isMine = true,
+                                        message = message,
+                                        onMessageClick = {
+
+                                        }
+                                    )
                                 } else {
                                     if (message.replyData == null) {
                                         MineImageMessage(

@@ -104,6 +104,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.geometry)
     implementation(libs.androidx.compose.material.core)
     implementation(libs.androidx.media3.exoplayer)
+    implementation("androidx.media3:media3-ui:1.5.1")
     ksp("com.google.dagger:hilt-compiler:2.56")
     implementation(libs.androidx.hilt.navigation.compose)
 
