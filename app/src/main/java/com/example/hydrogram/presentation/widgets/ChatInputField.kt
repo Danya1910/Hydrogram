@@ -118,6 +118,7 @@ fun ChatInputField(
     isVideoButton: Boolean,
     isVideoRecording: Boolean,
     changeButton: () -> Unit,
+    circleVideoDuration: Long,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -129,13 +130,24 @@ fun ChatInputField(
         if (isRecording) {
             val startTime = System.currentTimeMillis() - elapsedTime
             while (isActive) {
-                withFrameMillis { frameTimeMillis ->
+                withFrameMillis {
                     elapsedTime = System.currentTimeMillis() - startTime
                 }
             }
         } else {
             elapsedTime = 0L
         }
+    }
+
+
+    val formattedVideoTime = remember(circleVideoDuration) {
+        val minutes = (circleVideoDuration / 60000) % 60
+        val seconds = (circleVideoDuration / 1000) % 60
+        val millis = (circleVideoDuration % 1000) / 10
+
+        val minutesFormat = if (minutes < 10) "%1d" else "%02d"
+
+        String.format(Locale.US, "$minutesFormat:%02d,%02d", minutes, seconds, millis)
     }
 
     val formattedTime = remember(elapsedTime) {
@@ -192,7 +204,9 @@ fun ChatInputField(
                     onCancelEditClick()
                 },
                 isRecording = isRecording,
+                isVideoRecording = isVideoRecording,
                 formattedTime = formattedTime,
+                formattedVideoTime = formattedVideoTime,
                 isTextMessage = isTextMessage,
             )
             AnimatedVisibility(
@@ -530,7 +544,9 @@ private fun MessageInputField(
     editingMessage: Message?,
     onCancelEditClick: () -> Unit,
     isRecording: Boolean,
+    isVideoRecording: Boolean,
     formattedTime: String,
+    formattedVideoTime: String,
     isTextMessage: Boolean,
 ) {
 
@@ -562,7 +578,8 @@ private fun MessageInputField(
                 shape = RoundedCornerShape(21.dp)
             )
     ) {
-        if (isRecording) {
+        if (isRecording || isVideoRecording) {
+            val timeToDisplay = if (isRecording) formattedTime else formattedVideoTime
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -572,7 +589,7 @@ private fun MessageInputField(
                 RecordingIndicator()
                 Spacer(modifier = Modifier.width(25.dp))
                 RecordingTime(
-                    formattedTime = formattedTime,
+                    formattedTime = timeToDisplay,
                 )
                 Spacer(modifier = Modifier.width(16.dp))
                 HelpText()
