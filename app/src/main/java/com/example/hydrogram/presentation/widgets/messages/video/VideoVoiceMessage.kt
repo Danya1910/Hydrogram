@@ -224,6 +224,9 @@ private fun CircleVideoPlayer(
         modifier = Modifier
             .fillMaxSize()
             .clip(CircleShape)
+            .background(
+                color = DateSeparatorGreen.copy(alpha = 0.65f),
+            )
             .border(width = 1.dp, color = Green, shape = CircleShape)
     ) {
         AndroidView(
