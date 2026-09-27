@@ -34,6 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,10 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.hydrogram.ui.theme.LightBlack
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -53,6 +58,7 @@ fun VideoMessageRecorder(
     isRecordingTriggered: Boolean,
     isCanceled: Boolean,
     onVideoRecorded: (File, Long) -> Unit,
+    currentDuration: (Long) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -63,6 +69,11 @@ fun VideoMessageRecorder(
 
     var currentOutputFile by remember { mutableStateOf<File?>(null) }
     var wasCanceledByProp by remember { mutableStateOf(false) }
+
+    var timerJob by remember { mutableStateOf<Job?>(null) }
+    val animationScope = rememberCoroutineScope()
+
+
 
     LaunchedEffect(Unit) {
         val cameraProviderProvider = ProcessCameraProvider.getInstance(context)
@@ -97,6 +108,8 @@ fun VideoMessageRecorder(
 
     val videoCapture = videoCaptureState.value
 
+    val progress = remember { Animatable(0f) }
+
     @SuppressLint("MissingPermission")
     LaunchedEffect(isRecordingTriggered, isCanceled, videoCapture) {
         if (videoCapture == null) return@LaunchedEffect
@@ -130,49 +143,59 @@ fun VideoMessageRecorder(
             }
 
             currentRecording = pending.start(ContextCompat.getMainExecutor(context)) { event ->
-                if (event is VideoRecordEvent.Status) {
-                    val durationMillis = event.recordingStats.recordedDurationNanos / 1_000_000
-                    //
-                    //
-                    // передвать текущее время записи
-                    //
-                    //
-                }
-                if (event is VideoRecordEvent.Finalize) {
+                if (event is VideoRecordEvent.Start) {
+                    animationScope.launch {
+                        progress.snapTo(0f)
+                        progress.animateTo(
+                            targetValue = 1f,
+                            animationSpec = tween(durationMillis = 60_000, easing = LinearEasing)
+                        )
+                    }
 
+                    timerJob?.cancel()
+                    val startTime = System.currentTimeMillis()
+                    timerJob = animationScope.launch {
+                        while (isActive) {
+                            val elapsed = System.currentTimeMillis() - startTime
+                            currentDuration(elapsed)
+                            delay(33)
+                        }
+                    }
+                }
+
+                if (event is VideoRecordEvent.Status) {
+                }
+
+                if (event is VideoRecordEvent.Finalize) {
                     currentRecording = null
+
+                    timerJob?.cancel()
+                    timerJob = null
+                    animationScope.launch { progress.stop() }
 
                     if (wasCanceledByProp) {
                         currentOutputFile?.delete()
                         currentOutputFile = null
+                        currentDuration(0L)
                         Log.d("VideoRecorder", "Запись отменена пользователем, файл удален.")
                     } else if (!event.hasError()) {
                         val finalDurationMillis = event.recordingStats.recordedDurationNanos / 1_000_000
+                        currentDuration(finalDurationMillis)
                         onVideoRecorded(outputFile, finalDurationMillis)
                     } else {
                         Log.e("VideoRecorder", "Ошибка записи: ${event.error}")
                         currentOutputFile?.delete()
                         currentOutputFile = null
+                        currentDuration(0L)
                     }
                 }
             }
         }
         else if (!isRecordingTriggered && currentRecording != null) {
             currentRecording?.stop()
-        }
-    }
-
-    val progress = remember { Animatable(0f) }
-
-    LaunchedEffect(isRecordingTriggered) {
-        if(isRecordingTriggered) {
-            progress.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(
-                    durationMillis = 60_000,
-                    easing = LinearEasing,
-                )
-            )
+            timerJob?.cancel()
+            timerJob = null
+            progress.snapTo(0f)
         }
     }
 
@@ -180,6 +203,8 @@ fun VideoMessageRecorder(
         onDispose {
             currentRecording?.stop()
             currentRecording = null
+            timerJob?.cancel()
+            timerJob = null
         }
     }
 
