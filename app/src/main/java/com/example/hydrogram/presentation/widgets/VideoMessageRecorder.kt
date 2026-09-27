@@ -16,13 +16,18 @@ import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
 import androidx.camera.video.VideoRecordEvent
 import androidx.camera.view.PreviewView
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -156,6 +162,20 @@ fun VideoMessageRecorder(
         }
     }
 
+    val progress = remember { Animatable(0f) }
+
+    LaunchedEffect(isRecordingTriggered) {
+        if(isRecordingTriggered) {
+            progress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = 60_000,
+                    easing = LinearEasing,
+                )
+            )
+        }
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             currentRecording?.stop()
@@ -174,6 +194,15 @@ fun VideoMessageRecorder(
         AndroidView(
             factory = { previewView },
             modifier = Modifier.fillMaxSize()
+        )
+        CircularProgressIndicator(
+            progress = { progress.value },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(3.dp),
+            color = Color.White,
+            trackColor = Color.Transparent,
+            strokeWidth = 3.dp,
         )
     }
 }
