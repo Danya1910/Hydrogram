@@ -89,6 +89,14 @@ fun CircleVideoMessage(
 
     val density = LocalDensity.current
 
+    var currentExpandDuration by remember { mutableStateOf(0L) }
+
+    val currentSeconds = currentExpandDuration / 1000
+    val currentMinutes = currentSeconds / 60
+    val currentRemainingSeconds = currentSeconds % 60
+    val currentFormattedDuration = String.format("%02d:%02d", currentMinutes, currentRemainingSeconds)
+
+
     Row(
         horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start,
         modifier = Modifier
@@ -127,6 +135,9 @@ fun CircleVideoMessage(
                 isExpanded = isExpanded,
                 onCycleEnded = {
                     isExpanded = false
+                },
+                getCurrentDuration = { duration ->
+                    currentExpandDuration = duration
                 }
             )
             Row(
@@ -138,7 +149,7 @@ fun CircleVideoMessage(
                     .padding(horizontal = 5.dp)
             ) {
                 VideoInfo(
-                    text = videoDuration
+                    text = if(isExpanded) currentFormattedDuration else videoDuration
                 )
                 Spacer(modifier = Modifier.weight(1f))
                 VideoInfo(
@@ -155,6 +166,7 @@ private fun CircleVideoPlayer(
     message: Message.CircleVideo,
     isExpanded: Boolean,
     onCycleEnded: () -> Unit,
+    getCurrentDuration: (Long) -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -174,14 +186,17 @@ private fun CircleVideoPlayer(
     LaunchedEffect(localExoPlayer, isExpanded) {
         if (isExpanded) {
             while (true) {
+                val currentPos = localExoPlayer.currentPosition
                 val duration = localExoPlayer.duration
                 if (duration > 0) {
                     progress = localExoPlayer.currentPosition.toFloat() / duration
                 }
+                getCurrentDuration(currentPos)
                 delay(100)
             }
         } else {
             progress = 0f
+            getCurrentDuration(0L)
         }
     }
 
