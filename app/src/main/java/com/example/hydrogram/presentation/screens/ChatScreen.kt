@@ -156,6 +156,7 @@ import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import java.util.Locale
 import kotlin.text.startsWith
 import kotlin.text.substringAfter
 
@@ -724,6 +725,14 @@ private fun Content(
     )
 
     val blurRadius = if (isVideoRecording && !isCancelVideo) 16.dp else 0.dp
+
+    var circleVideoDuration by remember { mutableStateOf(0L) }
+
+    LaunchedEffect(isVideoRecording) {
+        if(!isVideoRecording) {
+            circleVideoDuration = 0L
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -2107,6 +2116,9 @@ private fun Content(
                             senderAvatar = mineData?.avatarUrl ?: "",
                         )
                     },
+                    currentDuration = { duration ->
+                        circleVideoDuration = duration
+                    },
                 )
             }
         }
@@ -2344,6 +2356,7 @@ private fun Content(
                     changeButton = {
                         isVideoButton = !isVideoButton
                     },
+                    circleVideoDuration = circleVideoDuration,
                 )
             }
         }
