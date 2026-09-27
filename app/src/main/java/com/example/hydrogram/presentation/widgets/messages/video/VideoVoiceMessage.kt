@@ -19,13 +19,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -154,6 +158,8 @@ private fun CircleVideoPlayer(
 ) {
     val context = LocalContext.current
 
+    var progress by remember { mutableFloatStateOf(0f) }
+
     val localExoPlayer = remember(message.messageId) {
         ExoPlayer.Builder(context).build().apply {
             val mediaItem = MediaItem.fromUri(message.videoUrl ?: "")
@@ -162,6 +168,20 @@ private fun CircleVideoPlayer(
 
             repeatMode = Player.REPEAT_MODE_ONE
             playWhenReady = true
+        }
+    }
+
+    LaunchedEffect(localExoPlayer, isExpanded) {
+        if (isExpanded) {
+            while (true) {
+                val duration = localExoPlayer.duration
+                if (duration > 0) {
+                    progress = localExoPlayer.currentPosition.toFloat() / duration
+                }
+                delay(100)
+            }
+        } else {
+            progress = 0f
         }
     }
 
@@ -225,6 +245,17 @@ private fun CircleVideoPlayer(
             },
             modifier = Modifier.fillMaxSize()
         )
+        if (isExpanded) {
+            CircularProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(3.dp),
+                color = Color.White,
+                trackColor = Color.Transparent,
+                strokeWidth = 3.dp,
+            )
+        }
     }
 }
 
