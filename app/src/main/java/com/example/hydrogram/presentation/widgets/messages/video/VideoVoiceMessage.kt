@@ -229,9 +229,6 @@ fun CircleVideoMessage(
                 getCurrentDuration = { duration ->
                     currentExpandDuration = duration
                 },
-                setCurrentVideo = {messageId->
-                    setCurrentVideo(messageId)
-                },
                 currentVideoId = currentVideoId,
             )
             Row(
@@ -261,7 +258,6 @@ private fun CircleVideoPlayer(
     isExpanded: Boolean,
     onCycleEnded: () -> Unit,
     getCurrentDuration: (Long) -> Unit,
-    setCurrentVideo: (String) -> Unit,
     currentVideoId: String,
 ) {
     val context = LocalContext.current
@@ -286,9 +282,9 @@ private fun CircleVideoPlayer(
         localExoPlayer.volume = if (isCurrentActive) 1f else 0f
 
         if (isCurrentActive) {
-            localExoPlayer.seekTo(0) // Начинаем сначала при разворачивании
+            localExoPlayer.seekTo(0)
         } else {
-            localExoPlayer.pause() // Паузим, если фокус ушел на другое видео
+            localExoPlayer.pause()
         }
         onDispose { }
     }
