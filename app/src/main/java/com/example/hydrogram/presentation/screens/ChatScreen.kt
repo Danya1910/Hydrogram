@@ -1207,6 +1207,7 @@ private fun Content(
                                         )
                                     } else {
                                         VoiceReplyWidget(
+                                            audioPlayer = voicePlayer,
                                             message = message,
                                             isMine = true,
                                             context = context,
@@ -1864,6 +1865,7 @@ private fun Content(
                                         )
                                     } else {
                                         VoiceReplyWidget(
+                                            audioPlayer = voicePlayer,
                                             message = message,
                                             isMine = false,
                                             context = context,
