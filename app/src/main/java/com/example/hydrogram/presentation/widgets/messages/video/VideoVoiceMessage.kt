@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.widgets.messages.video
 
 import android.text.format.DateFormat
+import android.util.Log
 import android.view.Gravity
 import android.view.TextureView
 import android.widget.FrameLayout
@@ -9,15 +10,19 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -38,9 +43,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -50,23 +59,68 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.presentation.util.MessageCallbacks
+import com.example.hydrogram.presentation.util.MessageData
+import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
 import com.example.hydrogram.ui.theme.DateSeparatorGreen
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.Date
+import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun CircleVideoMessage(
     isMine: Boolean,
     message: Message,
+    messageData: MessageData,
+    messageCallbacks: MessageCallbacks,
     globalIndex: Int?,
     lazyListState: LazyListState,
     bottomPaddingPx: Int,
     onMessageClick: (String) -> Unit,
 ) {
+
+    var dragAmount by remember { mutableFloatStateOf(0f) }
+    val haptic = LocalHapticFeedback.current
+    var isHapticTriggered by remember { mutableStateOf(false) }
+
+    val animatedOffset by animateFloatAsState(
+        targetValue = if (dragAmount == 0f) 0f else dragAmount,
+        label = "SwipeOffset"
+    )
+
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
+
+    val haveReaction = validReactions.isNotEmpty()
+
+    var mineReactionId: String? = null
+    var mineReactionEmoji: String? = null
+    var penpalReactionId: String? = null
+    var penpalReactionEmoji: String? = null
+
+    var reactions: MessageReactions? = null
+
+    message.reactions?.entries?.forEach { entry ->
+        if (entry.key == messageData.mineId) {
+            mineReactionId = entry.key
+            mineReactionEmoji = entry.value
+
+        } else {
+            penpalReactionId = entry.key
+            penpalReactionEmoji = entry.value
+        }
+        reactions = MessageReactions(
+            mineReaction = mineReactionEmoji,
+            penpalReaction = penpalReactionEmoji,
+        )
+        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
+        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
+    }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -96,38 +150,77 @@ fun CircleVideoMessage(
     val currentRemainingSeconds = currentSeconds % 60
     val currentFormattedDuration = String.format("%02d:%02d", currentMinutes, currentRemainingSeconds)
 
-    Row(
-        horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start,
+    BoxWithConstraints(
+        contentAlignment = if (isMine) Alignment.CenterEnd else Alignment.CenterStart,
         modifier = Modifier
             .fillMaxWidth()
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragEnd = {
+                        if (dragAmount < -150f) {
+                            messageCallbacks.onReply(message)
+                        }
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
+                        isHapticTriggered = false
+                    },
+                    onHorizontalDrag = { change, dragAmountPx ->
+                        change.consume()
+
+                        val newOffset = (dragAmount + dragAmountPx).coerceIn(-200f, 0f)
+                        dragAmount = newOffset
+
+                        if (newOffset < -150f && !isHapticTriggered) {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isHapticTriggered = true
+                        } else if (newOffset > -150f && isHapticTriggered) {
+                            isHapticTriggered = false
+                        }
+                    }
+                )
+            }
     ) {
+        val maxBubbleWidth = maxWidth * 0.85f
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
+                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
                 .padding(horizontal = 16.dp)
                 .fillMaxWidth(widthExpand)
                 .aspectRatio(1f)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) {
-                    onMessageClick(message.messageId)
-                    isExpanded = !isExpanded
+                .combinedClickable(
+                    onClick = {
+                        onMessageClick(message.messageId)
+                        isExpanded = !isExpanded
 
-                    if (isExpanded && globalIndex != null) {
-                        coroutineScope.launch {
-                            delay(100.milliseconds)
+                        if (isExpanded && globalIndex != null) {
+                            coroutineScope.launch {
+                                delay(100.milliseconds)
 
-                            val extraMargin = with(density) { 32.dp.roundToPx() }
-                            val scrollOffset = -bottomPaddingPx - extraMargin
+                                val extraMargin = with(density) { 32.dp.roundToPx() }
+                                val scrollOffset = -bottomPaddingPx - extraMargin
 
-                            lazyListState.animateScrollToItem(
-                                index = globalIndex,
-                                scrollOffset = scrollOffset
-                            )
+                                lazyListState.animateScrollToItem(
+                                    index = globalIndex,
+                                    scrollOffset = scrollOffset
+                                )
+                            }
                         }
+                    },
+                    onDoubleClick = {
+                        messageCallbacks.onDoubleClick(
+                            message.reactions?.get(messageData.mineId) != null
+                        )
+                    },
+                    onLongClick = {
+                        messageCallbacks.onLongClick(
+                            false
+                        )
                     }
-                }
+                )
         ) {
             CircleVideoPlayer(
                 message = message,
