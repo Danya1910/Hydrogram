@@ -89,7 +89,7 @@ fun CircleVideoMessage(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()

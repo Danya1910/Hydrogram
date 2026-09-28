@@ -96,22 +96,12 @@ fun VoiceWidget(
     isMine: Boolean,
     messageCallbacks: MessageCallbacks,
     messageData: MessageData,
+    setCurrentVideo: (String) -> Unit,
 ) {
 
     val voice = message as Message.Voice
 
-    LaunchedEffect(message.messageId) {
-        val currentId = audioPlayer.currentMediaItem?.mediaId
-        if (currentId != message.messageId) {
-            audioPlayer.setMediaItem(
-                MediaItem.Builder()
-                    .setUri(message.audioUrl ?: "")
-                    .setMediaId(message.messageId)
-                    .build()
-            )
-            audioPlayer.prepare()
-        }
-    }
+
 
     var dragAmount by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
@@ -157,13 +147,17 @@ fun VoiceWidget(
     var isPlaying by remember { mutableStateOf(false) }
     var currentPosition by remember { mutableStateOf(0L) }
 
-    val totalDurationMs = remember((message as Message.Voice).durationSeconds) {
+    val totalDurationMs = remember(message.durationSeconds) {
         (message.durationSeconds ?: 0) * 1000L
     }
+
+    val isThisTrack = audioPlayer.currentMediaItem?.mediaId == message.messageId
+    val isPlayingThis = isThisTrack && isPlaying
 
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
+
 
     DisposableEffect(audioPlayer, message.messageId) {
         val listener = object : Player.Listener {
@@ -174,33 +168,38 @@ fun VoiceWidget(
                         currentPosition = 0L
                         audioPlayer.seekTo(0)
                         audioPlayer.pause()
+                        setCurrentVideo("")
                     }
                 }
             }
+
             override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
                 isPlaying = isPlayingChanged &&
                         audioPlayer.currentMediaItem?.mediaId == message.messageId
             }
+
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                isPlaying = false
-                currentPosition = 0L
+                if (mediaItem?.mediaId != message.messageId) {
+                    isPlaying = false
+                    currentPosition = 0L
+                }
             }
         }
         audioPlayer.addListener(listener)
 
         isPlaying = audioPlayer.isPlaying &&
                 audioPlayer.currentMediaItem?.mediaId == message.messageId
+        if (isPlaying) {
+            currentPosition = audioPlayer.currentPosition
+        }
 
         onDispose {
             audioPlayer.removeListener(listener)
-            if (audioPlayer.currentMediaItem?.mediaId == message.messageId && audioPlayer.isPlaying) {
-                audioPlayer.pause()
-            }
         }
     }
 
-    LaunchedEffect(isPlaying, message.messageId) {
-        while (isPlaying) {
+    LaunchedEffect(isPlayingThis, message.messageId) {
+        while (isPlayingThis) {
             currentPosition = audioPlayer.currentPosition
             delay(100L)
         }
@@ -321,16 +320,31 @@ fun VoiceWidget(
                             PlayButton(
                                 isPlaying = isPlaying,
                                 onClick = {
-                                    if (audioPlayer.currentMediaItem?.mediaId != message.messageId) {
+                                    val myId = message.messageId
+                                    val currentId = audioPlayer.currentMediaItem?.mediaId
+
+                                    if (currentId != myId) {
+                                        audioPlayer.pause()
+
                                         audioPlayer.setMediaItem(
                                             MediaItem.Builder()
                                                 .setUri(voice.audioUrl ?: "")
-                                                .setMediaId(message.messageId)
+                                                .setMediaId(myId)
                                                 .build()
                                         )
                                         audioPlayer.prepare()
+                                        audioPlayer.play()
+
+                                        setCurrentVideo(myId)
+                                    } else {
+                                        if (audioPlayer.isPlaying) {
+                                            audioPlayer.pause()
+                                            setCurrentVideo("")
+                                        } else {
+                                            audioPlayer.play()
+                                            setCurrentVideo(myId)
+                                        }
                                     }
-                                    audioPlayer.togglePlay()
                                 },
                                 isMine = isMine,
                             )
