@@ -11,7 +11,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import android.os.Build.VERSION.SDK_INT
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -20,7 +19,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -58,6 +56,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -90,11 +89,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.permissions.rememberPermissionState
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavController
 import coil3.request.ImageRequest
 import com.example.hydrogram.R
@@ -120,7 +119,6 @@ import dev.chrisbanes.haze.hazeChild
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import coil3.compose.AsyncImage
 import coil3.gif.AnimatedImageDecoder
-import coil3.gif.GifDecoder
 import coil3.ImageLoader
 import coil3.request.crossfade
 import com.example.hydrogram.domain.model.ReplyData
@@ -151,12 +149,10 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import java.util.Locale
 import kotlin.text.startsWith
 import kotlin.text.substringAfter
 
@@ -371,6 +367,16 @@ private fun Content(
             Manifest.permission.RECORD_AUDIO
         )
     )
+
+    val voicePlayer = remember {
+        ExoPlayer.Builder(context).build()
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            voicePlayer.release()
+        }
+    }
 
     var isVideoRecording by remember { mutableStateOf(false) }
 
@@ -734,7 +740,7 @@ private fun Content(
         }
     }
 
-    var currentCircleVideoId by remember { mutableStateOf("") }
+    var currentPlayingMessageId by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -1131,6 +1137,7 @@ private fun Content(
                                 } else if (message.type == "voice") {
                                     if (message.replyData == null) {
                                         VoiceWidget(
+                                            audioPlayer = voicePlayer,
                                             message = message,
                                             isMine = true,
                                             context = context,
@@ -1280,7 +1287,7 @@ private fun Content(
                                         lazyListState = listState,
                                         bottomPaddingPx = totalBottomPaddingPx,
                                         setCurrentVideo = { messageId ->
-                                            currentCircleVideoId = messageId
+                                            currentPlayingMessageId = messageId
                                         },
                                         messageData = MessageData(
                                             replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
@@ -1348,7 +1355,7 @@ private fun Content(
                                                 scrollToMessage(messageId)
                                             },
                                         ),
-                                        currentVideoId = currentCircleVideoId,
+                                        currentVideoId = currentPlayingMessageId,
                                     )
                                 } else {
                                     if (message.replyData == null) {
@@ -1786,6 +1793,7 @@ private fun Content(
                                 } else if (message.type == "voice") {
                                     if (message.replyData == null) {
                                         VoiceWidget(
+                                            audioPlayer = voicePlayer,
                                             message = message,
                                             isMine = false,
                                             context = context,
@@ -1937,7 +1945,7 @@ private fun Content(
                                         lazyListState = listState,
                                         bottomPaddingPx = totalBottomPaddingPx,
                                         setCurrentVideo = { messageId ->
-                                            currentCircleVideoId = messageId
+                                            currentPlayingMessageId = messageId
                                         },
                                         messageData = MessageData(
                                             replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
@@ -2005,7 +2013,7 @@ private fun Content(
                                                 scrollToMessage(messageId)
                                             },
                                         ),
-                                        currentVideoId = currentCircleVideoId,
+                                        currentVideoId = currentPlayingMessageId,
                                     )
 
                                 } else {
