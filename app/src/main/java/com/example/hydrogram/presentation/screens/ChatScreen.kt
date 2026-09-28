@@ -734,6 +734,8 @@ private fun Content(
         }
     }
 
+    var currentCircleVideoId by remember { mutableStateOf("") }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -1282,8 +1284,8 @@ private fun Content(
                                         globalIndex = globalIndex,
                                         lazyListState = listState,
                                         bottomPaddingPx = totalBottomPaddingPx,
-                                        onMessageClick = {
-
+                                        setCurrentVideo = { messageId ->
+                                            currentCircleVideoId = messageId
                                         },
                                         messageData = MessageData(
                                             replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
@@ -1351,6 +1353,7 @@ private fun Content(
                                                 scrollToMessage(messageId)
                                             },
                                         ),
+                                        currentVideoId = currentCircleVideoId,
                                     )
                                 } else {
                                     if (message.replyData == null) {
@@ -1938,8 +1941,8 @@ private fun Content(
                                         globalIndex = globalIndex,
                                         lazyListState = listState,
                                         bottomPaddingPx = totalBottomPaddingPx,
-                                        onMessageClick = {
-
+                                        setCurrentVideo = { messageId ->
+                                            currentCircleVideoId = messageId
                                         },
                                         messageData = MessageData(
                                             replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
@@ -2006,7 +2009,8 @@ private fun Content(
                                             onReplyMessageClick = { messageId ->
                                                 scrollToMessage(messageId)
                                             },
-                                        )
+                                        ),
+                                        currentVideoId = currentCircleVideoId,
                                     )
 
                                 } else {
