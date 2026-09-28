@@ -9,11 +9,8 @@ import androidx.annotation.OptIn
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -24,8 +21,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -80,7 +75,8 @@ fun CircleVideoMessage(
     globalIndex: Int?,
     lazyListState: LazyListState,
     bottomPaddingPx: Int,
-    onMessageClick: (String) -> Unit,
+    setCurrentVideo: (String) -> Unit,
+    currentVideoId: String,
 ) {
 
     var dragAmount by remember { mutableFloatStateOf(0f) }
@@ -124,7 +120,7 @@ fun CircleVideoMessage(
 
     val coroutineScope = rememberCoroutineScope()
 
-    var isExpanded by remember { mutableStateOf(false) }
+    val isExpanded = currentVideoId == message.messageId
 
     val widthExpand by animateFloatAsState(
         targetValue = if (isExpanded) 0.9f else 0.5f,
@@ -193,13 +189,17 @@ fun CircleVideoMessage(
                 .aspectRatio(1f)
                 .combinedClickable(
                     onClick = {
-                        onMessageClick(message.messageId)
-                        isExpanded = !isExpanded
+                        val willExpand = !isExpanded
 
-                        if (isExpanded && globalIndex != null) {
+                        if (isExpanded) {
+                            setCurrentVideo("")
+                        } else {
+                            setCurrentVideo(message.messageId)
+                        }
+
+                        if (willExpand && globalIndex != null) {
                             coroutineScope.launch {
                                 delay(100.milliseconds)
-
                                 val extraMargin = with(density) { 32.dp.roundToPx() }
                                 val scrollOffset = -bottomPaddingPx - extraMargin
 
@@ -216,9 +216,7 @@ fun CircleVideoMessage(
                         )
                     },
                     onLongClick = {
-                        messageCallbacks.onLongClick(
-                            false
-                        )
+                        messageCallbacks.onLongClick(false)
                     }
                 )
         ) {
@@ -226,11 +224,15 @@ fun CircleVideoMessage(
                 message = message,
                 isExpanded = isExpanded,
                 onCycleEnded = {
-                    isExpanded = false
+                    setCurrentVideo("")
                 },
                 getCurrentDuration = { duration ->
                     currentExpandDuration = duration
-                }
+                },
+                setCurrentVideo = {messageId->
+                    setCurrentVideo(messageId)
+                },
+                currentVideoId = currentVideoId,
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -259,10 +261,14 @@ private fun CircleVideoPlayer(
     isExpanded: Boolean,
     onCycleEnded: () -> Unit,
     getCurrentDuration: (Long) -> Unit,
+    setCurrentVideo: (String) -> Unit,
+    currentVideoId: String,
 ) {
     val context = LocalContext.current
 
     var progress by remember { mutableFloatStateOf(0f) }
+
+    val isCurrentActive = currentVideoId == message.messageId
 
     val localExoPlayer = remember(message.messageId) {
         ExoPlayer.Builder(context).build().apply {
@@ -273,6 +279,18 @@ private fun CircleVideoPlayer(
             repeatMode = Player.REPEAT_MODE_ONE
             playWhenReady = true
         }
+    }
+
+    DisposableEffect(isCurrentActive) {
+        localExoPlayer.playWhenReady = isCurrentActive
+        localExoPlayer.volume = if (isCurrentActive) 1f else 0f
+
+        if (isCurrentActive) {
+            localExoPlayer.seekTo(0) // Начинаем сначала при разворачивании
+        } else {
+            localExoPlayer.pause() // Паузим, если фокус ушел на другое видео
+        }
+        onDispose { }
     }
 
     LaunchedEffect(localExoPlayer, isExpanded) {
