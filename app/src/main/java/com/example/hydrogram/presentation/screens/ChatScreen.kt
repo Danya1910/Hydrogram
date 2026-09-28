@@ -1204,6 +1204,9 @@ private fun Content(
                                                 mineAvatar = mineData?.avatarUrl ?: "",
                                                 penpalAvatar = penpalData?.avatarUrl ?: "",
                                             ),
+                                            setCurrentVideo = { messageId ->
+                                                currentPlayingMessageId = messageId
+                                            },
                                         )
                                     } else {
                                         VoiceReplyWidget(
@@ -1862,6 +1865,9 @@ private fun Content(
                                                 mineAvatar = mineData?.avatarUrl ?: "",
                                                 penpalAvatar = penpalData?.avatarUrl ?: "",
                                             ),
+                                            setCurrentVideo = { messageId ->
+                                                currentPlayingMessageId = messageId
+                                            },
                                         )
                                     } else {
                                         VoiceReplyWidget(
