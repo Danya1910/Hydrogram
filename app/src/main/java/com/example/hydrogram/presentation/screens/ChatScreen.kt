@@ -1140,7 +1140,6 @@ private fun Content(
                                             audioPlayer = voicePlayer,
                                             message = message,
                                             isMine = true,
-                                            context = context,
                                             messageCallbacks = MessageCallbacks(
                                                 onReply = {
                                                     currentMessageAnswer = it
@@ -1796,7 +1795,6 @@ private fun Content(
                                             audioPlayer = voicePlayer,
                                             message = message,
                                             isMine = false,
-                                            context = context,
                                             messageCallbacks = MessageCallbacks(
                                                 onReply = {
                                                     currentMessageAnswer = it

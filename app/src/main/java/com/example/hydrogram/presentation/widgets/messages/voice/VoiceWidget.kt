@@ -94,7 +94,6 @@ fun VoiceWidget(
     audioPlayer: ExoPlayer,
     message: Message,
     isMine: Boolean,
-    context: Context,
     messageCallbacks: MessageCallbacks,
     messageData: MessageData,
 ) {
