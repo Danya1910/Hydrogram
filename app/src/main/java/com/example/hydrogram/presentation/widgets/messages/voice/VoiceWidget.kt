@@ -563,6 +563,7 @@ fun VoiceWidget(
 
 @Composable
 fun VoiceReplyWidget(
+    audioPlayer: ExoPlayer,
     message: Message,
     isMine: Boolean,
     context: Context,
@@ -570,13 +571,21 @@ fun VoiceReplyWidget(
     messageData: MessageData,
 ) {
 
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri((message as Message.Voice).audioUrl ?: "")
-            setMediaItem(mediaItem)
-            prepare()
+    val voice = message as Message.Voice
+
+    LaunchedEffect(message.messageId) {
+        val currentId = audioPlayer.currentMediaItem?.mediaId
+        if (currentId != message.messageId) {
+            audioPlayer.setMediaItem(
+                MediaItem.Builder()
+                    .setUri(message.audioUrl ?: "")
+                    .setMediaId(message.messageId)
+                    .build()
+            )
+            audioPlayer.prepare()
         }
     }
+
 
     var dragAmount by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
@@ -630,32 +639,43 @@ fun VoiceReplyWidget(
         "HH:mm", Date(message.timestamp)
     ).toString()
 
-    DisposableEffect(exoPlayer) {
+    DisposableEffect(audioPlayer, message.messageId) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) {
-                    isPlaying = false
-                    currentPosition = 0L
-                    exoPlayer.seekTo(0)
-                    exoPlayer.pause()
+                    if (audioPlayer.currentMediaItem?.mediaId == message.messageId) {
+                        isPlaying = false
+                        currentPosition = 0L
+                        audioPlayer.seekTo(0)
+                        audioPlayer.pause()
+                    }
                 }
             }
-
             override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
-                isPlaying = isPlayingChanged
+                isPlaying = isPlayingChanged &&
+                        audioPlayer.currentMediaItem?.mediaId == message.messageId
+            }
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                isPlaying = false
+                currentPosition = 0L
             }
         }
-        exoPlayer.addListener(listener)
+        audioPlayer.addListener(listener)
+
+        isPlaying = audioPlayer.isPlaying &&
+                audioPlayer.currentMediaItem?.mediaId == message.messageId
 
         onDispose {
-            exoPlayer.removeListener(listener)
-            exoPlayer.release()
+            audioPlayer.removeListener(listener)
+            if (audioPlayer.currentMediaItem?.mediaId == message.messageId && audioPlayer.isPlaying) {
+                audioPlayer.pause()
+            }
         }
     }
 
-    LaunchedEffect(isPlaying) {
+    LaunchedEffect(isPlaying, message.messageId) {
         while (isPlaying) {
-            currentPosition = exoPlayer.currentPosition
+            currentPosition = audioPlayer.currentPosition
             delay(100L)
         }
     }
@@ -956,7 +976,16 @@ fun VoiceReplyWidget(
                                 PlayButton(
                                     isPlaying = isPlaying,
                                     onClick = {
-                                        exoPlayer.togglePlay()
+                                        if (audioPlayer.currentMediaItem?.mediaId != message.messageId) {
+                                            audioPlayer.setMediaItem(
+                                                MediaItem.Builder()
+                                                    .setUri(voice.audioUrl ?: "")
+                                                    .setMediaId(message.messageId)
+                                                    .build()
+                                            )
+                                            audioPlayer.prepare()
+                                        }
+                                        audioPlayer.togglePlay()
                                     },
                                     isMine = isMine,
                                 )
