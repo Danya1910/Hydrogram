@@ -96,7 +96,6 @@ fun CircleVideoMessage(
     val currentRemainingSeconds = currentSeconds % 60
     val currentFormattedDuration = String.format("%02d:%02d", currentMinutes, currentRemainingSeconds)
 
-
     Row(
         horizontalArrangement = if (isMine) Arrangement.End else Arrangement.Start,
         modifier = Modifier
