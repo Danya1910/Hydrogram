@@ -78,6 +78,7 @@ import com.example.hydrogram.ui.theme.DateSeparatorGreen
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.util.Date
 import kotlin.math.roundToInt
@@ -85,6 +86,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun CircleVideoMessage(
+    videoPlayer: ExoPlayer,
     isMine: Boolean,
     message: Message,
     messageData: MessageData,
@@ -198,7 +200,7 @@ fun CircleVideoMessage(
             }
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
-        Column() {
+        Column {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -239,33 +241,36 @@ fun CircleVideoMessage(
                         }
                     )
             ) {
-                CircleVideoPlayer(
-                    message = message,
-                    isExpanded = isExpanded,
-                    onCycleEnded = {
-                        setCurrentVideo("")
-                    },
-                    getCurrentDuration = { duration ->
-                        currentExpandDuration = duration
-                    },
-                    currentVideoId = currentVideoId,
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .align(
-                            Alignment.BottomCenter,
-                        )
-                        .padding(horizontal = 5.dp)
-                ) {
-                    VideoInfo(
-                        text = if (isExpanded) currentFormattedDuration else videoDuration
+                if (isExpanded) {
+                    CircleVideoPlayer(
+                        videoPlayer = videoPlayer,
+                        message = message,
+                        isExpanded = isExpanded,
+                        getCurrentDuration = { duration ->
+                            currentExpandDuration = duration
+                        },
                     )
-                    Spacer(modifier = Modifier.weight(1f))
-                    VideoInfo(
-                        text = formattedTime
+                } else {
+                    CirclePreview(
+                        message = message,
                     )
                 }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .align(
+                                Alignment.BottomCenter,
+                            )
+                            .padding(horizontal = 5.dp)
+                    ) {
+                        VideoInfo(
+                            text = if (isExpanded) currentFormattedDuration else videoDuration
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        VideoInfo(
+                            text = formattedTime
+                        )
+                    }
             }
 
             AnimatedVisibility(
@@ -363,7 +368,7 @@ private fun PreviewGenerator(
     }
 
     LaunchedEffect(message.messageId) {
-        if(bitmap == null && !message.videoUrl.isNullOrBlank()) {
+        if (bitmap == null && !message.videoUrl.isNullOrBlank()) {
             bitmap = VideoThumbnailExtractor.extract(
                 context = context,
                 messageId = message.messageId,
@@ -372,7 +377,7 @@ private fun PreviewGenerator(
         }
     }
 
-    if(bitmap != null) {
+    if (bitmap != null) {
         Image(
             bitmap = bitmap!!.asImageBitmap(),
             contentDescription = null,
@@ -399,90 +404,48 @@ private fun PreviewGenerator(
 @OptIn(UnstableApi::class)
 @Composable
 private fun CircleVideoPlayer(
+    videoPlayer: ExoPlayer,
     message: Message.CircleVideo,
     isExpanded: Boolean,
-    onCycleEnded: () -> Unit,
     getCurrentDuration: (Long) -> Unit,
-    currentVideoId: String,
 ) {
-    val context = LocalContext.current
 
     var progress by remember { mutableFloatStateOf(0f) }
 
-    val isCurrentActive = currentVideoId == message.messageId
-
-    val localExoPlayer = remember(message.messageId) {
-        ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri(message.videoUrl ?: "")
-            setMediaItem(mediaItem)
-            prepare()
-
-            repeatMode = Player.REPEAT_MODE_ONE
-            playWhenReady = true
-        }
+    LaunchedEffect(message.messageId) {
+        videoPlayer.setMediaItem(
+            MediaItem.Builder()
+                .setUri(message.videoUrl ?: "")
+                .setMediaId(message.messageId)
+                .build()
+        )
+        videoPlayer.prepare()
+        videoPlayer.seekTo(0)
+        videoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+        videoPlayer.volume = 1f
+        videoPlayer.play()
     }
 
-    DisposableEffect(isCurrentActive) {
-        localExoPlayer.playWhenReady = isCurrentActive
-        localExoPlayer.volume = if (isCurrentActive) 1f else 0f
-
-        if (isCurrentActive) {
-            localExoPlayer.seekTo(0)
-        } else {
-            localExoPlayer.pause()
-        }
-        onDispose { }
-    }
-
-    LaunchedEffect(localExoPlayer, isExpanded) {
-        if (isExpanded) {
-            while (true) {
-                val currentPos = localExoPlayer.currentPosition
-                val duration = localExoPlayer.duration
-                if (duration > 0) {
-                    progress = localExoPlayer.currentPosition.toFloat() / duration
-                }
-                getCurrentDuration(currentPos)
-                delay(100)
+    LaunchedEffect(message.messageId) {
+        while (isActive) {
+            val d = videoPlayer.duration
+            if (d > 0) {
+                progress = videoPlayer.currentPosition.toFloat() / d
+                getCurrentDuration(videoPlayer.currentPosition)
             }
-        } else {
-            progress = 0f
-            getCurrentDuration(0L)
+            delay(100)
         }
-    }
-
-    LaunchedEffect(isExpanded) {
-        if (isExpanded) {
-            localExoPlayer.seekTo(0)
-        }
-    }
-
-    DisposableEffect(localExoPlayer) {
-        val listener = object : Player.Listener {
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo,
-                newPosition: Player.PositionInfo,
-                reason: Int
-            ) {
-                if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
-                    onCycleEnded()
-                }
-            }
-        }
-        localExoPlayer.addListener(listener)
-        onDispose {
-            localExoPlayer.removeListener(listener)
-        }
-    }
-
-    DisposableEffect(isExpanded) {
-        localExoPlayer.volume = if (isExpanded) 1f else 0f
-        onDispose { }
     }
 
     DisposableEffect(message.messageId) {
         onDispose {
-            localExoPlayer.release()
+            if (videoPlayer.currentMediaItem?.mediaId == message.messageId) {
+                videoPlayer.pause()
+                videoPlayer.stop()
+                videoPlayer.clearMediaItems()
+                videoPlayer.volume = 0f
+            }
+            getCurrentDuration(0L)
         }
     }
 
@@ -504,13 +467,10 @@ private fun CircleVideoPlayer(
                         Gravity.CENTER
                     )
 
-                    localExoPlayer.setVideoTextureView(this)
+                    videoPlayer.setVideoTextureView(this)
                 }
             },
             update = { textureView ->
-                localExoPlayer.videoScalingMode = C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-
-                localExoPlayer.setVideoTextureView(textureView)
             },
             modifier = Modifier.fillMaxSize()
         )
