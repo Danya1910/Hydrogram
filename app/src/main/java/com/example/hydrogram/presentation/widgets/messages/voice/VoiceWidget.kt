@@ -15,7 +15,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import android.content.Context
 import android.text.format.DateFormat
-import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -75,7 +74,6 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.times
 import coil3.compose.AsyncImage
 import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
@@ -112,14 +110,12 @@ fun VoiceWidget(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
 
-    var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
-    var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
     var reactions: MessageReactions? = null
@@ -127,19 +123,15 @@ fun VoiceWidget(
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == messageData.mineId) {
-            mineReactionId = entry.key
             mineReactionEmoji = entry.value
 
         } else {
-            penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
         reactions = MessageReactions(
             mineReaction = mineReactionEmoji,
             penpalReaction = penpalReactionEmoji,
         )
-        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
-        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
     }
 
 
@@ -640,8 +632,6 @@ fun VoiceReplyWidget(
             mineReaction = mineReactionEmoji,
             penpalReaction = penpalReactionEmoji,
         )
-        Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
-        Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
     }
 
 
