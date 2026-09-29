@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
@@ -39,27 +40,6 @@ fun ReactionWidget(
     penpalAvatar: String? = null,
     onReactionClick: () -> Unit,
 ) {
-
-    val mineAvatarBitmap = remember(mineAvatar) {
-        if (!mineAvatar.isNullOrBlank()) {
-            val base64String = mineAvatar.substringAfter("base64,")
-            val decodedBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-        } else {
-            null
-        }
-    }
-    Log.d("ReactionWidget", "mineAvatarBitmap: $mineAvatarBitmap")
-
-    val penpalAvatarBitmap = remember(penpalAvatar) {
-        if (!penpalAvatar.isNullOrBlank()) {
-            val base64String = penpalAvatar.substringAfter("base64,")
-            val decodedBytes = android.util.Base64.decode(base64String, android.util.Base64.DEFAULT)
-            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-        } else {
-            null
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -86,21 +66,21 @@ fun ReactionWidget(
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
             )
-            if (mineAvatarBitmap != null || penpalAvatarBitmap != null) {
+            if (mineAvatar != null || penpalAvatar != null) {
                 Spacer(modifier = Modifier.width(5.dp))
                 Box(
                     modifier = Modifier
                         .height(25.dp)
                         .width(
                             when {
-                                mineAvatarBitmap != null && penpalAvatarBitmap != null -> 40.dp
+                                mineAvatar != null && penpalAvatar != null -> 40.dp
                                 else -> 25.dp
                             }
                         )
                 ) {
-                    if (penpalAvatarBitmap != null) {
-                        Image(
-                            bitmap = penpalAvatarBitmap.asImageBitmap(),
+                    if (penpalAvatar != null) {
+                        AsyncImage(
+                            model = penpalAvatar,
                             contentDescription = null,
                             modifier = Modifier
                                 .align(Alignment.CenterEnd)
@@ -110,7 +90,8 @@ fun ReactionWidget(
                         )
                     }
 
-                    if (mineAvatarBitmap != null) {
+
+                    if (mineAvatar != null) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier
@@ -122,15 +103,15 @@ fun ReactionWidget(
                                     color = Green
                                 )
                         ) {
-                            Image(
-                                bitmap = mineAvatarBitmap.asImageBitmap(),
+                            AsyncImage(
+                                model = mineAvatar,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .align(Alignment.CenterStart)
                                     .size(25.dp)
                                     .clip(CircleShape)
                                     .let {
-                                        if (penpalAvatarBitmap != null) {
+                                        if (penpalAvatar != null) {
                                             it.background(Color.White, CircleShape)
                                                 .padding(1.dp)
                                                 .clip(CircleShape)
