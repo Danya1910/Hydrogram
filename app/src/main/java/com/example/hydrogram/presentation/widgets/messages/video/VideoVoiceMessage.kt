@@ -6,13 +6,19 @@ import android.view.Gravity
 import android.view.TextureView
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -21,6 +27,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -56,7 +63,9 @@ import androidx.media3.exoplayer.ExoPlayer
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
+import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
 import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
+import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.DateSeparatorGreen
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
@@ -144,7 +153,8 @@ fun CircleVideoMessage(
     val currentSeconds = currentExpandDuration / 1000
     val currentMinutes = currentSeconds / 60
     val currentRemainingSeconds = currentSeconds % 60
-    val currentFormattedDuration = String.format("%02d:%02d", currentMinutes, currentRemainingSeconds)
+    val currentFormattedDuration =
+        String.format("%02d:%02d", currentMinutes, currentRemainingSeconds)
 
     BoxWithConstraints(
         contentAlignment = if (isMine) Alignment.CenterEnd else Alignment.CenterStart,
@@ -180,73 +190,138 @@ fun CircleVideoMessage(
             }
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .offset { IntOffset(animatedOffset.roundToInt(), 0) }
-                .padding(horizontal = 16.dp)
-                .fillMaxWidth(widthExpand)
-                .aspectRatio(1f)
-                .combinedClickable(
-                    onClick = {
-                        val willExpand = !isExpanded
-
-                        if (isExpanded) {
-                            setCurrentVideo("")
-                        } else {
-                            setCurrentVideo(message.messageId)
-                        }
-
-                        if (willExpand && globalIndex != null) {
-                            coroutineScope.launch {
-                                delay(100.milliseconds)
-                                val extraMargin = with(density) { 32.dp.roundToPx() }
-                                val scrollOffset = -bottomPaddingPx - extraMargin
-
-                                lazyListState.animateScrollToItem(
-                                    index = globalIndex,
-                                    scrollOffset = scrollOffset
-                                )
-                            }
-                        }
-                    },
-                    onDoubleClick = {
-                        messageCallbacks.onDoubleClick(
-                            message.reactions?.get(messageData.mineId) != null
-                        )
-                    },
-                    onLongClick = {
-                        messageCallbacks.onLongClick(false)
-                    }
-                )
-        ) {
-            CircleVideoPlayer(
-                message = message,
-                isExpanded = isExpanded,
-                onCycleEnded = {
-                    setCurrentVideo("")
-                },
-                getCurrentDuration = { duration ->
-                    currentExpandDuration = duration
-                },
-                currentVideoId = currentVideoId,
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+        Column() {
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .align(
-                        Alignment.BottomCenter,
+                    .offset { IntOffset(animatedOffset.roundToInt(), 0) }
+                    .padding(horizontal = 16.dp)
+                    .fillMaxWidth(widthExpand)
+                    .aspectRatio(1f)
+                    .combinedClickable(
+                        onClick = {
+                            val willExpand = !isExpanded
+
+                            if (isExpanded) {
+                                setCurrentVideo("")
+                            } else {
+                                setCurrentVideo(message.messageId)
+                            }
+
+                            if (willExpand && globalIndex != null) {
+                                coroutineScope.launch {
+                                    delay(100.milliseconds)
+                                    val extraMargin = with(density) { 32.dp.roundToPx() }
+                                    val scrollOffset = -bottomPaddingPx - extraMargin
+
+                                    lazyListState.animateScrollToItem(
+                                        index = globalIndex,
+                                        scrollOffset = scrollOffset
+                                    )
+                                }
+                            }
+                        },
+                        onDoubleClick = {
+                            messageCallbacks.onDoubleClick(
+                                message.reactions?.get(messageData.mineId) != null
+                            )
+                        },
+                        onLongClick = {
+                            messageCallbacks.onLongClick(false)
+                        }
                     )
-                    .padding(horizontal = 5.dp)
             ) {
-                VideoInfo(
-                    text = if(isExpanded) currentFormattedDuration else videoDuration
+                CircleVideoPlayer(
+                    message = message,
+                    isExpanded = isExpanded,
+                    onCycleEnded = {
+                        setCurrentVideo("")
+                    },
+                    getCurrentDuration = { duration ->
+                        currentExpandDuration = duration
+                    },
+                    currentVideoId = currentVideoId,
                 )
-                Spacer(modifier = Modifier.weight(1f))
-                VideoInfo(
-                    text = formattedTime
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .align(
+                            Alignment.BottomCenter,
+                        )
+                        .padding(horizontal = 5.dp)
+                ) {
+                    VideoInfo(
+                        text = if (isExpanded) currentFormattedDuration else videoDuration
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    VideoInfo(
+                        text = formattedTime
+                    )
+                }
             }
+
+            AnimatedVisibility(
+                visible = haveReaction,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically(),
+            ) {
+                val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                        reactions.penpalReaction != null &&
+                        reactions.mineReaction != reactions.penpalReaction
+
+                if (hasBothDifferentReactions) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ReactionWidget(
+                            reactions = MessageReactions(
+                                mineReaction = reactions.mineReaction,
+                                penpalReaction = null
+                            ),
+                            color = Blue,
+                            onReactionClick = {
+                                messageCallbacks.onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        ReactionWidget(
+                            reactions = MessageReactions(
+                                mineReaction = null,
+                                penpalReaction = reactions!!.penpalReaction
+                            ),
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                messageCallbacks.onReactionClick()
+                            },
+                            mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                        )
+                    }
+                } else {
+                    if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Color(0xFFCCE3F8),
+                            onReactionClick = {
+                                messageCallbacks.onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                        )
+                    } else {
+                        ReactionWidget(
+                            reactions = reactions,
+                            color = Blue,
+                            onReactionClick = {
+                                messageCallbacks.onReactionClick()
+                            },
+                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                        )
+                    }
+                }
+            }
+
         }
     }
 }
