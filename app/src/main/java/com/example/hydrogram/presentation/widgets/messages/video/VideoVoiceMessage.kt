@@ -326,6 +326,31 @@ fun CircleVideoMessage(
     }
 }
 
+@Composable
+private fun CirclePreview(
+    message: Message.CircleVideo
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(shape = CircleShape)
+            .background(
+                color = DateSeparatorGreen.copy(alpha = 0.65f),
+            )
+    ) {
+        PreviewGenerator(
+            message
+        )
+    }
+}
+
+@Composable
+private fun PreviewGenerator(
+    message: Message.CircleVideo
+) {
+
+}
+
 @OptIn(UnstableApi::class)
 @Composable
 private fun CircleVideoPlayer(
