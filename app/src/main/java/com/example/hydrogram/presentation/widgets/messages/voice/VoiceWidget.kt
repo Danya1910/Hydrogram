@@ -102,7 +102,6 @@ fun VoiceWidget(
     val voice = message as Message.Voice
 
 
-
     var dragAmount by remember { mutableFloatStateOf(0f) }
     val haptic = LocalHapticFeedback.current
     var isHapticTriggered by remember { mutableStateOf(false) }
@@ -273,7 +272,6 @@ fun VoiceWidget(
             },
     ) {
         val maxBubbleWidth = maxWidth * 0.85f
-
         Box(
             modifier = Modifier
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
@@ -363,11 +361,14 @@ fun VoiceWidget(
                                     val minSpikeHeightDp = 2.dp
                                     val maxSpikeHeightDp = 16.dp
 
-                                    val density = androidx.compose.ui.platform.LocalDensity.current
+                                    val density =
+                                        androidx.compose.ui.platform.LocalDensity.current
                                     val spikeWidthPx = with(density) { spikeWidthDp.toPx() }
                                     val spikePaddingPx = with(density) { spikePaddingDp.toPx() }
-                                    val minSpikeHeightPx = with(density) { minSpikeHeightDp.toPx() }
-                                    val maxSpikeHeightPx = with(density) { maxSpikeHeightDp.toPx() }
+                                    val minSpikeHeightPx =
+                                        with(density) { minSpikeHeightDp.toPx() }
+                                    val maxSpikeHeightPx =
+                                        with(density) { maxSpikeHeightDp.toPx() }
 
                                     val maxRawAmplitude = animatedAmplitudes.maxOrNull() ?: 1f
 
@@ -403,7 +404,10 @@ fun VoiceWidget(
                                                     (progress + 0.001f).coerceAtMost(1f) to waveColor,
                                                     1.0f to waveColor
                                                 ),
-                                                start = androidx.compose.ui.geometry.Offset(0f, 0f),
+                                                start = androidx.compose.ui.geometry.Offset(
+                                                    0f,
+                                                    0f
+                                                ),
                                                 end = androidx.compose.ui.geometry.Offset(
                                                     totalWaveformWidthPx,
                                                     0f
@@ -571,7 +575,6 @@ fun VoiceWidget(
                 }
             }
         }
-
     }
 }
 
@@ -665,10 +668,12 @@ fun VoiceReplyWidget(
                     }
                 }
             }
+
             override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
                 isPlaying = isPlayingChanged &&
                         audioPlayer.currentMediaItem?.mediaId == message.messageId
             }
+
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 isPlaying = false
                 currentPosition = 0L
@@ -765,7 +770,6 @@ fun VoiceReplyWidget(
 
         val replyBgColor = if (!isMine) Color(0xFFFFEBD6) else Color(0xFFE2F7CA)
         val replyMainColor = if (!isMine) Color(0xFFFDB86F) else Color(0xFF42C23A)
-
         Box(
             modifier = Modifier
                 .offset { IntOffset(animatedOffset.roundToInt(), 0) }
@@ -1021,13 +1025,15 @@ fun VoiceReplyWidget(
                                         val density =
                                             androidx.compose.ui.platform.LocalDensity.current
                                         val spikeWidthPx = with(density) { spikeWidthDp.toPx() }
-                                        val spikePaddingPx = with(density) { spikePaddingDp.toPx() }
+                                        val spikePaddingPx =
+                                            with(density) { spikePaddingDp.toPx() }
                                         val minSpikeHeightPx =
                                             with(density) { minSpikeHeightDp.toPx() }
                                         val maxSpikeHeightPx =
                                             with(density) { maxSpikeHeightDp.toPx() }
 
-                                        val maxRawAmplitude = animatedAmplitudes.maxOrNull() ?: 1f
+                                        val maxRawAmplitude =
+                                            animatedAmplitudes.maxOrNull() ?: 1f
 
                                         Column(
                                             modifier = Modifier
@@ -1054,25 +1060,27 @@ fun VoiceReplyWidget(
                                                 val playedColor =
                                                     if (isMine) Color(0xFF42C23A) else Blue
 
-                                                val sharpProgressGradient = Brush.linearGradient(
-                                                    colorStops = arrayOf(
-                                                        0.0f to playedColor,
-                                                        progress to playedColor,
-                                                        (progress + 0.001f).coerceAtMost(1f) to waveColor,
-                                                        1.0f to waveColor
-                                                    ),
-                                                    start = androidx.compose.ui.geometry.Offset(
-                                                        0f,
-                                                        0f
-                                                    ),
-                                                    end = androidx.compose.ui.geometry.Offset(
-                                                        totalWaveformWidthPx,
-                                                        0f
+                                                val sharpProgressGradient =
+                                                    Brush.linearGradient(
+                                                        colorStops = arrayOf(
+                                                            0.0f to playedColor,
+                                                            progress to playedColor,
+                                                            (progress + 0.001f).coerceAtMost(1f) to waveColor,
+                                                            1.0f to waveColor
+                                                        ),
+                                                        start = androidx.compose.ui.geometry.Offset(
+                                                            0f,
+                                                            0f
+                                                        ),
+                                                        end = androidx.compose.ui.geometry.Offset(
+                                                            totalWaveformWidthPx,
+                                                            0f
+                                                        )
                                                     )
-                                                )
 
                                                 animatedHeights.forEachIndexed { index, amplitude ->
-                                                    val rawProgress = amplitude / maxRawAmplitude
+                                                    val rawProgress =
+                                                        amplitude / maxRawAmplitude
                                                     val spikeHeight =
                                                         minSpikeHeightPx + (rawProgress * (maxSpikeHeightPx - minSpikeHeightPx))
 
