@@ -113,7 +113,7 @@ dependencies {
     implementation("com.github.lincollincol:compose-audiowaveform:1.1.2")
 
     // Haze
-    implementation("dev.chrisbanes.haze:haze-materials:1.1.1")
+    implementation("dev.chrisbanes.haze:haze-materials:1.6.7")
 
     // UI
     implementation(libs.material)
