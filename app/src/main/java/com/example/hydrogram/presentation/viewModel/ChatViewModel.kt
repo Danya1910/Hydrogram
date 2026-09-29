@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalGraphicsContext
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.ReplyData
@@ -28,7 +27,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.io.File
 import javax.inject.Inject
-import kotlin.enums.enumEntries
 
 
 @HiltViewModel
