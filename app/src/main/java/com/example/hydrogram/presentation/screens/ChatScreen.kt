@@ -6,16 +6,12 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import android.util.Log
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import android.util.Base64
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -27,7 +23,10 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -43,6 +42,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
@@ -64,6 +64,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.BlurredEdgeTreatment
@@ -95,40 +96,32 @@ import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavController
+import coil3.ImageLoader
+import coil3.compose.AsyncImage
+import coil3.gif.AnimatedImageDecoder
 import coil3.request.ImageRequest
+import coil3.request.crossfade
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
+import com.example.hydrogram.domain.model.ReplyData
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.ChatUiState
+import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.states.UserState
+import com.example.hydrogram.presentation.util.CopyTextToClipboard
+import com.example.hydrogram.presentation.util.GlassBackground
+import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.util.MessageCallbacks
+import com.example.hydrogram.presentation.util.MessageData
 import com.example.hydrogram.presentation.util.formatHeaderDate
 import com.example.hydrogram.presentation.util.generateChatId
 import com.example.hydrogram.presentation.util.getStartOfDay
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
-import com.example.hydrogram.presentation.widgets.TopChatBar
-import com.example.hydrogram.ui.theme.DateSeparatorGreen
-import com.example.hydrogram.ui.theme.Separator
-import com.example.hydrogram.ui.theme.SfProText
-import dev.chrisbanes.haze.HazeDefaults
-import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
-import dev.chrisbanes.haze.hazeChild
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import coil3.compose.AsyncImage
-import coil3.gif.AnimatedImageDecoder
-import coil3.ImageLoader
-import coil3.request.crossfade
-import com.example.hydrogram.domain.model.ReplyData
-import com.example.hydrogram.presentation.states.MineState
-import com.example.hydrogram.presentation.util.CopyTextToClipboard
-import com.example.hydrogram.presentation.util.GlassBackground
-import com.example.hydrogram.presentation.util.GlassBorder
-import com.example.hydrogram.presentation.util.MessageCallbacks
-import com.example.hydrogram.presentation.util.MessageData
 import com.example.hydrogram.presentation.widgets.MessageActionMenu
+import com.example.hydrogram.presentation.widgets.TopChatBar
 import com.example.hydrogram.presentation.widgets.VideoMessageRecorder
 import com.example.hydrogram.presentation.widgets.messages.image.MineImageMessage
 import com.example.hydrogram.presentation.widgets.messages.image.MineReplyImageMessage
@@ -146,15 +139,21 @@ import com.example.hydrogram.presentation.widgets.messages.video.CircleVideoMess
 import com.example.hydrogram.presentation.widgets.messages.voice.VoiceReplyWidget
 import com.example.hydrogram.presentation.widgets.messages.voice.VoiceWidget
 import com.example.hydrogram.ui.theme.Blue
+import com.example.hydrogram.ui.theme.DateSeparatorGreen
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
+import com.example.hydrogram.ui.theme.Separator
+import com.example.hydrogram.ui.theme.SfProText
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import dev.chrisbanes.haze.HazeDefaults
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
+import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
-import kotlin.text.startsWith
-import kotlin.text.substringAfter
 
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
@@ -166,7 +165,6 @@ fun ChatScreen(
     userViewModel: UserViewModel,
     penpalId: String?,
 ) {
-
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
     val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
@@ -190,22 +188,15 @@ fun ChatScreen(
     }
 
     val mineData by userViewModel.mineState.collectAsStateWithLifecycle()
-
     val penpalData by userViewModel.userState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         chatViewModel.getCurrentUserId()
-        Log.d("ChatScreen", "mineId: $mineId, penpalId: $penpalId")
-    }
-
-    LaunchedEffect(mineId) {
-        Log.d("ChatScreen", "mineId: $mineId")
     }
 
     LaunchedEffect(chatId) {
         if (chatId.isNotEmpty()) {
             chatViewModel.observeChatHistory(chatId = chatId)
-            Log.d("ChatScreen", "Успешный старт чата по ID: $chatId")
         }
     }
 
@@ -218,7 +209,6 @@ fun ChatScreen(
                         .fillMaxWidth()
                         .hazeChild(
                             state = hazeState,
-                            shape = RectangleShape,
                             style = HazeDefaults.style(
                                 backgroundColor = Color.White.copy(alpha = 0.01f),
                                 blurRadius = 2.dp
@@ -258,8 +248,6 @@ fun ChatScreen(
 
                         is UserState.Success -> {
                             val user = state.user
-                            Log.d("ChatScreen", "данные собеседника: $user")
-
                             TopChatBar(
                                 user = user ?: User(),
                                 onBackClick = { navController.popBackStack() },
@@ -299,9 +287,7 @@ fun ChatScreen(
                                     .fillMaxWidth(),
                                 contentAlignment = Alignment.Center
                             ) {
-                                CircularProgressIndicator(
-                                    color = Blue,
-                                )
+                                CircularProgressIndicator(color = Blue)
                             }
                         }
 
@@ -318,19 +304,23 @@ fun ChatScreen(
 
                         is ChatUiState.Success -> {
                             val messages = state.messages
-                            Log.d("ChatScreen", "messages: $messages")
+                            val mineUser = (mineData as? MineState.Success)?.user
+                            val penpalUser = (penpalData as? UserState.Success)?.user
 
-                            Content(
-                                messages = messages,
-                                chatViewModel = chatViewModel,
-                                bottomPadding = paddingValues.calculateBottomPadding(),
-                                mineId = mineId,
-                                chatId = chatId,
-                                penpalName = (penpalData as UserState.Success).user?.name ?: "",
-                                mineName = (mineData as MineState.Success).user?.name ?: "",
-                                mineData = (mineData as MineState.Success).user,
-                                penpalData = (penpalData as UserState.Success).user,
-                            )
+                            if (penpalUser != null) {
+                                Content(
+                                    messages = messages,
+                                    chatViewModel = chatViewModel,
+                                    bottomPadding = paddingValues.calculateBottomPadding(),
+                                    mineId = mineId,
+                                    chatId = chatId,
+                                    penpalName = penpalUser.name ?: "",
+                                    mineName = mineUser?.name ?: "",
+                                    mineData = mineUser,
+                                    penpalData = penpalUser,
+                                    hazeState = hazeState,
+                                )
+                            }
                         }
                     }
                 }
@@ -340,7 +330,7 @@ fun ChatScreen(
 }
 
 
-@OptIn(ExperimentalPermissionsApi::class)
+@OptIn(ExperimentalPermissionsApi::class, ExperimentalHazeMaterialsApi::class)
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 private fun Content(
@@ -353,13 +343,27 @@ private fun Content(
     mineName: String,
     mineData: User?,
     penpalData: User?,
+    hazeState: HazeState,
 ) {
-
     val context = LocalContext.current
+    val density = LocalDensity.current
 
     var contextMenuState by remember { mutableStateOf<ContextMenuState?>(null) }
-
     var textState by remember { mutableStateOf("") }
+    var isVideoRecording by remember { mutableStateOf(false) }
+    var isCancelVideo by remember { mutableStateOf(false) }
+    var isVideoButton by remember { mutableStateOf(false) }
+    var isRecording by remember { mutableStateOf(false) }
+    var isStickerWidgetVisible by remember { mutableStateOf(false) }
+    var currentMessageAnswer by remember { mutableStateOf<Message?>(null) }
+    var currentEditingMessage by remember { mutableStateOf<Message?>(null) }
+    var currentReactingMessage by remember { mutableStateOf<Message?>(null) }
+    var currentPlayingMessageId by remember { mutableStateOf("") }
+    var circleVideoDuration by remember { mutableStateOf(0L) }
+    var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
+    var hasInitializedUnreadId by remember { mutableStateOf(false) }
+
+    val isExpanded = currentMessageAnswer != null
 
     val mediaPermissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
@@ -368,30 +372,15 @@ private fun Content(
         )
     )
 
-    val voicePlayer = remember {
-        ExoPlayer.Builder(context).build()
-    }
-
-    DisposableEffect(Unit) {
-        onDispose {
-            voicePlayer.release()
-        }
-    }
-
-    var isVideoRecording by remember { mutableStateOf(false) }
-
-    var isCancelVideo by remember { mutableStateOf(false) }
-
-    var isVideoButton by remember { mutableStateOf(false) }
-
     LaunchedEffect(mediaPermissionsState.allPermissionsGranted, isVideoRecording) {
         if (!mediaPermissionsState.allPermissionsGranted && isVideoRecording) {
             mediaPermissionsState.launchMultiplePermissionRequest()
         }
     }
 
-    LaunchedEffect(isVideoRecording) {
-        Log.d("Video", "isVideoRecording: $isVideoRecording")
+    val player = remember { ExoPlayer.Builder(context).build() }
+    DisposableEffect(Unit) {
+        onDispose { player.release() }
     }
 
     val gifImageLoader = remember(context) {
@@ -403,367 +392,212 @@ private fun Content(
     }
 
     val groupedMessages = remember(messages) {
-        messages.groupBy { message -> getStartOfDay(message.timestamp) }
+        messages.groupBy { getStartOfDay(it.timestamp) }
+    }
+    val messagesById = remember(messages) { messages.associateBy { it.messageId } }
+
+    val messageIndices = remember(groupedMessages) {
+        val map = HashMap<String, Int>(messagesById.size)
+        var currentIndex = 0
+        groupedMessages.forEach { (_, dayMessages) ->
+            currentIndex++
+            dayMessages.forEach { message ->
+                map[message.messageId] = currentIndex
+                currentIndex++
+            }
+        }
+        map
     }
 
     val listState = rememberLazyListState()
-
     val coroutineScope = rememberCoroutineScope()
 
-    val scrollToMessage = { targetReplyId: String ->
-        var finalUIIndex = -1
-        var currentUIIndex = 0
-
-        for ((dayTimestamp, dayMessages) in groupedMessages) {
-
-            if (finalUIIndex == -1) {
-                currentUIIndex++
-            }
-
-            val indexInDay = dayMessages.indexOfFirst { it.messageId.toString() == targetReplyId }
-
-            if (indexInDay != -1) {
-                finalUIIndex = currentUIIndex + indexInDay
-                break
-            }
-
-            currentUIIndex += dayMessages.size
-        }
-
-        Log.d(
-            "ChatScroll",
-            "ПРЯМОЙ ЧАТ | Ищем ID: $targetReplyId. Рассчитанный индекс UI: $finalUIIndex"
-        )
-
-        if (finalUIIndex != -1) {
-            coroutineScope.launch {
-                try {
-                    delay(100)
-
-                    listState.animateScrollToItem(
-                        index = finalUIIndex,
-                        scrollOffset = -150
-                    )
-                    Log.d("ChatScroll", "Скролл на индекс $finalUIIndex выполнен")
-                } catch (e: Exception) {
-                    listState.scrollToItem(index = finalUIIndex, scrollOffset = -150)
-                }
-            }
-        } else {
-            Toast.makeText(
-                context,
-                "Сообщение не найдено",
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-    }
-
-    val hazeState = remember { HazeState() }
-
-    var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
-    var hasInitializedUnreadId by remember { mutableStateOf(false) }
-
-    var isStickerWidgetVisible by remember { mutableStateOf(false) }
-
-    var currentMessageAnswer by remember { mutableStateOf<Message?>(null) }
-
-    var isExpanded by remember { mutableStateOf(false) }
-
-
     if (!hasInitializedUnreadId && messages.isNotEmpty()) {
-        val firstUnread = messages
+        firstUnreadMessageId = messages
+            .asSequence()
             .filter { it.senderId != mineId && it.status != "read" }
-            .minByOrNull { it.timestamp }?.messageId
-
-        firstUnreadMessageId = firstUnread
+            .minByOrNull { it.timestamp }
+            ?.messageId
         hasInitializedUnreadId = true
     }
 
-    val chatScrollTrigger = chatId
-
-    LaunchedEffect(chatScrollTrigger) {
+    LaunchedEffect(chatId) {
         val unreadId = firstUnreadMessageId
-
         if (unreadId != null) {
-            val itemIndex = listState.layoutInfo.visibleItemsInfo
-                .firstOrNull { it.key == unreadId }?.index
-
-            if (itemIndex != null) {
-                listState.scrollToItem(index = itemIndex, scrollOffset = 0)
-            } else {
-                var targetIndex = 0
-                var found = false
-
-                for ((_, dayMessages) in groupedMessages) {
-                    if (found) break
-
-                    targetIndex++
-
-                    for (msg in dayMessages) {
-                        if (msg.messageId == unreadId) {
-                            found = true
-                            break
-                        }
-                        targetIndex++
-                    }
-                }
-
-                if (found) {
-                    val fastJumpIndex = (targetIndex - 10).coerceAtLeast(0)
-                    listState.scrollToItem(index = fastJumpIndex, scrollOffset = 0)
-                    listState.animateScrollToItem(index = targetIndex, scrollOffset = 0)
-                }
+            val target = messageIndices[unreadId]
+            if (target != null) {
+                val fastJump = (target - 10).coerceAtLeast(0)
+                listState.scrollToItem(fastJump)
+                listState.animateScrollToItem(target)
             }
-        } else {
-            if (messages.isNotEmpty()) {
-                val totalItems = listState.layoutInfo.totalItemsCount
-                if (totalItems > 0) {
-                    val intermediateIndex = (totalItems - 20).coerceAtLeast(0)
-
-                    listState.scrollToItem(index = intermediateIndex, scrollOffset = 0)
-                    listState.animateScrollToItem(index = totalItems - 1, scrollOffset = 0)
-                }
+        } else if (messages.isNotEmpty()) {
+            val total = listState.layoutInfo.totalItemsCount
+            if (total > 0) {
+                val intermediate = (total - 20).coerceAtLeast(0)
+                listState.scrollToItem(intermediate)
+                listState.animateScrollToItem(total - 1)
             }
         }
     }
 
-    LaunchedEffect(listState.layoutInfo.visibleItemsInfo) {
-        val visibleItems = listState.layoutInfo.visibleItemsInfo
-        if (visibleItems.isNotEmpty()) {
-            visibleItems.forEach { visibleItem ->
-                val keyString = visibleItem.key as? String
-                if (keyString != null && !keyString.startsWith("date_")) {
-                    val message = messages.find { it.messageId == keyString }
-                    if (message != null && message.senderId != mineId && message.status != "read") {
+    val scrollToMessage: (String) -> Unit = remember(messageIndices) {
+        { targetReplyId ->
+            val index = messageIndices[targetReplyId]
+            if (index != null) {
+                coroutineScope.launch {
+                    listState.scrollToItem(index = index, scrollOffset = -150)
+                }
+            } else {
+                Toast.makeText(context, "Сообщение не найдено", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    val visibleMessageIds by remember {
+        derivedStateOf {
+            listState.layoutInfo.visibleItemsInfo
+                .asSequence()
+                .mapNotNull { it.key as? String }
+                .filterNot { it.startsWith("date_") }
+                .toList()
+        }
+    }
+
+    LaunchedEffect(listState, messagesById, mineId, chatId) {
+        snapshotFlow { visibleMessageIds }
+            .collect { ids ->
+                ids.forEach { id ->
+                    val msg = messagesById[id] ?: return@forEach
+                    if (msg.senderId != mineId && msg.status != "read") {
                         chatViewModel.changeMessageStatus(
                             chatId = chatId,
-                            messageId = message.messageId,
+                            messageId = msg.messageId,
                             status = "read",
                         )
                     }
                 }
             }
-        }
     }
 
-
-    var currentReactingMessage by remember { mutableStateOf<Message?>(null) }
-    var currentEditingMessage by remember { mutableStateOf<Message?>(null) }
+    LaunchedEffect(messages.size) {
+        if (messages.isNotEmpty() && messages.lastOrNull()?.senderId == mineId) {
+            delay(50)
+            val total = listState.layoutInfo.totalItemsCount
+            if (total > 0) {
+                listState.animateScrollToItem(total - 1)
+            }
+        }
+    }
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
     ) { uri ->
-        if (uri != null) {
-            if (currentEditingMessage != null) {
+        if (uri == null) return@rememberLauncherForActivityResult
 
-
-                Log.d("EditDebug", "=== НАЧАЛО РЕДАКТИРОВАНИЯ ===")
-                Log.d("EditDebug", "messageId: ${currentEditingMessage?.messageId}")
-                Log.d("EditDebug", "currentType: ${currentEditingMessage?.type}")
-                Log.d("EditDebug", "newText: $textState")
-                Log.d("EditDebug", "chatId: $chatId")
-
-
-                val imageData = try {
-                    convertImageToOptimizedBase64(context, uri)
-                } catch (e: Exception) {
-                    Log.e("EditDebug", "Ошибка конвертации изображения: ${e.message}")
-                    Toast.makeText(context, "Ошибка обработки изображения", Toast.LENGTH_SHORT)
-                        .show()
-                    return@rememberLauncherForActivityResult
-                }
-
-                chatViewModel.changeMessage(
-                    chatId = chatId,
-                    messageId = currentEditingMessage?.messageId ?: "",
-                    currentMessageType = currentEditingMessage?.type ?: "",
-                    typeOfChange = "image",
-                    change = imageData
-                )
-
-                currentEditingMessage = null
-
+        if (currentEditingMessage != null) {
+            val imageData = try {
+                convertImageToOptimizedBase64(context, uri)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Ошибка обработки изображения", Toast.LENGTH_SHORT).show()
                 return@rememberLauncherForActivityResult
             }
-            if (currentMessageAnswer == null) {
-                chatViewModel.sendImage(
-                    senderId = mineId,
-                    chatId = chatId,
-                    imageUri = uri,
-                    targetUserId = penpalData?.uid ?: "",
-                    senderName = mineName,
-                    senderAvatar = mineData?.avatarUrl ?: "",
-                )
-            } else {
-                val content = when (currentMessageAnswer) {
-                    is Message.Text -> (currentMessageAnswer as Message.Text).text
-                        ?: ""
-
-                    is Message.Image -> (currentMessageAnswer as Message.Image).image
-                        ?: ""
-
-                    is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
-                        ?: ""
-
-                    is Message.Voice -> (currentMessageAnswer as Message.Voice).audioUrl
-                        ?: ""
-
-                    else -> {
-                        ""
-                    }
-                }
-
-                val replyData = currentMessageAnswer?.replyData ?: ReplyData(
-                    messageId = currentMessageAnswer!!.messageId,
-                    senderId = currentMessageAnswer!!.senderId,
-                    type = currentMessageAnswer!!.type,
-                    content = content,
-                )
-
-                chatViewModel.sendImage(
-                    senderId = mineId,
-                    chatId = chatId,
-                    imageUri = uri,
-                    replyData = replyData,
-                    targetUserId = penpalData?.uid ?: "",
-                    senderName = mineName,
-                    senderAvatar = mineData?.avatarUrl ?: "",
-                )
-            }
-        }
-    }
-
-    LaunchedEffect(currentMessageAnswer) {
-        Log.d("ChatScreen", "selected message: ${currentMessageAnswer.toString()}")
-        if (currentMessageAnswer != null) {
-            isExpanded = true
+            chatViewModel.changeMessage(
+                chatId = chatId,
+                messageId = currentEditingMessage?.messageId ?: "",
+                currentMessageType = currentEditingMessage?.type ?: "",
+                typeOfChange = "image",
+                change = imageData
+            )
             currentEditingMessage = null
-        } else {
-            isExpanded = false
+            return@rememberLauncherForActivityResult
         }
-    }
 
-    LaunchedEffect(messages.size) {
-        if (messages.isNotEmpty()) {
-            val lastMessage = messages.lastOrNull()
-            if (lastMessage?.senderId == mineId) {
-                delay(50)
-
-                val totalItems = listState.layoutInfo.totalItemsCount
-                if (totalItems > 0) {
-                    listState.animateScrollToItem(
-                        index = totalItems - 1,
-                        scrollOffset = 0
-                    )
-                }
-            }
+        val reply = currentMessageAnswer
+        if (reply == null) {
+            chatViewModel.sendImage(
+                senderId = mineId,
+                chatId = chatId,
+                imageUri = uri,
+                targetUserId = penpalData?.uid ?: "",
+                senderName = mineName,
+                senderAvatar = mineData?.avatarUrl ?: "",
+            )
+        } else {
+            chatViewModel.sendImage(
+                senderId = mineId,
+                chatId = chatId,
+                imageUri = uri,
+                replyData = reply.toReplyData(),
+                targetUserId = penpalData?.uid ?: "",
+                senderName = mineName,
+                senderAvatar = mineData?.avatarUrl ?: "",
+            )
         }
     }
 
     val animatedBottomPadding by animateDpAsState(
         targetValue = if (isExpanded) 54.dp else 0.dp,
         animationSpec = tween(durationMillis = 300),
+        label = "bottomPadding"
     )
+    val bottomBarExtraPadding by animateDpAsState(
+        targetValue = if (isRecording || isVideoRecording) 17.dp else 4.dp,
+        animationSpec = tween(durationMillis = 200),
+        label = "bottomBarPadding"
+    )
+
+    val totalBottomPaddingPx = remember(animatedBottomPadding, bottomBarExtraPadding) {
+        with(density) { (47.dp + animatedBottomPadding + bottomBarExtraPadding).roundToPx() }
+    }
 
     val isAtBottom by remember {
         derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val visibleItems = layoutInfo.visibleItemsInfo
-            val totalItemsCount = layoutInfo.totalItemsCount
-
-            if (totalItemsCount == 0) true
+            val info = listState.layoutInfo
+            if (info.totalItemsCount == 0) true
             else {
-                val lastVisibleItem = visibleItems.lastOrNull()
-                lastVisibleItem != null && lastVisibleItem.index >= totalItemsCount - 2
+                val last = info.visibleItemsInfo.lastOrNull()
+                last != null && last.index >= info.totalItemsCount - 2
             }
         }
     }
 
-    val density = LocalDensity.current
     val thresholdPx = with(density) { 100.dp.toPx() }
-
     val isScrollToBottomVisible by remember {
         derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val visibleItems = layoutInfo.visibleItemsInfo
-
-            if (visibleItems.isEmpty()) {
-                false
-            } else {
-                val lastVisibleItem = visibleItems.last()
-
-                val isLastItemVisible = lastVisibleItem.index == layoutInfo.totalItemsCount - 1
-
-                if (isLastItemVisible) {
-                    val lastItemBottom = lastVisibleItem.offset + lastVisibleItem.size
-                    val viewportEnd = layoutInfo.viewportEndOffset
-
-                    val remining = lastItemBottom - viewportEnd
-
-                    remining <= thresholdPx
-                } else {
-                    false
-                }
-            }
+            val info = listState.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull() ?: return@derivedStateOf false
+            if (last.index != info.totalItemsCount - 1) return@derivedStateOf false
+            val bottom = last.offset + last.size
+            (bottom - info.viewportEndOffset) <= thresholdPx
         }
     }
 
     LaunchedEffect(isExpanded, messages.size) {
         if (isAtBottom && messages.isNotEmpty()) {
             delay(100)
-
-            val totalItems = listState.layoutInfo.totalItemsCount
-            if (totalItems > 0) {
-                val offsetInPx = with(density) { 5.dp.roundToPx() }
-                listState.animateScrollToItem(
-                    index = totalItems - 1,
-                    scrollOffset = -offsetInPx
-                )
+            val total = listState.layoutInfo.totalItemsCount
+            if (total > 0) {
+                val offset = with(density) { 5.dp.roundToPx() }
+                listState.animateScrollToItem(total - 1, -offset)
             }
         }
     }
 
-    var isRecording by remember { mutableStateOf(false) }
-
-    val bottomBarExtraPadding by animateDpAsState(
-        targetValue = if (isRecording || isVideoRecording) 17.dp else 4.dp,
-        animationSpec = tween(durationMillis = 200)
-    )
-
-    val blurRadius = if (isVideoRecording && !isCancelVideo) 16.dp else 0.dp
-
-    var circleVideoDuration by remember { mutableStateOf(0L) }
-
     LaunchedEffect(isVideoRecording) {
-        if (!isVideoRecording) {
-            circleVideoDuration = 0L
-        }
+        if (!isVideoRecording) circleVideoDuration = 0L
     }
 
-    var currentPlayingMessageId by remember { mutableStateOf("") }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .blur(
-                    radius = blurRadius,
-                    edgeTreatment = BlurredEdgeTreatment.Unbounded
-                )
-        ) {
+    Box(modifier = Modifier.fillMaxSize()) {
+
+        Box(modifier = Modifier.fillMaxSize()) {
             if (messages.isEmpty()) {
-                Log.d("NewChatWidget", "=== SHOWING NEW CHAT WIDGET ===")
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .fillMaxSize()
+                    modifier = Modifier.fillMaxSize()
                 ) {
                     NewChatWidget(
                         onGreetingClick = {
-                            Log.d("NewChatWidget", "=== ON GREETING CLICK CALLED ===")
                             chatViewModel.sendSticker(
                                 senderId = mineId,
                                 chatId = chatId,
@@ -772,30 +606,11 @@ private fun Content(
                                 senderName = mineName,
                                 senderAvatar = mineData?.avatarUrl ?: "",
                             )
-                            Log.d("NewChatWidget", "sticker path: ${R.raw.duck_greeting_sticker}")
                         },
                         context = context,
                         gifImageLoader = gifImageLoader,
                     )
                 }
-            }
-            val totalBottomPaddingPx = remember(animatedBottomPadding, bottomBarExtraPadding) {
-                with(density) { (47.dp + animatedBottomPadding + bottomBarExtraPadding).roundToPx() }
-            }
-
-            val messageIndices = remember(groupedMessages, firstUnreadMessageId) {
-                val map = mutableMapOf<String, Int>()
-                var currentIndex = 0
-
-                groupedMessages.forEach { (dayTimestamp, dayMessages) ->
-                    currentIndex++
-
-                    dayMessages.forEach { message ->
-                        map[message.messageId] = currentIndex
-                        currentIndex++
-                    }
-                }
-                map
             }
 
             LazyColumn(
@@ -815,1440 +630,120 @@ private fun Content(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null
                     ) {
-                        if (isStickerWidgetVisible) {
-                            isStickerWidgetVisible = false
-                        }
+                        if (isStickerWidgetVisible) isStickerWidgetVisible = false
                     },
             ) {
                 groupedMessages.forEach { (dayTimestamp, dayMessages) ->
-
-
                     item(key = "date_$dayTimestamp") {
                         DateSeparator(text = formatHeaderDate(dayTimestamp))
                     }
 
                     items(
                         items = dayMessages,
-                        key = { message -> message.messageId }
+                        key = { it.messageId },
+                        contentType = { it.type }
                     ) { message ->
-
-                        val globalIndex = messageIndices[message.messageId]
-
-                        val messageCoordinates =
-                            remember { mutableStateOf<LayoutCoordinates?>(null) }
-
-                        if (message.messageId == firstUnreadMessageId) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            UnreadMessageSeparator()
-                            Spacer(modifier = Modifier.height(8.dp))
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .onGloballyPositioned { coordinates ->
-                                    messageCoordinates.value = coordinates
-                                }
-                        ) {
-
-                            if (message.senderId == mineId) {
-                                if (message.type == "text") {
-                                    if (message.replyData == null) {
-                                        MineTextMessage(
-                                            message = message as Message.Text,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = it
-                                                    Log.d("ChatScreen", it.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = {},
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            ),
-                                        )
-                                    } else {
-                                        MineReplyTextMessage(
-                                            message = message as Message.Text,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = it
-                                                    Log.d("ChatScreen", it.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = { messageId ->
-                                                    scrollToMessage(messageId)
-                                                },
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            ),
-                                        )
-                                    }
-                                } else if (message.type == "sticker") {
-                                    if (message.replyData == null) {
-                                        MineStickerMessage(
-                                            sticker = message as Message.Sticker,
-                                            context = context,
-                                            gifImageLoader = gifImageLoader,
-                                            onReply = {
-                                                currentMessageAnswer = it
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    } else {
-                                        MineStickerReplyMessage(
-                                            sticker = message as Message.Sticker,
-                                            context = context,
-                                            gifImageLoader = gifImageLoader,
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            onReply = {
-                                                val newReplyData = ReplyData(
-                                                    messageId = it.messageId,
-                                                    type = "sticker",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    content = it.stickerPath ?: "",
-                                                )
-
-                                                currentMessageAnswer = Message.Sticker(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.senderId,
-                                                    type = it.type,
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    replyData = newReplyData,
-                                                    stickerPath = it.stickerPath,
-                                                )
-                                            },
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    }
-                                } else if (message.type == "voice") {
-                                    if (message.replyData == null) {
-                                        VoiceWidget(
-                                            audioPlayer = voicePlayer,
-                                            message = message,
-                                            isMine = true,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = it
-                                                    Log.d("ChatScreen", it.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = {},
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            ),
-                                            setCurrentVideo = { messageId ->
-                                                currentPlayingMessageId = messageId
-                                            },
-                                        )
-                                    } else {
-                                        VoiceReplyWidget(
-                                            audioPlayer = voicePlayer,
-                                            message = message,
-                                            isMine = true,
-                                            context = context,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = it
-                                                    Log.d("ChatScreen", it.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = { messageId ->
-                                                    scrollToMessage(messageId)
-                                                },
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            ),
-                                        )
-                                    }
-                                } else if (message.type == "circleVideo") {
-                                    CircleVideoMessage(
-                                        isMine = true,
-                                        message = message,
-                                        globalIndex = globalIndex,
-                                        lazyListState = listState,
-                                        bottomPaddingPx = totalBottomPaddingPx,
-                                        setCurrentVideo = { messageId ->
-                                            currentPlayingMessageId = messageId
-                                        },
-                                        messageData = MessageData(
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        ),
-                                        messageCallbacks = MessageCallbacks(
-                                            onReply = {
-                                                currentMessageAnswer = it
-                                                Log.d("ChatScreen", it.toString())
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(
-                                                            penpalData?.uid
-                                                        ),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                        ),
-                                        currentVideoId = currentPlayingMessageId,
-                                    )
-                                } else {
-                                    if (message.replyData == null) {
-                                        MineImageMessage(
-                                            message = message as Message.Image,
-                                            onReply = {
-                                                currentMessageAnswer = Message.Image(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    type = "image",
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    image = it.image,
-                                                )
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    } else {
-                                        MineReplyImageMessage(
-                                            message = message as Message.Image,
-                                            onReply = {
-                                                val newReplyData = ReplyData(
-                                                    messageId = it.messageId,
-                                                    type = "image",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    content = it.image ?: "",
-                                                )
-
-                                                currentMessageAnswer = Message.Image(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.senderId,
-                                                    type = it.type,
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    replyData = newReplyData,
-                                                    image = it.image,
-                                                )
-                                            },
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    }
-                                }
-                            } else {
-                                if (message.type == "text") {
-                                    if (message.replyData == null) {
-                                        PenpalTextMessage(
-                                            message = message as Message.Text,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = message
-                                                    Log.d("ChatScreen", message.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = {},
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            )
-                                        )
-                                    } else PenpalReplyTextMessage(
-                                        message = message as Message.Text,
-                                        messageCallbacks = MessageCallbacks(
-                                            onReply = {
-                                                currentMessageAnswer = it
-                                            },
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                        ),
-                                        messageData = MessageData(
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    )
-                                } else if (message.type == "sticker") {
-                                    if (message.replyData == null) {
-                                        PenpalStickerMessage(
-                                            sticker = message as Message.Sticker,
-                                            context = context,
-                                            gifImageLoader = gifImageLoader,
-                                            onReply = {
-                                                currentMessageAnswer = Message.Sticker(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    type = "sticker",
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    stickerPath = it.stickerPath,
-                                                )
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    } else {
-                                        PenpalStickerReplyMessage(
-                                            sticker = message as Message.Sticker,
-                                            context = context,
-                                            gifImageLoader = gifImageLoader,
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            onReply = {
-                                                val newReplyData = ReplyData(
-                                                    messageId = it.messageId,
-                                                    type = "sticker",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    content = it.stickerPath ?: "",
-                                                )
-
-                                                currentMessageAnswer = Message.Sticker(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.senderId,
-                                                    type = it.type,
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    replyData = newReplyData,
-                                                    stickerPath = it.stickerPath,
-                                                )
-                                            },
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    }
-                                } else if (message.type == "voice") {
-                                    if (message.replyData == null) {
-                                        VoiceWidget(
-                                            audioPlayer = voicePlayer,
-                                            message = message,
-                                            isMine = false,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = it
-                                                    Log.d("ChatScreen", it.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = { messageId ->
-                                                    scrollToMessage(messageId)
-                                                },
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            ),
-                                            setCurrentVideo = { messageId ->
-                                                currentPlayingMessageId = messageId
-                                            },
-                                        )
-                                    } else {
-                                        VoiceReplyWidget(
-                                            audioPlayer = voicePlayer,
-                                            message = message,
-                                            isMine = false,
-                                            context = context,
-                                            messageCallbacks = MessageCallbacks(
-                                                onReply = {
-                                                    currentMessageAnswer = it
-                                                    Log.d("ChatScreen", it.toString())
-                                                },
-                                                onDoubleClick = {
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "chatId: $chatId, messageId: ${message.messageId}"
-                                                    )
-                                                    Log.d(
-                                                        "ChatScreen",
-                                                        "have mine Id: $it"
-                                                    )
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = if (it) null else "\u2764\uFE0F",
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                },
-                                                onLongClick = {
-                                                    val coordinates = messageCoordinates.value
-                                                    if (coordinates != null) {
-                                                        val positionInRoot =
-                                                            coordinates.positionInRoot()
-
-
-                                                        contextMenuState = ContextMenuState(
-                                                            message = message,
-                                                            position = IntOffset(
-                                                                positionInRoot.x.toInt(),
-                                                                positionInRoot.y.toInt()
-                                                            ),
-                                                            isMine = true,
-                                                            size = coordinates.size
-                                                        )
-                                                        currentReactingMessage = message
-                                                    }
-                                                },
-                                                onReactionClick = {
-                                                    if (message.reactions?.get(mineId) == null) {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = message.reactions?.get(
-                                                                penpalData?.uid
-                                                            ),
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    } else {
-                                                        chatViewModel.toggleReaction(
-                                                            reaction = null,
-                                                            chatId = chatId,
-                                                            messageId = message.messageId,
-                                                        )
-                                                    }
-                                                },
-                                                onReplyMessageClick = { messageId ->
-                                                    scrollToMessage(messageId)
-                                                },
-                                            ),
-                                            messageData = MessageData(
-                                                replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                                mineId = mineId,
-                                                mineAvatar = mineData?.avatarUrl ?: "",
-                                                penpalAvatar = penpalData?.avatarUrl ?: "",
-                                            ),
-                                        )
-                                    }
-                                } else if (message.type == "circleVideo") {
-                                    CircleVideoMessage(
-                                        isMine = false,
-                                        message = message,
-                                        globalIndex = globalIndex,
-                                        lazyListState = listState,
-                                        bottomPaddingPx = totalBottomPaddingPx,
-                                        setCurrentVideo = { messageId ->
-                                            currentPlayingMessageId = messageId
-                                        },
-                                        messageData = MessageData(
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        ),
-                                        messageCallbacks = MessageCallbacks(
-                                            onReply = {
-                                                currentMessageAnswer = it
-                                                Log.d("ChatScreen", it.toString())
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(
-                                                            penpalData?.uid
-                                                        ),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                        ),
-                                        currentVideoId = currentPlayingMessageId,
-                                    )
-
-                                } else {
-                                    if (message.replyData == null) {
-                                        PenpalImageMessage(
-                                            message = message as Message.Image,
-                                            onReply = {
-                                                currentMessageAnswer = Message.Image(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    type = "image",
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    image = it.image,
-                                                )
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    } else {
-                                        PenpalReplyImageMessage(
-                                            message = message as Message.Image,
-                                            onReply = {
-                                                val newReplyData = ReplyData(
-                                                    messageId = it.messageId,
-                                                    type = "image",
-                                                    senderId = it.senderId,
-                                                    content = it.image ?: "",
-                                                )
-
-                                                currentMessageAnswer = Message.Image(
-                                                    messageId = it.replyData?.messageId ?: "",
-                                                    senderId = it.replyData?.senderId ?: "",
-                                                    type = it.type,
-                                                    status = "sent",
-                                                    timestamp = System.currentTimeMillis(),
-                                                    replyData = newReplyData,
-                                                    image = it.image,
-                                                )
-                                            },
-                                            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
-                                            onReplyMessageClick = { messageId ->
-                                                scrollToMessage(messageId)
-                                            },
-                                            onDoubleClick = {
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "chatId: $chatId, messageId: ${message.messageId}"
-                                                )
-                                                Log.d(
-                                                    "ChatScreen",
-                                                    "have mine Id: $it"
-                                                )
-                                                chatViewModel.toggleReaction(
-                                                    reaction = if (it) null else "\u2764\uFE0F",
-                                                    chatId = chatId,
-                                                    messageId = message.messageId,
-                                                )
-                                            },
-                                            onLongClick = {
-                                                val coordinates = messageCoordinates.value
-                                                if (coordinates != null) {
-                                                    val positionInRoot =
-                                                        coordinates.positionInRoot()
-
-
-                                                    contextMenuState = ContextMenuState(
-                                                        message = message,
-                                                        position = IntOffset(
-                                                            positionInRoot.x.toInt(),
-                                                            positionInRoot.y.toInt()
-                                                        ),
-                                                        isMine = true,
-                                                        size = coordinates.size
-                                                    )
-                                                    currentReactingMessage = message
-                                                }
-                                            },
-                                            onReactionClick = {
-                                                if (message.reactions?.get(mineId) == null) {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = message.reactions?.get(penpalData?.uid),
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                } else {
-                                                    chatViewModel.toggleReaction(
-                                                        reaction = null,
-                                                        chatId = chatId,
-                                                        messageId = message.messageId,
-                                                    )
-                                                }
-                                            },
-                                            mineId = mineId,
-                                            mineAvatar = mineData?.avatarUrl ?: "",
-                                            penpalAvatar = penpalData?.avatarUrl ?: "",
-                                        )
-                                    }
-                                }
+                        Column {
+                            if (message.messageId == firstUnreadMessageId) {
+                                Spacer(Modifier.height(8.dp))
+                                UnreadMessageSeparator()
+                                Spacer(Modifier.height(8.dp))
                             }
+
+                            MessageItem(
+                                message = message,
+                                isMine = message.senderId == mineId,
+                                mineId = mineId,
+                                mineName = mineName,
+                                penpalName = penpalName,
+                                mineData = mineData,
+                                penpalData = penpalData,
+                                chatId = chatId,
+                                chatViewModel = chatViewModel,
+                                context = context,
+                                gifImageLoader = gifImageLoader,
+                                player = player,
+                                listState = listState,
+                                totalBottomPaddingPx = totalBottomPaddingPx,
+                                globalIndex = messageIndices[message.messageId],
+                                currentPlayingMessageId = currentPlayingMessageId,
+                                onSetCurrentVideo = { currentPlayingMessageId = it },
+                                onAnswer = { currentMessageAnswer = it },
+                                onLongClick = { msg, pos, size ->
+                                    contextMenuState = ContextMenuState(msg, pos, true, size)
+                                    currentReactingMessage = msg
+                                },
+                                onScrollToMessage = scrollToMessage,
+                            )
+                            Spacer(Modifier.height(4.dp))
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
                 }
             }
-
-            contextMenuState?.let { state ->
-                Popup(
-                    alignment = Alignment.TopStart,
-                    offset = IntOffset(
-                        x = state.position.x + state.size.width / 2,
-                        y = state.position.y - 52,
-                    ),
-                    onDismissRequest = {
-                        contextMenuState = null
-                        currentReactingMessage = null
-                        currentEditingMessage = null
-                    }
-                ) {
-                    MessageActionMenu(
-                        onReactionClick = { reaction ->
-                            chatViewModel.toggleReaction(
-                                reaction = reaction,
-                                chatId = chatId,
-                                messageId = currentReactingMessage?.messageId ?: "",
-                            )
-                            contextMenuState = null
-                            currentReactingMessage = null
-                        },
-                        onCopyClick =
-                            if (currentReactingMessage?.type == "text") {
-                                {
-                                    CopyTextToClipboard(
-                                        context = context,
-                                        text = (currentReactingMessage as Message.Text).text ?: "",
-                                    )
-                                    contextMenuState = null
-                                    currentReactingMessage = null
-                                }
-                            } else {
-                                null
-                            },
-                        onAnswerClick = {
-                            currentMessageAnswer = currentReactingMessage
-                            contextMenuState = null
-                        },
-                        onDeleteClick = {
-                            chatViewModel.deleteMessage(
-                                chatId = chatId,
-                                messageId = currentReactingMessage?.messageId ?: "",
-                            )
-                            contextMenuState = null
-                            currentReactingMessage = null
-                        },
-                        onEditClick = if (
-                            currentReactingMessage?.type == "text" &&
-                            currentReactingMessage?.senderId == mineId
-                        ) {
-                            {
-                                currentEditingMessage = currentReactingMessage
-                                textState = (currentEditingMessage as Message.Text).text ?: ""
-                                contextMenuState = null
-                                currentReactingMessage = null
-                                currentMessageAnswer = null
-                                isExpanded = false
-                                Log.d("EditDebug", textState)
-                            }
-                        } else {
-                            null
-                        }
-                    )
-                }
-            }
-
         }
 
+        contextMenuState?.let { state ->
+            Popup(
+                alignment = Alignment.TopStart,
+                offset = IntOffset(
+                    x = state.position.x + state.size.width / 2,
+                    y = state.position.y - 52,
+                ),
+                onDismissRequest = {
+                    contextMenuState = null
+                    currentReactingMessage = null
+                    currentEditingMessage = null
+                }
+            ) {
+                MessageActionMenu(
+                    onReactionClick = { reaction ->
+                        chatViewModel.toggleReaction(
+                            reaction = reaction,
+                            chatId = chatId,
+                            messageId = currentReactingMessage?.messageId ?: "",
+                        )
+                        contextMenuState = null
+                        currentReactingMessage = null
+                    },
+                    onCopyClick = if (currentReactingMessage?.type == "text") {
+                        {
+                            CopyTextToClipboard(
+                                context = context,
+                                text = (currentReactingMessage as Message.Text).text ?: "",
+                            )
+                            contextMenuState = null
+                            currentReactingMessage = null
+                        }
+                    } else null,
+                    onAnswerClick = {
+                        currentMessageAnswer = currentReactingMessage
+                        contextMenuState = null
+                    },
+                    onDeleteClick = {
+                        chatViewModel.deleteMessage(
+                            chatId = chatId,
+                            messageId = currentReactingMessage?.messageId ?: "",
+                        )
+                        contextMenuState = null
+                        currentReactingMessage = null
+                    },
+                    onEditClick = if (
+                        currentReactingMessage?.type == "text" &&
+                        currentReactingMessage?.senderId == mineId
+                    ) {
+                        {
+                            currentEditingMessage = currentReactingMessage
+                            textState = (currentEditingMessage as Message.Text).text ?: ""
+                            contextMenuState = null
+                            currentReactingMessage = null
+                            currentMessageAnswer = null
+                        }
+                    } else null
+                )
+            }
+        }
 
-
-        if (mediaPermissionsState.allPermissionsGranted) {
+        if (isVideoRecording && mediaPermissionsState.allPermissionsGranted) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -2271,9 +766,7 @@ private fun Content(
                             senderAvatar = mineData?.avatarUrl ?: "",
                         )
                     },
-                    currentDuration = { duration ->
-                        circleVideoDuration = duration
-                    },
+                    currentDuration = { duration -> circleVideoDuration = duration },
                 )
             }
         }
@@ -2287,56 +780,87 @@ private fun Content(
                 .graphicsLayer(clip = false)
         ) {
             AnimatedVisibility(
-                visible = !isScrollToBottomVisible,
-                enter = fadeIn(animationSpec = tween(durationMillis = 200)) +
-                        scaleIn(
-                            initialScale = 0.5f,
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioMediumBouncy,
-                                stiffness = Spring.StiffnessMedium
+                visible = isStickerWidgetVisible,
+                enter = slideInVertically(
+                    animationSpec = spring(stiffness = 400f),
+                    initialOffsetY = { it }
+                ) + fadeIn(tween(200)),
+                exit = slideOutVertically(
+                    animationSpec = spring(stiffness = 400f),
+                    targetOffsetY = { it }
+                ) + fadeOut(tween(200)),
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    StickerWidget(
+                        context = context,
+                        gifImageLoader = gifImageLoader,
+                        onStickerClick = { stickerString ->
+                            currentEditingMessage?.let { editing ->
+                                chatViewModel.changeMessage(
+                                    chatId = chatId,
+                                    messageId = editing.messageId,
+                                    currentMessageType = editing.type,
+                                    typeOfChange = "sticker",
+                                    change = stickerString
+                                )
+                                currentEditingMessage = null
+                                isStickerWidgetVisible = false
+                                return@StickerWidget
+                            }
+                            chatViewModel.sendSticker(
+                                senderId = mineId,
+                                chatId = chatId,
+                                stickerPath = stickerString,
+                                replyData = currentMessageAnswer?.toReplyData(),
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
+                                senderAvatar = mineData?.avatarUrl ?: "",
                             )
-                        ),
-                exit = fadeOut(animationSpec = tween(durationMillis = 150)) +
-                        scaleOut(
-                            targetScale = 0.5f,
-                            animationSpec = tween(durationMillis = 150)
-                        ),
-                modifier = Modifier
-                    .padding(
-                        horizontal = 8.dp
+                            isStickerWidgetVisible = false
+                            currentMessageAnswer = null
+                        },
                     )
+                }
+            }
+            AnimatedVisibility(
+                visible = !isScrollToBottomVisible,
+                enter = fadeIn(tween(200)) + scaleIn(
+                    initialScale = 0.5f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessMedium
+                    )
+                ),
+                exit = fadeOut(tween(150)) + scaleOut(targetScale = 0.5f, animationSpec = tween(150)),
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
                     .graphicsLayer(clip = false)
             ) {
                 ScrollToBottomButton(
                     onScrollToBottomClick = {
                         coroutineScope.launch {
-                            val totalItems = listState.layoutInfo.totalItemsCount
-                            if (totalItems > 0) {
-                                listState.animateScrollToItem(
-                                    index = totalItems - 1,
-                                    scrollOffset = 0
-                                )
-                            }
+                            val total = listState.layoutInfo.totalItemsCount
+                            if (total > 0) listState.animateScrollToItem(total - 1)
                         }
                     }
                 )
             }
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(Modifier.height(10.dp))
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .graphicsLayer(clip = false)
                     .hazeChild(
                         state = hazeState,
-                        shape = RectangleShape,
                         style = HazeDefaults.style(
                             backgroundColor = Color.White.copy(alpha = 0.01f),
                             blurRadius = 2.dp
                         )
                     )
-                    .padding(
-                        top = if (isRecording) bottomBarExtraPadding else 0.dp,
-                    )
+                    .padding(top = if (isRecording) bottomBarExtraPadding else 0.dp)
                     .background(
                         brush = Brush.verticalGradient(
                             colors = listOf(
@@ -2349,71 +873,35 @@ private fun Content(
             ) {
                 ChatInputField(
                     inputText = textState,
-                    onValueChange = { newValue -> textState = newValue },
+                    onValueChange = { textState = it },
                     onSendClick = {
-                        if (currentEditingMessage != null) {
-
-                            val newText = textState.trim()
-
+                        // Edit
+                        currentEditingMessage?.let { editing ->
                             chatViewModel.changeMessage(
                                 chatId = chatId,
-                                messageId = currentEditingMessage?.messageId ?: "",
-                                currentMessageType = currentEditingMessage?.type ?: "",
+                                messageId = editing.messageId,
+                                currentMessageType = editing.type,
                                 typeOfChange = "text",
-                                change = newText
+                                change = textState.trim()
                             )
-
                             currentEditingMessage = null
                             textState = ""
-
+                            return@ChatInputField
                         }
+                        // Send
                         if (textState.isNotBlank()) {
-                            val messageText = textState
+                            val text = textState
                             textState = ""
-                            Log.d("ChatScreen", currentMessageAnswer.toString())
-                            if (currentMessageAnswer == null) {
-                                chatViewModel.sendText(
-                                    senderId = mineId,
-                                    chatId = chatId,
-                                    text = messageText,
-                                    targetUserId = penpalData?.uid ?: "",
-                                    senderName = mineName,
-                                    senderAvatar = mineData?.avatarUrl ?: "",
-                                )
-                            } else {
-                                val content = when (currentMessageAnswer) {
-                                    is Message.Text -> (currentMessageAnswer as Message.Text).text
-                                        ?: ""
-
-                                    is Message.Image -> (currentMessageAnswer as Message.Image).image
-                                        ?: ""
-
-                                    is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
-                                        ?: ""
-
-                                    is Message.Voice -> (currentMessageAnswer as Message.Voice).audioUrl
-                                        ?: ""
-
-                                    else -> {
-                                        ""
-                                    }
-                                }
-                                val replyData = ReplyData(
-                                    messageId = currentMessageAnswer!!.messageId,
-                                    senderId = currentMessageAnswer!!.senderId,
-                                    type = currentMessageAnswer!!.type,
-                                    content = content,
-                                )
-                                chatViewModel.sendText(
-                                    senderId = mineId,
-                                    chatId = chatId,
-                                    text = messageText,
-                                    replyData = replyData,
-                                    targetUserId = penpalData?.uid ?: "",
-                                    senderName = mineName,
-                                    senderAvatar = mineData?.avatarUrl ?: "",
-                                )
-                            }
+                            val reply = currentMessageAnswer
+                            chatViewModel.sendText(
+                                senderId = mineId,
+                                chatId = chatId,
+                                text = text,
+                                replyData = reply?.toReplyData(),
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
+                                senderAvatar = mineData?.avatarUrl ?: "",
+                            )
                             currentMessageAnswer = null
                         }
                     },
@@ -2422,29 +910,18 @@ private fun Content(
                             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                         )
                     },
-                    onStickerClick = {
-                        isStickerWidgetVisible = !isStickerWidgetVisible
-                    },
+                    onStickerClick = { isStickerWidgetVisible = !isStickerWidgetVisible },
                     isExpanded = isExpanded,
                     isEditing = currentEditingMessage != null,
                     replyMessage = currentMessageAnswer,
                     replyName = if (currentMessageAnswer?.senderId == mineId) mineName else penpalName,
-                    onCancelClick = {
-                        currentMessageAnswer = null
-                        isExpanded = false
-                    },
-                    onReplyMessageClick = { messageId ->
-                        scrollToMessage(messageId)
-                    },
+                    onCancelClick = { currentMessageAnswer = null },
+                    onReplyMessageClick = scrollToMessage,
                     editingMessage = currentEditingMessage,
-                    onCancelEditClick = {
-                        currentEditingMessage = null
-                    },
+                    onCancelEditClick = { currentEditingMessage = null },
                     isRecording = isRecording,
                     isVideoRecording = isVideoRecording,
-                    changeRecordState = {
-                        isRecording = it
-                    },
+                    changeRecordState = { isRecording = it },
                     onRecordStart = {
                         if (mediaPermissionsState.allPermissionsGranted) {
                             chatViewModel.startRecording()
@@ -2453,52 +930,18 @@ private fun Content(
                         }
                     },
                     onRecordStop = {
-                        if (currentMessageAnswer == null) {
-                            chatViewModel.stopAndSendRecording(
-                                senderId = mineId,
-                                chatId = chatId,
-                                targetUserId = penpalData?.uid ?: "",
-                                senderName = mineName,
-                                senderAvatar = mineData?.avatarUrl ?: "",
-                            )
-                        } else {
-                            val content = when (currentMessageAnswer) {
-                                is Message.Text -> (currentMessageAnswer as Message.Text).text
-                                    ?: ""
-
-                                is Message.Image -> (currentMessageAnswer as Message.Image).image
-                                    ?: ""
-
-                                is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
-                                    ?: ""
-
-                                is Message.Voice -> (currentMessageAnswer as Message.Voice).audioUrl
-                                    ?: ""
-
-                                else -> {
-                                    ""
-                                }
-                            }
-                            val replyData = ReplyData(
-                                messageId = currentMessageAnswer!!.messageId,
-                                senderId = currentMessageAnswer!!.senderId,
-                                type = currentMessageAnswer!!.type,
-                                content = content,
-                            )
-                            chatViewModel.stopAndSendRecording(
-                                senderId = mineId,
-                                chatId = chatId,
-                                replyData = replyData,
-                                targetUserId = penpalData?.uid ?: "",
-                                senderName = mineName,
-                                senderAvatar = mineData?.avatarUrl ?: "",
-                            )
-                        }
+                        val reply = currentMessageAnswer
+                        chatViewModel.stopAndSendRecording(
+                            senderId = mineId,
+                            chatId = chatId,
+                            replyData = reply?.toReplyData(),
+                            targetUserId = penpalData?.uid ?: "",
+                            senderName = mineName,
+                            senderAvatar = mineData?.avatarUrl ?: "",
+                        )
                         currentMessageAnswer = null
                     },
-                    onRecordCancel = {
-                        chatViewModel.cancelRecording()
-                    },
+                    onRecordCancel = { chatViewModel.cancelRecording() },
                     videoRecordingToggle = { isVideoNow ->
                         isCancelVideo = false
                         isVideoRecording = isVideoNow
@@ -2508,98 +951,343 @@ private fun Content(
                         isVideoRecording = false
                     },
                     isVideoButton = isVideoButton,
-                    changeButton = {
-                        isVideoButton = !isVideoButton
-                    },
+                    changeButton = { isVideoButton = !isVideoButton },
                     circleVideoDuration = circleVideoDuration,
                 )
             }
         }
 
-        AnimatedVisibility(
-            visible = isStickerWidgetVisible,
-            enter = slideInVertically(
-                animationSpec = spring(stiffness = 400f),
-                initialOffsetY = { fullHeight -> fullHeight }
-            ) + fadeIn(animationSpec = tween(200)),
-            exit = slideOutVertically(
-                animationSpec = spring(stiffness = 400f),
-                targetOffsetY = { fullHeight -> fullHeight }
-            ) + fadeOut(animationSpec = tween(200)),
-        ) {
-            Column(
-                verticalArrangement = Arrangement.Bottom,
-                modifier = Modifier.fillMaxSize()
-            ) {
-                StickerWidget(
-                    context = context,
-                    gifImageLoader = gifImageLoader,
-                    onStickerClick = { stickerString ->
-                        if (currentEditingMessage != null) {
+    }
+}
 
-                            chatViewModel.changeMessage(
-                                chatId = chatId,
-                                messageId = currentEditingMessage?.messageId ?: "",
-                                currentMessageType = currentEditingMessage?.type ?: "",
-                                typeOfChange = "sticker",
-                                change = stickerString
-                            )
 
-                            currentEditingMessage = null
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun MessageItem(
+    message: Message,
+    isMine: Boolean,
+    mineId: String,
+    mineName: String,
+    penpalName: String,
+    mineData: User?,
+    penpalData: User?,
+    chatId: String,
+    chatViewModel: ChatViewModel,
+    context: Context,
+    gifImageLoader: ImageLoader,
+    player: ExoPlayer,
+    listState: LazyListState,
+    totalBottomPaddingPx: Int,
+    globalIndex: Int?,
+    currentPlayingMessageId: String,
+    onSetCurrentVideo: (String) -> Unit,
+    onAnswer: (Message) -> Unit,
+    onLongClick: (Message, IntOffset, IntSize) -> Unit,
+    onScrollToMessage: (String) -> Unit,
+) {
+    var coordinates: LayoutCoordinates? = null
+    val boxModifier = Modifier.onGloballyPositioned { coordinates = it }
 
-                        }
-                        if (currentMessageAnswer == null) {
-                            chatViewModel.sendSticker(
-                                senderId = mineId,
-                                chatId = chatId,
-                                stickerPath = stickerString,
-                                targetUserId = penpalData?.uid ?: "",
-                                senderName = mineName,
-                                senderAvatar = mineData?.avatarUrl ?: "",
-                            )
-                        } else {
-                            val content = when (currentMessageAnswer) {
-                                is Message.Text -> (currentMessageAnswer as Message.Text).text
-                                    ?: ""
+    val messageData = remember(message.messageId, mineId, penpalName, mineName) {
+        MessageData(
+            replyName = if (message.replyData?.senderId == mineId) mineName else penpalName,
+            mineId = mineId,
+            mineAvatar = mineData?.avatarUrl ?: "",
+            penpalAvatar = penpalData?.avatarUrl ?: "",
+        )
+    }
 
-                                is Message.Image -> (currentMessageAnswer as Message.Image).image
-                                    ?: ""
-
-                                is Message.Sticker -> (currentMessageAnswer as Message.Sticker).stickerPath
-                                    ?: ""
-
-                                is Message.Voice -> (currentMessageAnswer as Message.Voice).audioUrl
-                                    ?: ""
-
-                                else -> {
-                                    ""
-                                }
-                            }
-
-                            val replyData = currentMessageAnswer?.replyData ?: ReplyData(
-                                messageId = currentMessageAnswer!!.messageId,
-                                senderId = currentMessageAnswer!!.senderId,
-                                type = currentMessageAnswer!!.type,
-                                content = content,
-                            )
-
-                            chatViewModel.sendSticker(
-                                senderId = mineId,
-                                chatId = chatId,
-                                stickerPath = stickerString,
-                                replyData = replyData,
-                                targetUserId = penpalData?.uid ?: "",
-                                senderName = mineName,
-                                senderAvatar = mineData?.avatarUrl ?: "",
-                            )
-                        }
-                        isStickerWidgetVisible = false
-                        currentMessageAnswer = null
-                    },
+    val callbacks = remember(message.messageId, chatId) {
+        MessageCallbacks(
+            onReply = { onAnswer(it) },
+            onDoubleClick = { hasReaction ->
+                chatViewModel.toggleReaction(
+                    reaction = if (hasReaction) null else "\u2764\uFE0F",
+                    chatId = chatId,
+                    messageId = message.messageId,
                 )
+            },
+            onLongClick = {
+                val coords = coordinates
+                if (coords != null) {
+                    val pos = coords.positionInRoot()
+                    onLongClick(
+                        message,
+                        IntOffset(pos.x.toInt(), pos.y.toInt()),
+                        coords.size
+                    )
+                }
+            },
+            onReactionClick = {
+                val mineReaction = message.reactions?.get(mineId)
+                chatViewModel.toggleReaction(
+                    reaction = if (mineReaction == null) {
+                        message.reactions?.get(penpalData?.uid)
+                    } else null,
+                    chatId = chatId,
+                    messageId = message.messageId,
+                )
+            },
+            onReplyMessageClick = { messageId -> onScrollToMessage(messageId) },
+        )
+    }
+
+    Box(modifier = boxModifier) {
+        when {
+            isMine -> when (message.type) {
+                "text" -> {
+                    val text = message as Message.Text
+                    if (text.replyData == null) {
+                        MineTextMessage(
+                            message = text,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                        )
+                    } else {
+                        MineReplyTextMessage(
+                            message = text,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                        )
+                    }
+                }
+
+                "sticker" -> {
+                    val sticker = message as Message.Sticker
+                    if (sticker.replyData == null) {
+                        MineStickerMessage(
+                            sticker = sticker,
+                            context = context,
+                            gifImageLoader = gifImageLoader,
+                            onReply = { onAnswer(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    } else {
+                        MineStickerReplyMessage(
+                            sticker = sticker,
+                            context = context,
+                            gifImageLoader = gifImageLoader,
+                            replyName = messageData.replyName,
+                            onReply = { onAnswer(it) },
+                            onReplyMessageClick = { onScrollToMessage(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    }
+                }
+
+                "voice" -> {
+                    if (message.replyData == null) {
+                        VoiceWidget(
+                            audioPlayer = player,
+                            message = message,
+                            isMine = true,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                            setCurrentVideo = onSetCurrentVideo,
+                        )
+                    } else {
+                        VoiceReplyWidget(
+                            audioPlayer = player,
+                            message = message,
+                            isMine = true,
+                            context = context,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                        )
+                    }
+                }
+
+                "circleVideo" -> {
+                    CircleVideoMessage(
+                        videoPlayer = player,
+                        isMine = true,
+                        message = message,
+                        globalIndex = globalIndex,
+                        lazyListState = listState,
+                        bottomPaddingPx = totalBottomPaddingPx,
+                        setCurrentVideo = onSetCurrentVideo,
+                        messageData = messageData,
+                        messageCallbacks = callbacks,
+                        currentVideoId = currentPlayingMessageId,
+                    )
+                }
+
+                else -> {
+                    val image = message as Message.Image
+                    if (image.replyData == null) {
+                        MineImageMessage(
+                            message = image,
+                            onReply = { onAnswer(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    } else {
+                        MineReplyImageMessage(
+                            message = image,
+                            onReply = { onAnswer(it) },
+                            replyName = messageData.replyName,
+                            onReplyMessageClick = { onScrollToMessage(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    }
+                }
+            }
+
+            else -> when (message.type) {
+                "text" -> {
+                    val text = message as Message.Text
+                    if (text.replyData == null) {
+                        PenpalTextMessage(
+                            message = text,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                        )
+                    } else {
+                        PenpalReplyTextMessage(
+                            message = text,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                        )
+                    }
+                }
+
+                "sticker" -> {
+                    val sticker = message as Message.Sticker
+                    if (sticker.replyData == null) {
+                        PenpalStickerMessage(
+                            sticker = sticker,
+                            context = context,
+                            gifImageLoader = gifImageLoader,
+                            onReply = { onAnswer(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    } else {
+                        PenpalStickerReplyMessage(
+                            sticker = sticker,
+                            context = context,
+                            gifImageLoader = gifImageLoader,
+                            replyName = messageData.replyName,
+                            onReply = { onAnswer(it) },
+                            onReplyMessageClick = { onScrollToMessage(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    }
+                }
+
+                "voice" -> {
+                    if (message.replyData == null) {
+                        VoiceWidget(
+                            audioPlayer = player,
+                            message = message,
+                            isMine = false,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                            setCurrentVideo = onSetCurrentVideo,
+                        )
+                    } else {
+                        VoiceReplyWidget(
+                            audioPlayer = player,
+                            message = message,
+                            isMine = false,
+                            context = context,
+                            messageCallbacks = callbacks,
+                            messageData = messageData,
+                        )
+                    }
+                }
+
+                "circleVideo" -> {
+                    CircleVideoMessage(
+                        videoPlayer = player,
+                        isMine = false,
+                        message = message,
+                        globalIndex = globalIndex,
+                        lazyListState = listState,
+                        bottomPaddingPx = totalBottomPaddingPx,
+                        setCurrentVideo = onSetCurrentVideo,
+                        messageData = messageData,
+                        messageCallbacks = callbacks,
+                        currentVideoId = currentPlayingMessageId,
+                    )
+                }
+
+                else -> {
+                    val image = message as Message.Image
+                    if (image.replyData == null) {
+                        PenpalImageMessage(
+                            message = image,
+                            onReply = { onAnswer(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    } else {
+                        PenpalReplyImageMessage(
+                            message = image,
+                            onReply = { onAnswer(it) },
+                            replyName = messageData.replyName,
+                            onReplyMessageClick = { onScrollToMessage(it) },
+                            onDoubleClick = callbacks.onDoubleClick,
+                            onLongClick = callbacks.onLongClick,
+                            onReactionClick = callbacks.onReactionClick,
+                            mineId = mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                        )
+                    }
+                }
             }
         }
     }
+}
+
+
+private fun Message.toReplyData(): ReplyData {
+    val content = when (this) {
+        is Message.Text -> text ?: ""
+        is Message.Image -> image ?: ""
+        is Message.Sticker -> stickerPath ?: ""
+        is Message.Voice -> audioUrl ?: ""
+        else -> ""
+    }
+    return ReplyData(
+        messageId = messageId,
+        senderId = senderId,
+        type = type,
+        content = content,
+    )
 }
 
 
@@ -2610,9 +1298,7 @@ private fun UnreadMessageSeparator() {
         modifier = Modifier
             .height(24.dp)
             .fillMaxWidth()
-            .background(
-                color = Separator.copy(alpha = 0.8f)
-            )
+            .background(color = Separator.copy(alpha = 0.8f))
     ) {
         Text(
             text = "Непрочитанные сообщения",
@@ -2626,9 +1312,7 @@ private fun UnreadMessageSeparator() {
 
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
-private fun DateSeparator(
-    text: String,
-) {
+private fun DateSeparator(text: String) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -2661,11 +1345,8 @@ private fun DateSeparator(
     }
 }
 
-
 fun decodeBase64Image(imageData: String?): Bitmap? {
-    if (imageData.isNullOrBlank() || !imageData.startsWith("data:image/jpeg;base64,")) {
-        return null
-    }
+    if (imageData.isNullOrBlank() || !imageData.startsWith("data:image/jpeg;base64,")) return null
     return try {
         val base64String = imageData.substringAfter("base64,")
         val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
@@ -2698,7 +1379,6 @@ private fun NewChatWidget(
     context: Context,
     gifImageLoader: ImageLoader,
 ) {
-
     val brush = Brush.horizontalGradient(
         colors = listOf(
             DateSeparatorGreen,
@@ -2712,32 +1392,18 @@ private fun NewChatWidget(
         )
     )
 
-
-
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .widthIn(max = 280.dp)
-                .clip(
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .background(
-                    brush = brush,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(
-                    horizontal = 16.dp,
-                    vertical = 10.dp,
-                )
-                .clickable {
-                    onGreetingClick()
-                    Log.d("NewChatWidget", "CLICKED")
-                }
+                .clip(RoundedCornerShape(16.dp))
+                .background(brush = brush, shape = RoundedCornerShape(16.dp))
+                .padding(horizontal = 16.dp, vertical = 10.dp)
+                .clickable { onGreetingClick() }
         ) {
             Text(
                 textAlign = TextAlign.Center,
@@ -2747,16 +1413,16 @@ private fun NewChatWidget(
                 fontSize = 15.sp,
                 color = Color.White,
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 textAlign = TextAlign.Center,
-                text = "Отправьте сообещние или нажмите на приветсвие ниже.",
+                text = "Отправьте сообщение или нажмите на приветствие ниже.",
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
                 fontSize = 14.sp,
                 color = Color.White,
             )
-            Spacer(modifier = Modifier.height(10.dp))
+            Spacer(Modifier.height(10.dp))
             AsyncImage(
                 model = ImageRequest.Builder(context)
                     .data(R.raw.duck_greeting_sticker)
@@ -2764,8 +1430,7 @@ private fun NewChatWidget(
                     .build(),
                 imageLoader = gifImageLoader,
                 contentDescription = null,
-                modifier = Modifier
-                    .size(200.dp)
+                modifier = Modifier.size(200.dp)
             )
         }
     }
@@ -2777,7 +1442,6 @@ private fun StickerWidget(
     gifImageLoader: ImageLoader,
     onStickerClick: (String) -> Unit,
 ) {
-
     val list = listOf(
         R.raw.duck_greeting_sticker,
         R.raw.duck_crying_sticker,
@@ -2789,27 +1453,16 @@ private fun StickerWidget(
         modifier = Modifier
             .fillMaxWidth()
             .height(300.dp)
-            .clip(
-                shape = RoundedCornerShape(16.dp),
-            )
-            .background(
-                color = LightGrayBackground,
-            )
-            .border(
-                width = 1.dp,
-                brush = GlassBorder,
-                shape = RoundedCornerShape(16.dp),
-            )
-            .padding(
-                vertical = 16.dp,
-            )
+            .clip(RoundedCornerShape(16.dp))
+            .background(color = LightGrayBackground)
+            .border(width = 1.dp, brush = GlassBorder, shape = RoundedCornerShape(16.dp))
+            .padding(vertical = 16.dp)
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
+            modifier = Modifier.fillMaxSize()
         ) {
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(Modifier.height(8.dp))
             Text(
                 text = "ИЗБРАННЫЕ СТИКЕРЫ",
                 fontSize = 15.sp,
@@ -2817,27 +1470,20 @@ private fun StickerWidget(
                 fontFamily = SfProText,
                 color = Color.Gray,
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(Modifier.height(16.dp))
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 90.dp),
                 contentPadding = PaddingValues(8.dp),
-
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(
-                        color = LightGrayBackground,
-                    )
+                    .background(color = LightGrayBackground)
             ) {
                 items(list.size) { index ->
-                    val resourceId = list[index]
-
                     StickerItem(
-                        iconPath = resourceId,
-                        onStickerClick = { stickerString ->
-                            onStickerClick(stickerString)
-                        },
+                        iconPath = list[index],
+                        onStickerClick = onStickerClick,
                         context = context,
                         gifImageLoader = gifImageLoader,
                     )
@@ -2845,7 +1491,6 @@ private fun StickerWidget(
             }
         }
     }
-
 }
 
 @Composable
@@ -2859,10 +1504,7 @@ private fun StickerItem(
         contentAlignment = Alignment.Center,
         modifier = Modifier
             .aspectRatio(1f)
-            .clickable {
-                onStickerClick(iconPath.toString())
-                Log.d("ChatScreen", "stickerPath: $iconPath")
-            }
+            .clickable { onStickerClick(iconPath.toString()) }
     ) {
         AsyncImage(
             model = ImageRequest.Builder(context)
@@ -2876,36 +1518,28 @@ private fun StickerItem(
     }
 }
 
-
-private fun convertImageToOptimizedBase64(
-    context: Context,
-    imageUri: Uri
-): String {
+private fun convertImageToOptimizedBase64(context: Context, imageUri: Uri): String {
     val inputStream = context.contentResolver.openInputStream(imageUri)
         ?: throw Exception("Не удалось открыть поток изображения")
 
     val originalBitmap = BitmapFactory.decodeStream(inputStream)
     inputStream.close()
 
-    if (originalBitmap == null) {
-        throw Exception("Не удалось декодировать изображение")
-    }
+    if (originalBitmap == null) throw Exception("Не удалось декодировать изображение")
 
     try {
         val maxSideTarget = 800f
         val width = originalBitmap.width
         val height = originalBitmap.height
-
-        val scaleFactor = if (width > height) {
-            maxSideTarget / width
-        } else {
-            maxSideTarget / height
-        }
+        val scaleFactor = if (width > height) maxSideTarget / width else maxSideTarget / height
 
         val bitmapToCompress = if (scaleFactor < 1f) {
-            val finalWidth = (width * scaleFactor).toInt()
-            val finalHeight = (height * scaleFactor).toInt()
-            Bitmap.createScaledBitmap(originalBitmap, finalWidth, finalHeight, true)
+            Bitmap.createScaledBitmap(
+                originalBitmap,
+                (width * scaleFactor).toInt(),
+                (height * scaleFactor).toInt(),
+                true
+            )
         } else {
             originalBitmap.copy(Bitmap.Config.ARGB_8888, true)
         }
@@ -2920,24 +1554,18 @@ private fun convertImageToOptimizedBase64(
         bitmapToCompress.compress(Bitmap.CompressFormat.JPEG, 70, outputStream)
         val byteArray = outputStream.toByteArray()
         outputStream.close()
-
         bitmapToCompress.recycle()
 
         val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
         return "data:image/jpeg;base64,$base64String"
-
     } catch (e: Exception) {
-        if (!originalBitmap.isRecycled) {
-            originalBitmap.recycle()
-        }
+        if (!originalBitmap.isRecycled) originalBitmap.recycle()
         throw e
     }
 }
 
 @Composable
-private fun ScrollToBottomButton(
-    onScrollToBottomClick: () -> Unit,
-) {
+private fun ScrollToBottomButton(onScrollToBottomClick: () -> Unit) {
     Box(
         modifier = Modifier
             .size(42.dp)
@@ -2947,21 +1575,10 @@ private fun ScrollToBottomButton(
                 clip = true,
                 ambientColor = Color.Black.copy(alpha = 0.9f),
             )
-            .clip(
-                shape = CircleShape,
-            )
-            .background(
-                brush = GlassBackground,
-                shape = CircleShape,
-            )
-            .border(
-                width = 1.dp,
-                brush = GlassBorder,
-                shape = CircleShape,
-            )
-            .clickable {
-                onScrollToBottomClick()
-            },
+            .clip(CircleShape)
+            .background(brush = GlassBackground, shape = CircleShape)
+            .border(width = 1.dp, brush = GlassBorder, shape = CircleShape)
+            .clickable { onScrollToBottomClick() },
         contentAlignment = Alignment.Center,
     ) {
         Icon(
@@ -2981,6 +1598,4 @@ data class ContextMenuState(
 
 @Preview(showBackground = true)
 @Composable
-private fun NewChatWidgetPreview() {
-
-}
+private fun NewChatWidgetPreview() {}
