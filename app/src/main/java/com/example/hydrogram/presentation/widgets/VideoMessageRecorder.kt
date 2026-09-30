@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.ui.theme.LightBlack
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -55,71 +56,41 @@ import java.io.File
 
 @Composable
 fun VideoMessageRecorder(
+    videoCapture: VideoCapture<Recorder>?,
     isRecordingTriggered: Boolean,
     isCanceled: Boolean,
     onVideoRecorded: (File, Long) -> Unit,
     currentDuration: (Long) -> Unit,
 ) {
     val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
+    val mainExecutor = remember { ContextCompat.getMainExecutor(context) }
 
-    val previewView = remember { PreviewView(context) }
-    val videoCaptureState = remember { mutableStateOf<VideoCapture<Recorder>?>(null) }
     var currentRecording by remember { mutableStateOf<Recording?>(null) }
-
     var currentOutputFile by remember { mutableStateOf<File?>(null) }
     var wasCanceledByProp by remember { mutableStateOf(false) }
 
     var timerJob by remember { mutableStateOf<Job?>(null) }
     val animationScope = rememberCoroutineScope()
-
-
-
-    LaunchedEffect(Unit) {
-        val cameraProviderProvider = ProcessCameraProvider.getInstance(context)
-        cameraProviderProvider.addListener({
-            val cameraProvider = cameraProviderProvider.get()
-
-            val preview = Preview.Builder().build().also {
-                it.surfaceProvider = previewView.surfaceProvider
-            }
-
-            val recorder = Recorder.Builder()
-                .setQualitySelector(QualitySelector.from(Quality.LOWEST))
-                .build()
-            val videoCapture = VideoCapture.withOutput(recorder)
-            videoCaptureState.value = videoCapture
-
-            val cameraSelector = CameraSelector.DEFAULT_FRONT_CAMERA
-
-            try {
-                cameraProvider.unbindAll()
-                cameraProvider.bindToLifecycle(
-                    lifecycleOwner,
-                    cameraSelector,
-                    preview,
-                    videoCapture,
-                )
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }, ContextCompat.getMainExecutor(context))
-    }
-
-    val videoCapture = videoCaptureState.value
-
     val progress = remember { Animatable(0f) }
 
     @SuppressLint("MissingPermission")
     LaunchedEffect(isRecordingTriggered, isCanceled, videoCapture) {
-        if (videoCapture == null) return@LaunchedEffect
+        val vc = videoCapture ?: return@LaunchedEffect
 
+        // Отмена
         if (isCanceled && currentRecording != null) {
             wasCanceledByProp = true
             currentRecording?.stop()
             return@LaunchedEffect
         }
 
+        // Стоп
+        if (!isRecordingTriggered && currentRecording != null) {
+            currentRecording?.stop()
+            return@LaunchedEffect
+        }
+
+        // Старт
         if (isRecordingTriggered && currentRecording == null) {
             wasCanceledByProp = false
 
@@ -130,72 +101,56 @@ fun VideoMessageRecorder(
             currentOutputFile = outputFile
 
             val outputOptions = FileOutputOptions.Builder(outputFile).build()
-
             val hasAudio = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.RECORD_AUDIO
             ) == PackageManager.PERMISSION_GRANTED
 
-            var pending = videoCapture.output
-                .prepareRecording(context, outputOptions)
+            var pending = vc.output.prepareRecording(context, outputOptions)
+            if (hasAudio) pending = pending.withAudioEnabled()
 
-            if (hasAudio) {
-                pending = pending.withAudioEnabled()
-            }
-
-            currentRecording = pending.start(ContextCompat.getMainExecutor(context)) { event ->
-                if (event is VideoRecordEvent.Start) {
-                    animationScope.launch {
-                        progress.snapTo(0f)
-                        progress.animateTo(
-                            targetValue = 1f,
-                            animationSpec = tween(durationMillis = 60_000, easing = LinearEasing)
-                        )
+            currentRecording = pending.start(mainExecutor) { event ->
+                when (event) {
+                    is VideoRecordEvent.Start -> {
+                        animationScope.launch {
+                            progress.snapTo(0f)
+                            progress.animateTo(
+                                targetValue = 1f,
+                                animationSpec = tween(60_000, easing = LinearEasing)
+                            )
+                        }
+                        timerJob?.cancel()
+                        val startTime = System.currentTimeMillis()
+                        timerJob = animationScope.launch {
+                            while (isActive) {
+                                currentDuration(System.currentTimeMillis() - startTime)
+                                delay(33)
+                            }
+                        }
                     }
 
-                    timerJob?.cancel()
-                    val startTime = System.currentTimeMillis()
-                    timerJob = animationScope.launch {
-                        while (isActive) {
-                            val elapsed = System.currentTimeMillis() - startTime
-                            currentDuration(elapsed)
-                            delay(33)
+                    is VideoRecordEvent.Finalize -> {
+                        timerJob?.cancel()
+                        timerJob = null
+                        animationScope.launch { progress.stop() }
+                        currentRecording = null
+
+                        if (wasCanceledByProp) {
+                            currentOutputFile?.delete()
+                            currentOutputFile = null
+                            currentDuration(0L)
+                        } else if (!event.hasError()) {
+                            val ms = event.recordingStats.recordedDurationNanos / 1_000_000
+                            currentDuration(ms)
+                            onVideoRecorded(outputFile, ms)
+                        } else {
+                            Log.e("VideoRecorder", "Ошибка: ${event.error}")
+                            currentOutputFile?.delete()
+                            currentOutputFile = null
+                            currentDuration(0L)
                         }
                     }
                 }
-
-                if (event is VideoRecordEvent.Status) {
-                }
-
-                if (event is VideoRecordEvent.Finalize) {
-                    currentRecording = null
-
-                    timerJob?.cancel()
-                    timerJob = null
-                    animationScope.launch { progress.stop() }
-
-                    if (wasCanceledByProp) {
-                        currentOutputFile?.delete()
-                        currentOutputFile = null
-                        currentDuration(0L)
-                        Log.d("VideoRecorder", "Запись отменена пользователем, файл удален.")
-                    } else if (!event.hasError()) {
-                        val finalDurationMillis = event.recordingStats.recordedDurationNanos / 1_000_000
-                        currentDuration(finalDurationMillis)
-                        onVideoRecorded(outputFile, finalDurationMillis)
-                    } else {
-                        Log.e("VideoRecorder", "Ошибка записи: ${event.error}")
-                        currentOutputFile?.delete()
-                        currentOutputFile = null
-                        currentDuration(0L)
-                    }
-                }
             }
-        }
-        else if (!isRecordingTriggered && currentRecording != null) {
-            currentRecording?.stop()
-            timerJob?.cancel()
-            timerJob = null
-            progress.snapTo(0f)
         }
     }
 
@@ -208,23 +163,17 @@ fun VideoMessageRecorder(
         }
     }
 
+    // ✅ Рисуем ТОЛЬКО прогресс-бар. PreviewView снаружи.
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
-            .clip(CircleShape)
-            .background(color = LightBlack)
+        modifier = Modifier.fillMaxSize()
     ) {
-        AndroidView(
-            factory = { previewView },
-            modifier = Modifier.fillMaxSize()
-        )
         CircularProgressIndicator(
             progress = { progress.value },
             modifier = Modifier
-                .fillMaxSize()
-                .padding(3.dp),
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .padding(19.dp),   // 16 (padding превью) + 3 (толщина)
             color = Color.White,
             trackColor = Color.Transparent,
             strokeWidth = 3.dp,
