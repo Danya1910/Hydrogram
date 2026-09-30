@@ -5,7 +5,10 @@ import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.hydrogram.domain.model.ReplyData
@@ -321,7 +324,7 @@ class ChatViewModel @Inject constructor(
         val endOfRecordingTime = System.currentTimeMillis()
         val durationSeconds = ((endOfRecordingTime - recordingTime) / 1000).toInt()
 
-        if(durationSeconds >= 1) {
+        if (durationSeconds >= 1) {
             viewModelScope.launch {
 
                 val finalAmplitudes = voiceMessageAmplitudes
