@@ -218,7 +218,7 @@ fun VoiceWidget(
         LaunchedEffect(targetAmplitude) {
             animatable.animateTo(
                 targetValue = targetAmplitude,
-                animationSpec = androidx.compose.animation.core.tween(
+                animationSpec = tween(
                     durationMillis = 400,
                     easing = LinearOutSlowInEasing
                 )
@@ -606,14 +606,12 @@ fun VoiceReplyWidget(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { it != null }
+        ?.filterValues { true }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
 
-    var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
-    var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
     var reactions: MessageReactions? = null
@@ -621,11 +619,9 @@ fun VoiceReplyWidget(
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == messageData.mineId) {
-            mineReactionId = entry.key
             mineReactionEmoji = entry.value
 
         } else {
-            penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
         reactions = MessageReactions(
