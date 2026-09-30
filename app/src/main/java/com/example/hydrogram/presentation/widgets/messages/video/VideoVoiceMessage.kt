@@ -249,28 +249,31 @@ fun CircleVideoMessage(
                         getCurrentDuration = { duration ->
                             currentExpandDuration = duration
                         },
+                        setCurrentVideo = { id ->
+                            setCurrentVideo(id)
+                        }
                     )
                 } else {
                     CirclePreview(
                         message = message,
                     )
                 }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .align(
-                                Alignment.BottomCenter,
-                            )
-                            .padding(horizontal = 5.dp)
-                    ) {
-                        VideoInfo(
-                            text = if (isExpanded) currentFormattedDuration else videoDuration
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .align(
+                            Alignment.BottomCenter,
                         )
-                        Spacer(modifier = Modifier.weight(1f))
-                        VideoInfo(
-                            text = formattedTime
-                        )
-                    }
+                        .padding(horizontal = 5.dp)
+                ) {
+                    VideoInfo(
+                        text = if (isExpanded) currentFormattedDuration else videoDuration
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    VideoInfo(
+                        text = formattedTime
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -408,6 +411,7 @@ private fun CircleVideoPlayer(
     message: Message.CircleVideo,
     isExpanded: Boolean,
     getCurrentDuration: (Long) -> Unit,
+    setCurrentVideo: (String) -> Unit,
 ) {
 
     var progress by remember { mutableFloatStateOf(0f) }
@@ -421,9 +425,25 @@ private fun CircleVideoPlayer(
         )
         videoPlayer.prepare()
         videoPlayer.seekTo(0)
-        videoPlayer.repeatMode = Player.REPEAT_MODE_ONE
+        videoPlayer.repeatMode = Player.REPEAT_MODE_OFF
         videoPlayer.volume = 1f
         videoPlayer.play()
+    }
+
+    DisposableEffect(videoPlayer, message.messageId) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (
+                    playbackState == Player.STATE_ENDED &&
+                    videoPlayer.currentMediaItem?.mediaId == message.messageId
+                ) {
+                    getCurrentDuration(0L)
+                    setCurrentVideo("")
+                }
+            }
+        }
+        videoPlayer.addListener(listener)
+        onDispose { videoPlayer.removeListener(listener) }
     }
 
     LaunchedEffect(message.messageId) {
