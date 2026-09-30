@@ -634,7 +634,7 @@ fun VoiceReplyWidget(
     var isPlaying by remember { mutableStateOf(false) }
     var currentPosition by remember { mutableStateOf(0L) }
 
-    val totalDurationMs = remember((message as Message.Voice).durationSeconds) {
+    val totalDurationMs = remember(message.durationSeconds) {
         (message.durationSeconds ?: 0) * 1000L
     }
 
@@ -707,7 +707,7 @@ fun VoiceReplyWidget(
         LaunchedEffect(targetAmplitude) {
             animatable.animateTo(
                 targetValue = targetAmplitude,
-                animationSpec = androidx.compose.animation.core.tween(
+                animationSpec = tween(
                     durationMillis = 400,
                     easing = LinearOutSlowInEasing
                 )
