@@ -2,16 +2,19 @@ package com.example.hydrogram.presentation.screens
 
 import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.util.Base64
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -67,14 +70,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.BlurredEdgeTreatment
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
@@ -93,6 +94,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.zIndex
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.navigation.NavController
@@ -109,6 +112,7 @@ import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.ChatUiState
 import com.example.hydrogram.presentation.states.MineState
 import com.example.hydrogram.presentation.states.UserState
+import com.example.hydrogram.presentation.util.CameraHolder
 import com.example.hydrogram.presentation.util.CopyTextToClipboard
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
@@ -169,6 +173,9 @@ fun ChatScreen(
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
     val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
 
+    val context = LocalContext.current
+    val cameraHolder = remember { CameraHolder(context) }
+
     val hazeState = remember { HazeState() }
 
     val chatId = remember(mineId, penpalId) {
@@ -185,6 +192,10 @@ fun ChatScreen(
         if (mineId.isNotBlank()) {
             userViewModel.setTargetMineId(uid = mineId)
         }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose { cameraHolder.release() }
     }
 
     val mineData by userViewModel.mineState.collectAsStateWithLifecycle()
@@ -311,6 +322,7 @@ fun ChatScreen(
                                 Content(
                                     messages = messages,
                                     chatViewModel = chatViewModel,
+                                    cameraHolder = cameraHolder,
                                     bottomPadding = paddingValues.calculateBottomPadding(),
                                     mineId = mineId,
                                     chatId = chatId,
@@ -336,6 +348,7 @@ fun ChatScreen(
 private fun Content(
     messages: List<Message>,
     chatViewModel: ChatViewModel,
+    cameraHolder: CameraHolder,
     bottomPadding: Dp,
     mineId: String,
     chatId: String,
@@ -346,6 +359,7 @@ private fun Content(
     hazeState: HazeState,
 ) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val density = LocalDensity.current
 
     var contextMenuState by remember { mutableStateOf<ContextMenuState?>(null) }
@@ -362,6 +376,7 @@ private fun Content(
     var circleVideoDuration by remember { mutableStateOf(0L) }
     var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
     var hasInitializedUnreadId by remember { mutableStateOf(false) }
+
 
     val isExpanded = currentMessageAnswer != null
 
@@ -380,7 +395,9 @@ private fun Content(
 
     val player = remember { ExoPlayer.Builder(context).build() }
     DisposableEffect(Unit) {
-        onDispose { player.release() }
+        onDispose {
+            player.release()
+        }
     }
 
     val gifImageLoader = remember(context) {
@@ -411,6 +428,12 @@ private fun Content(
 
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    val isChatReady by remember {
+        derivedStateOf {
+            listState.layoutInfo.totalItemsCount > 0 && !listState.isScrollInProgress
+        }
+    }
 
     if (!hasInitializedUnreadId && messages.isNotEmpty()) {
         firstUnreadMessageId = messages
@@ -461,6 +484,24 @@ private fun Content(
                 .filterNot { it.startsWith("date_") }
                 .toList()
         }
+    }
+
+    LaunchedEffect(isChatReady, isVideoRecording) {
+        if (!isChatReady && !isVideoRecording) return@LaunchedEffect
+        if (cameraHolder.isReady) return@LaunchedEffect    // ← читаем из холдера
+
+        val hasCamera = ContextCompat.checkSelfPermission(
+            context, Manifest.permission.CAMERA
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!hasCamera) return@LaunchedEffect
+
+        if (!isVideoRecording) delay(1500)
+
+        cameraHolder.warmUp(
+            lifecycleOwner = lifecycleOwner,
+            onReady = { /* ничего, isReady уже обновился внутри */ },
+            onError = { Log.e("ChatScreen", "Camera warmUp failed", it) },
+        )
     }
 
     LaunchedEffect(listState, messagesById, mineId, chatId) {
@@ -743,31 +784,58 @@ private fun Content(
             }
         }
 
-        if (isVideoRecording && mediaPermissionsState.allPermissionsGranted) {
+        // PreviewView ВСЕГДА в дереве — критично для surface
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            val isVideoUIOpen = isVideoRecording && !isCancelVideo
+            androidx.compose.ui.viewinterop.AndroidView(
+                factory = { cameraHolder.previewView },
+                modifier = if (isVideoUIOpen) {
+                    Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f)
+                        .padding(horizontal = 16.dp)
+                        .clip(CircleShape)
+                } else {
+                    Modifier
+                        .size(1.dp)
+                        .alpha(0f)
+                }
+            )
+        }
+
+        if (isVideoRecording && !isCancelVideo) {
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp)
-                    .alpha(if (isVideoRecording && !isCancelVideo) 1f else 0f)
             ) {
-                VideoMessageRecorder(
-                    isRecordingTriggered = isVideoRecording,
-                    isCanceled = isCancelVideo,
-                    onVideoRecorded = { file, duration ->
-                        chatViewModel.sendCircleVideo(
-                            senderId = mineId,
-                            chatId = chatId,
-                            video = file,
-                            videoDuration = (duration / 1000).toInt(),
-                            replyData = null,
-                            targetUserId = penpalData?.uid ?: "",
-                            senderName = mineName,
-                            senderAvatar = mineData?.avatarUrl ?: "",
-                        )
-                    },
-                    currentDuration = { duration -> circleVideoDuration = duration },
-                )
+                val vc = cameraHolder.videoCapture
+                if (cameraHolder.isReady && vc != null) {
+                    VideoMessageRecorder(
+                        videoCapture = vc,
+                        isRecordingTriggered = isVideoRecording,
+                        isCanceled = isCancelVideo,
+                        onVideoRecorded = { file, duration ->
+                            chatViewModel.sendCircleVideo(
+                                senderId = mineId,
+                                chatId = chatId,
+                                video = file,
+                                videoDuration = (duration / 1000).toInt(),
+                                replyData = null,
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
+                                senderAvatar = mineData?.avatarUrl ?: "",
+                            )
+                        },
+                        currentDuration = { duration -> circleVideoDuration = duration },
+                    )
+                } else {
+                    CircularProgressIndicator(color = Color.White)
+                }
             }
         }
 
@@ -834,7 +902,10 @@ private fun Content(
                         stiffness = Spring.StiffnessMedium
                     )
                 ),
-                exit = fadeOut(tween(150)) + scaleOut(targetScale = 0.5f, animationSpec = tween(150)),
+                exit = fadeOut(tween(150)) + scaleOut(
+                    targetScale = 0.5f,
+                    animationSpec = tween(150)
+                ),
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .graphicsLayer(clip = false)
@@ -1598,4 +1669,5 @@ data class ContextMenuState(
 
 @Preview(showBackground = true)
 @Composable
-private fun NewChatWidgetPreview() {}
+private fun NewChatWidgetPreview() {
+}
