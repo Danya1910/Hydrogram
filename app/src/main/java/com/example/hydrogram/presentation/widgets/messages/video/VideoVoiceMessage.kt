@@ -490,8 +490,6 @@ private fun CircleVideoPlayer(
                     videoPlayer.setVideoTextureView(this)
                 }
             },
-            update = { textureView ->
-            },
             modifier = Modifier.fillMaxSize()
         )
         if (isExpanded) {
