@@ -248,41 +248,46 @@ class ChatViewModel @Inject constructor(
 
         try {
             voiceMessageAmplitudes.clear()
-            recordingTime = System.currentTimeMillis()
             Log.d("Recording", "recording starts")
 
-            val file = File(context.cacheDir, "voice_msg_${recordingTime}.m4a")
+            val file = File(context.cacheDir, "voice_msg_${System.currentTimeMillis()}.m4a")
             currentRecordingFile = file
 
-            mediaRecorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val recorder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 MediaRecorder(context)
             } else {
                 @Suppress("DEPRECATION")
                 MediaRecorder()
-            }.apply {
+            }
+
+            recorder.apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-
                 setAudioSamplingRate(44100)
                 setAudioEncodingBitRate(96000)
-
                 setOutputFile(file.absolutePath)
                 prepare()
                 start()
             }
+
+            mediaRecorder = recorder
+
+            recordingTime = System.currentTimeMillis()
+
             isRecordingAmplitudes = true
             viewModelScope.launch(Dispatchers.Default) {
                 delay(50)
                 while (isRecordingAmplitudes) {
-                    val recorder = mediaRecorder ?: break          // ← защита
-                    if (!isRecordingAmplitudes) break              // ← защита
+                    val currentRecorder = mediaRecorder ?: break
+                    if (!isRecordingAmplitudes) break
 
                     val maxAmplitude = try {
-                        recorder.maxAmplitude
+                        currentRecorder.maxAmplitude
                     } catch (e: Exception) {
                         0
                     }
+
                     val db = if (maxAmplitude > 0) {
                         20 * kotlin.math.log10(maxAmplitude.toDouble())
                     } else {
@@ -303,12 +308,8 @@ class ChatViewModel @Inject constructor(
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            try {
-                mediaRecorder?.release()
-            } catch (_: Exception) {
-            }
+            try { mediaRecorder?.release() } catch (_: Exception) {}
             mediaRecorder = null
-
             currentRecordingFile?.delete()
             currentRecordingFile = null
             isRecordingAmplitudes = false
@@ -325,6 +326,9 @@ class ChatViewModel @Inject constructor(
     ) {
         Log.d("Recording", "stopAndSendRecording вызвана!")
 
+        // Сразу останавливаем сбор амплитуд
+        isRecordingAmplitudes = false
+
         val recorder = mediaRecorder
         mediaRecorder = null
 
@@ -332,66 +336,51 @@ class ChatViewModel @Inject constructor(
         currentRecordingFile = null
 
         val startTime = recordingTime
-        isRecordingAmplitudes = false
 
         if (recorder == null) {
-            Log.w("Recording", "recorder == null, уже остановлен")
+            Log.d("Recording", "recorder == null, уже остановлен")
             file?.delete()
             return
         }
 
-        // ВАЖНО: stop()/release() должны быть на том же потоке,
-        // что и start() — то есть на главном.
+        // Всё в главном потоке, БЕЗ delay перед stop()
         viewModelScope.launch(Dispatchers.Main) {
-            delay(150)
-
             val endTime = System.currentTimeMillis()
             val durationSeconds = ((endTime - startTime) / 1000).toInt()
 
             Log.d("Recording", "duration=$durationSeconds")
 
             if (durationSeconds < 1) {
-                Log.w("Recording", "слишком короткая запись — release без stop")
-                try {
-                    recorder.release()
-                } catch (e: Exception) {
-                    Log.e("Recording", "release failed", e)
-                }
+                Log.d("Recording", "слишком короткая запись — release без stop")
+                try { recorder.release() } catch (_: Exception) {}
                 file?.delete()
                 return@launch
             }
 
             var stopSucceeded = false
             try {
-                recorder.stop()
+                recorder.stop()          // ← СРАЗУ, без delay
                 stopSucceeded = true
             } catch (e: Exception) {
                 Log.e("Recording", "stop failed", e)
             } finally {
-                delay(50)
-                try {
-                    recorder.release()
-                } catch (e: Exception) {
-                    Log.e("Recording", "release failed", e)
-                }
+                try { recorder.release() } catch (_: Exception) {}
             }
 
             if (file == null) {
-                Log.w("Recording", "file == null")
+                Log.d("Recording", "file == null")
                 return@launch
             }
 
             val fileSize = file.length()
             Log.d("Recording", "stopSucceeded=$stopSucceeded, size=$fileSize")
 
-            // Если stop() всё-таки упал или файл подозрительно мал — не отправляем
             if (!stopSucceeded || fileSize < 1000L) {
-                Log.w("Recording", "файл битый — удаляем")
+                Log.d("Recording", "файл битый — удаляем")
                 file.delete()
                 return@launch
             }
 
-            // Всё ок — отправляем
             val finalAmplitudes = voiceMessageAmplitudes.toList()
             voiceMessageAmplitudes.clear()
 
@@ -428,25 +417,27 @@ class ChatViewModel @Inject constructor(
     }
 
     fun cancelRecording() {
+        Log.d("Recording", "cancelRecording вызвана!")
+
         isRecordingAmplitudes = false
-        try {
-            Log.d("Recording", "stop recording")
 
-            mediaRecorder?.apply {
-                stop()
-                release()
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            mediaRecorder = null
-        }
+        val recorder = mediaRecorder
+        mediaRecorder = null
 
-        voiceMessageAmplitudes.clear()
-
-        currentRecordingFile?.delete()
+        val file = currentRecordingFile
         currentRecordingFile = null
 
+        if (recorder == null) {
+            file?.delete()
+            voiceMessageAmplitudes.clear()
+            return
+        }
+
+        viewModelScope.launch(Dispatchers.Main) {
+            try { recorder.release() } catch (_: Exception) {}
+            file?.delete()
+            voiceMessageAmplitudes.clear()
+        }
     }
 
     override fun onCleared() {
