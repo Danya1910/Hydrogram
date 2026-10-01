@@ -142,9 +142,6 @@ fun VoiceWidget(
         (message.durationSeconds ?: 0) * 1000L
     }
 
-    val isThisTrack = audioPlayer.currentMediaItem?.mediaId == message.messageId
-    val isPlayingThis = isThisTrack && isPlaying
-
     val formattedTime = DateFormat.format(
         "HH:mm", Date(message.timestamp)
     ).toString()
@@ -153,24 +150,34 @@ fun VoiceWidget(
     DisposableEffect(audioPlayer, message.messageId) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_ENDED) {
-                    if (audioPlayer.currentMediaItem?.mediaId == message.messageId) {
-                        isPlaying = false
-                        currentPosition = 0L
-                        audioPlayer.seekTo(0)
-                        audioPlayer.pause()
-                        setCurrentVideo("")
-                    }
+                if (
+                    playbackState == Player.STATE_ENDED &&
+                    audioPlayer.currentMediaItem?.mediaId == message.messageId
+                ) {
+                    isPlaying = false
+                    currentPosition = 0L
+                    audioPlayer.seekTo(0)
+                    audioPlayer.pause()
+                }
+            }
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                val isThisItem = audioPlayer.currentMediaItem?.mediaId == message.messageId
+                if (isThisItem) {
+                    isPlaying = playWhenReady
                 }
             }
 
             override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
-                isPlaying = isPlayingChanged &&
-                        audioPlayer.currentMediaItem?.mediaId == message.messageId
+                val isThisItem = audioPlayer.currentMediaItem?.mediaId == message.messageId
+                if (isThisItem && !isPlayingChanged) {
+                    isPlaying = false
+                }
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                if (mediaItem?.mediaId != message.messageId) {
+                val isThisItem = mediaItem?.mediaId == message.messageId
+                if (!isThisItem) {
                     isPlaying = false
                     currentPosition = 0L
                 }
@@ -178,20 +185,25 @@ fun VoiceWidget(
         }
         audioPlayer.addListener(listener)
 
-        isPlaying = audioPlayer.isPlaying &&
-                audioPlayer.currentMediaItem?.mediaId == message.messageId
-        if (isPlaying) {
-            currentPosition = audioPlayer.currentPosition
-        }
+        isPlaying = audioPlayer.currentMediaItem?.mediaId == message.messageId &&
+                audioPlayer.playWhenReady
 
         onDispose {
             audioPlayer.removeListener(listener)
+            if (audioPlayer.currentMediaItem?.mediaId == message.messageId && audioPlayer.isPlaying) {
+                audioPlayer.pause()
+            }
         }
     }
 
-    LaunchedEffect(isPlayingThis, message.messageId) {
-        while (isPlayingThis) {
-            currentPosition = audioPlayer.currentPosition
+    LaunchedEffect(message.messageId) {
+        while (true) {
+            val isThisTrack = audioPlayer.currentMediaItem?.mediaId == message.messageId
+            val isPlayingNow = isThisTrack && audioPlayer.isPlaying
+
+            if (isPlayingNow) {
+                currentPosition = audioPlayer.currentPosition
+            }
             delay(100L)
         }
     }
@@ -314,8 +326,6 @@ fun VoiceWidget(
                                     val currentId = audioPlayer.currentMediaItem?.mediaId
 
                                     if (currentId != myId) {
-                                        audioPlayer.pause()
-
                                         audioPlayer.setMediaItem(
                                             MediaItem.Builder()
                                                 .setUri(voice.audioUrl ?: "")
@@ -324,15 +334,17 @@ fun VoiceWidget(
                                         )
                                         audioPlayer.prepare()
                                         audioPlayer.play()
-
-                                        setCurrentVideo(myId)
+                                        isPlaying = true
                                     } else {
                                         if (audioPlayer.isPlaying) {
                                             audioPlayer.pause()
-                                            setCurrentVideo("")
+                                            isPlaying = false
                                         } else {
+                                            if (audioPlayer.playbackState == Player.STATE_ENDED) {
+                                                audioPlayer.seekTo(0)
+                                            }
                                             audioPlayer.play()
-                                            setCurrentVideo(myId)
+                                            isPlaying = true
                                         }
                                     }
                                 },
@@ -655,14 +667,27 @@ fun VoiceReplyWidget(
                 }
             }
 
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                val isThisItem = audioPlayer.currentMediaItem?.mediaId == message.messageId
+                if (isThisItem && !playWhenReady) {
+                    isPlaying = false
+                }
+            }
+
             override fun onIsPlayingChanged(isPlayingChanged: Boolean) {
                 isPlaying = isPlayingChanged &&
                         audioPlayer.currentMediaItem?.mediaId == message.messageId
             }
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-                isPlaying = false
-                currentPosition = 0L
+                val isThisItem = mediaItem?.mediaId == message.messageId
+                if (isThisItem) {
+                    isPlaying = audioPlayer.isPlaying
+                    currentPosition = audioPlayer.currentPosition
+                } else {
+                    isPlaying = false
+                    currentPosition = 0L
+                }
             }
         }
         audioPlayer.addListener(listener)
@@ -980,16 +1005,31 @@ fun VoiceReplyWidget(
                                 PlayButton(
                                     isPlaying = isPlaying,
                                     onClick = {
-                                        if (audioPlayer.currentMediaItem?.mediaId != message.messageId) {
+                                        val myId = message.messageId
+                                        val currentId = audioPlayer.currentMediaItem?.mediaId
+
+                                        if (currentId != myId) {
                                             audioPlayer.setMediaItem(
                                                 MediaItem.Builder()
                                                     .setUri(voice.audioUrl ?: "")
-                                                    .setMediaId(message.messageId)
+                                                    .setMediaId(myId)
                                                     .build()
                                             )
                                             audioPlayer.prepare()
+                                            audioPlayer.play()
+                                            isPlaying = true
+                                        } else {
+                                            if (audioPlayer.isPlaying) {
+                                                audioPlayer.pause()
+                                                isPlaying = false
+                                            } else {
+                                                if (audioPlayer.playbackState == Player.STATE_ENDED) {
+                                                    audioPlayer.seekTo(0)
+                                                }
+                                                audioPlayer.play()
+                                                isPlaying = true
+                                            }
                                         }
-                                        audioPlayer.togglePlay()
                                     },
                                     isMine = isMine,
                                 )
