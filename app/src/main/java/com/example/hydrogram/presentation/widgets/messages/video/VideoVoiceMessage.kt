@@ -276,10 +276,6 @@ fun CircleVideoMessage(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp)
-            ) {
                 AnimatedVisibility(
                     visible = haveReaction,
                     enter = fadeIn() + expandVertically(),
@@ -289,6 +285,10 @@ fun CircleVideoMessage(
                             reactions.penpalReaction != null &&
                             reactions.mineReaction != reactions.penpalReaction
 
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp)
+                    ) {
                     if (hasBothDifferentReactions) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically
