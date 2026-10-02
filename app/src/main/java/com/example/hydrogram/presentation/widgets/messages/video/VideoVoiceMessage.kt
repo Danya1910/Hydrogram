@@ -276,68 +276,72 @@ fun CircleVideoMessage(
                 }
             }
 
-            AnimatedVisibility(
-                visible = haveReaction,
-                enter = fadeIn() + expandVertically(),
-                exit = fadeOut() + shrinkVertically(),
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
             ) {
-                val hasBothDifferentReactions = reactions?.mineReaction != null &&
-                        reactions.penpalReaction != null &&
-                        reactions.mineReaction != reactions.penpalReaction
+                AnimatedVisibility(
+                    visible = haveReaction,
+                    enter = fadeIn() + expandVertically(),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
+                    val hasBothDifferentReactions = reactions?.mineReaction != null &&
+                            reactions.penpalReaction != null &&
+                            reactions.mineReaction != reactions.penpalReaction
 
-                if (hasBothDifferentReactions) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        ReactionWidget(
-                            reactions = MessageReactions(
-                                mineReaction = reactions.mineReaction,
-                                penpalReaction = null
-                            ),
-                            color = Blue,
-                            onReactionClick = {
-                                messageCallbacks.onReactionClick()
-                            },
-                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        ReactionWidget(
-                            reactions = MessageReactions(
-                                mineReaction = null,
-                                penpalReaction = reactions!!.penpalReaction
-                            ),
-                            color = Color(0xFFCCE3F8),
-                            onReactionClick = {
-                                messageCallbacks.onReactionClick()
-                            },
-                            mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                        )
-                    }
-                } else {
-                    if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
-                        ReactionWidget(
-                            reactions = reactions,
-                            color = Color(0xFFCCE3F8),
-                            onReactionClick = {
-                                messageCallbacks.onReactionClick()
-                            },
-                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                        )
+                    if (hasBothDifferentReactions) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = reactions.mineReaction,
+                                    penpalReaction = null
+                                ),
+                                color = Blue,
+                                onReactionClick = {
+                                    messageCallbacks.onReactionClick()
+                                },
+                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ReactionWidget(
+                                reactions = MessageReactions(
+                                    mineReaction = null,
+                                    penpalReaction = reactions!!.penpalReaction
+                                ),
+                                color = Color(0xFFCCE3F8),
+                                onReactionClick = {
+                                    messageCallbacks.onReactionClick()
+                                },
+                                mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                            )
+                        }
                     } else {
-                        ReactionWidget(
-                            reactions = reactions,
-                            color = Blue,
-                            onReactionClick = {
-                                messageCallbacks.onReactionClick()
-                            },
-                            mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                            penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                        )
+                        if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
+                            ReactionWidget(
+                                reactions = reactions,
+                                color = Color(0xFFCCE3F8),
+                                onReactionClick = {
+                                    messageCallbacks.onReactionClick()
+                                },
+                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                            )
+                        } else {
+                            ReactionWidget(
+                                reactions = reactions,
+                                color = Blue,
+                                onReactionClick = {
+                                    messageCallbacks.onReactionClick()
+                                },
+                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
+                                penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
+                            )
+                        }
                     }
                 }
             }
-
         }
     }
 }
