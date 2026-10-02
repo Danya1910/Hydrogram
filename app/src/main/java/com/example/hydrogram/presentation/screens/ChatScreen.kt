@@ -490,7 +490,7 @@ private fun Content(
 
     LaunchedEffect(isChatReady, isVideoRecording) {
         if (!isChatReady && !isVideoRecording) return@LaunchedEffect
-        if (cameraHolder.isReady) return@LaunchedEffect    // ← читаем из холдера
+        if (cameraHolder.isReady) return@LaunchedEffect
 
         val hasCamera = ContextCompat.checkSelfPermission(
             context, Manifest.permission.CAMERA
