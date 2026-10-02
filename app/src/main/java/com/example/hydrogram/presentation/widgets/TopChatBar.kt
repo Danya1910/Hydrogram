@@ -1,7 +1,5 @@
 package com.example.hydrogram.presentation.widgets
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -23,7 +21,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -146,22 +143,6 @@ private fun UserIcon(
     user: User?,
     onIconClick: () -> Unit,
 ) {
-
-    val avatarBitmap = remember(user?.avatarUrl) {
-        val url = user?.avatarUrl
-        if (!url.isNullOrBlank() && url.startsWith("data:image/jpeg;base64,")) {
-            try {
-                val base64String = url.substringAfter("base64,")
-                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            null
-        }
-    }
 
     Box(
         contentAlignment = Alignment.Center,
