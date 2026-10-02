@@ -14,7 +14,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -393,10 +392,13 @@ private fun Content(
         }
     }
 
-    val player = remember { ExoPlayer.Builder(context).build() }
+    val voicePlayer = remember { ExoPlayer.Builder(context).build() }
+    val videoPlayer = remember { ExoPlayer.Builder(context).build() }
+
     DisposableEffect(Unit) {
         onDispose {
-            player.release()
+            voicePlayer.release()
+            videoPlayer.release()
         }
     }
 
@@ -703,7 +705,8 @@ private fun Content(
                                 chatViewModel = chatViewModel,
                                 context = context,
                                 gifImageLoader = gifImageLoader,
-                                player = player,
+                                voicePlayer = voicePlayer,
+                                videoPlayer = videoPlayer,
                                 listState = listState,
                                 totalBottomPaddingPx = totalBottomPaddingPx,
                                 globalIndex = messageIndices[message.messageId],
@@ -1046,7 +1049,8 @@ private fun MessageItem(
     chatViewModel: ChatViewModel,
     context: Context,
     gifImageLoader: ImageLoader,
-    player: ExoPlayer,
+    voicePlayer: ExoPlayer,
+    videoPlayer: ExoPlayer,
     listState: LazyListState,
     totalBottomPaddingPx: Int,
     globalIndex: Int?,
@@ -1159,7 +1163,8 @@ private fun MessageItem(
                 "voice" -> {
                     if (message.replyData == null) {
                         VoiceWidget(
-                            audioPlayer = player,
+                            audioPlayer = voicePlayer,
+                            videoPlayer = videoPlayer,
                             message = message,
                             isMine = true,
                             messageCallbacks = callbacks,
@@ -1168,7 +1173,8 @@ private fun MessageItem(
                         )
                     } else {
                         VoiceReplyWidget(
-                            audioPlayer = player,
+                            audioPlayer = voicePlayer,
+                            videoPlayer = videoPlayer,
                             message = message,
                             isMine = true,
                             context = context,
@@ -1180,7 +1186,8 @@ private fun MessageItem(
 
                 "circleVideo" -> {
                     CircleVideoMessage(
-                        videoPlayer = player,
+                        videoPlayer = videoPlayer,
+                        voicePlayer = voicePlayer,
                         isMine = true,
                         message = message,
                         globalIndex = globalIndex,
@@ -1277,7 +1284,8 @@ private fun MessageItem(
                 "voice" -> {
                     if (message.replyData == null) {
                         VoiceWidget(
-                            audioPlayer = player,
+                            audioPlayer = voicePlayer,
+                            videoPlayer = videoPlayer,
                             message = message,
                             isMine = false,
                             messageCallbacks = callbacks,
@@ -1286,7 +1294,8 @@ private fun MessageItem(
                         )
                     } else {
                         VoiceReplyWidget(
-                            audioPlayer = player,
+                            audioPlayer = voicePlayer,
+                            videoPlayer = videoPlayer,
                             message = message,
                             isMine = false,
                             context = context,
@@ -1298,7 +1307,8 @@ private fun MessageItem(
 
                 "circleVideo" -> {
                     CircleVideoMessage(
-                        videoPlayer = player,
+                        videoPlayer = videoPlayer,
+                        voicePlayer = voicePlayer,
                         isMine = false,
                         message = message,
                         globalIndex = globalIndex,
