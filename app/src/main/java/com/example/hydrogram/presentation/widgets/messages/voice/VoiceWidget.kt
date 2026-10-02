@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import android.content.Context
 import android.text.format.DateFormat
+import android.util.Log
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -31,6 +32,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -90,6 +92,7 @@ import kotlin.math.roundToInt
 @Composable
 fun VoiceWidget(
     audioPlayer: ExoPlayer,
+    videoPlayer: ExoPlayer,
     message: Message,
     isMine: Boolean,
     messageCallbacks: MessageCallbacks,
@@ -150,6 +153,8 @@ fun VoiceWidget(
     DisposableEffect(audioPlayer, message.messageId) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
+                Log.d("VoiceDebug", "state changed: $playbackState," +
+                        " mediaId=${audioPlayer.currentMediaItem?.mediaId}, myId=${message.messageId}")
                 if (
                     playbackState == Player.STATE_ENDED &&
                     audioPlayer.currentMediaItem?.mediaId == message.messageId
@@ -162,6 +167,8 @@ fun VoiceWidget(
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                Log.d("VoiceDebug", "playWhenReady: $playWhenReady, reason=$reason," +
+                        " mediaId=${audioPlayer.currentMediaItem?.mediaId}, myId=${message.messageId}")
                 val isThisItem = audioPlayer.currentMediaItem?.mediaId == message.messageId
                 if (isThisItem) {
                     isPlaying = playWhenReady
@@ -190,8 +197,11 @@ fun VoiceWidget(
 
         onDispose {
             audioPlayer.removeListener(listener)
-            if (audioPlayer.currentMediaItem?.mediaId == message.messageId && audioPlayer.isPlaying) {
-                audioPlayer.pause()
+            if (audioPlayer.currentMediaItem?.mediaId == message.messageId) {
+                try {
+                    audioPlayer.stop()
+                    audioPlayer.clearMediaItems()
+                } catch (_: Exception) {}
             }
         }
     }
@@ -287,19 +297,14 @@ fun VoiceWidget(
                 .background(
                     color = if (isMine) LightGreen else Color.White
                 )
-                .combinedClickable(
-                    onClick = {},
-                    onDoubleClick = {
-                        messageCallbacks.onDoubleClick(
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = { messageCallbacks.onDoubleClick(
                             message.reactions?.get(messageData.mineId) != null
-                        )
-                    },
-                    onLongClick = {
-                        messageCallbacks.onLongClick(
-                            false
-                        )
-                    }
-                )
+                        ) },
+                        onLongPress = { messageCallbacks.onLongClick(false) },
+                    )
+                }
                 .padding(
                     horizontal = 10.dp,
                 )
@@ -324,8 +329,12 @@ fun VoiceWidget(
                                 onClick = {
                                     val myId = message.messageId
                                     val currentId = audioPlayer.currentMediaItem?.mediaId
-
+                                    Log.d("VoiceDebug", "onClick: myId=$myId, currentId=$currentId," +
+                                            " state=${audioPlayer.playbackState}, playWhenReady=${audioPlayer.playWhenReady}")
                                     if (currentId != myId) {
+                                        videoPlayer.pause()
+                                        videoPlayer.seekTo(0)
+                                        audioPlayer.clearVideoSurface()
                                         audioPlayer.setMediaItem(
                                             MediaItem.Builder()
                                                 .setUri(voice.audioUrl ?: "")
@@ -333,8 +342,10 @@ fun VoiceWidget(
                                                 .build()
                                         )
                                         audioPlayer.prepare()
+                                        audioPlayer.seekTo(0)
                                         audioPlayer.play()
                                         isPlaying = true
+                                        Log.d("VoiceDebug", "setMediaItem + prepare + play called")
                                     } else {
                                         if (audioPlayer.isPlaying) {
                                             audioPlayer.pause()
@@ -585,6 +596,7 @@ fun VoiceWidget(
 @Composable
 fun VoiceReplyWidget(
     audioPlayer: ExoPlayer,
+    videoPlayer: ExoPlayer,
     message: Message,
     isMine: Boolean,
     context: Context,
@@ -697,8 +709,11 @@ fun VoiceReplyWidget(
 
         onDispose {
             audioPlayer.removeListener(listener)
-            if (audioPlayer.currentMediaItem?.mediaId == message.messageId && audioPlayer.isPlaying) {
-                audioPlayer.pause()
+            if (audioPlayer.currentMediaItem?.mediaId == message.messageId) {
+                try {
+                    audioPlayer.stop()
+                    audioPlayer.clearMediaItems()
+                } catch (_: Exception) {}
             }
         }
     }
@@ -1009,6 +1024,8 @@ fun VoiceReplyWidget(
                                         val currentId = audioPlayer.currentMediaItem?.mediaId
 
                                         if (currentId != myId) {
+                                            videoPlayer.pause()
+                                            videoPlayer.seekTo(0)
                                             audioPlayer.setMediaItem(
                                                 MediaItem.Builder()
                                                     .setUri(voice.audioUrl ?: "")
@@ -1349,6 +1366,7 @@ private fun PlayButton(
                 color = if (isMine) Color(0xFF42C23A) else Blue,
             )
             .clickable {
+                Log.d("VoiceDebug", "PlayButton clicked")
                 onClick()
             }
     ) {
