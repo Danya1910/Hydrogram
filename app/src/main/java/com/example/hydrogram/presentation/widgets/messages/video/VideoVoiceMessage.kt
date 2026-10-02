@@ -87,6 +87,7 @@ import kotlin.time.Duration.Companion.milliseconds
 @Composable
 fun CircleVideoMessage(
     videoPlayer: ExoPlayer,
+    voicePlayer: ExoPlayer,
     isMine: Boolean,
     message: Message,
     messageData: MessageData,
@@ -244,6 +245,7 @@ fun CircleVideoMessage(
                 if (isExpanded) {
                     CircleVideoPlayer(
                         videoPlayer = videoPlayer,
+                        voicePlayer = voicePlayer,
                         message = message,
                         isExpanded = isExpanded,
                         getCurrentDuration = { duration ->
@@ -412,6 +414,7 @@ private fun PreviewGenerator(
 @Composable
 private fun CircleVideoPlayer(
     videoPlayer: ExoPlayer,
+    voicePlayer: ExoPlayer,
     message: Message.CircleVideo,
     isExpanded: Boolean,
     getCurrentDuration: (Long) -> Unit,
@@ -421,6 +424,8 @@ private fun CircleVideoPlayer(
     var progress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(message.messageId) {
+        voicePlayer.pause()
+        voicePlayer.seekTo(0)
         videoPlayer.setMediaItem(
             MediaItem.Builder()
                 .setUri(message.videoUrl ?: "")
@@ -437,10 +442,11 @@ private fun CircleVideoPlayer(
     DisposableEffect(videoPlayer, message.messageId) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                if (
-                    playbackState == Player.STATE_ENDED &&
-                    videoPlayer.currentMediaItem?.mediaId == message.messageId
-                ) {
+                if (playbackState == Player.STATE_ENDED) {
+                    try {
+                        videoPlayer.stop()
+                        videoPlayer.clearMediaItems()
+                    } catch (e: Exception) {}
                     getCurrentDuration(0L)
                     setCurrentVideo("")
                 }
@@ -463,12 +469,14 @@ private fun CircleVideoPlayer(
 
     DisposableEffect(message.messageId) {
         onDispose {
-            if (videoPlayer.currentMediaItem?.mediaId == message.messageId) {
-                videoPlayer.pause()
+            try {
                 videoPlayer.stop()
                 videoPlayer.clearMediaItems()
-                videoPlayer.volume = 0f
+                videoPlayer.clearVideoSurface()   // ← ЭТО КЛЮЧЕВОЕ
+            } catch (e: Exception) {
+                Log.e("CircleVideo", "onDispose cleanup failed", e)
             }
+            videoPlayer.volume = 0f
             getCurrentDuration(0L)
         }
     }
