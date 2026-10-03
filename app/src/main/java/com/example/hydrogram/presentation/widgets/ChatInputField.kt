@@ -84,6 +84,7 @@ import com.example.hydrogram.presentation.util.BlueGlassBackground
 import com.example.hydrogram.presentation.util.BlueGlassBorder
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.util.glassEffect
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.LightBlack
@@ -568,16 +569,21 @@ private fun MessageInputField(
         contentAlignment = Alignment.CenterStart,
         modifier = modifier
             .height(inputHeight)
-            .background(
-                brush = GlassBackground,
-                shape = RoundedCornerShape(21.dp)
-            )
-            .border(
-                width = 1.dp,
-                brush = GlassBorder,
-                shape = RoundedCornerShape(21.dp)
-            )
+            .clip(RoundedCornerShape(21.dp))
     ) {
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .glassEffect(
+                    cornerRadius = 21.dp,
+                    frost = 14f,
+                    refraction = 100f,
+                    depth = 16f
+                )
+                .background(
+                    brush = GlassBackground,
+                )
+        )
         if (isRecording || isVideoRecording) {
             val timeToDisplay = if (isRecording) formattedTime else formattedVideoTime
             Row(
@@ -1096,3 +1102,4 @@ private fun HelpText() {
     }
 
 }
+
