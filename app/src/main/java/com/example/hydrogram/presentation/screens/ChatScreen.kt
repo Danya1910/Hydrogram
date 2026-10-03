@@ -29,6 +29,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +41,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -76,6 +78,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -157,6 +160,7 @@ import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
+import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
@@ -630,6 +634,9 @@ private fun Content(
         if (!isVideoRecording) circleVideoDuration = 0L
     }
 
+    var stickerDragOffset by remember { mutableStateOf(0f) }
+
+    val threshold = with(density) { 60.dp.toPx() }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -787,7 +794,6 @@ private fun Content(
             }
         }
 
-        // PreviewView ВСЕГДА в дереве — критично для surface
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
@@ -847,55 +853,7 @@ private fun Content(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .zIndex(1f)
-                .graphicsLayer(clip = false)
         ) {
-            AnimatedVisibility(
-                visible = isStickerWidgetVisible,
-                enter = slideInVertically(
-                    animationSpec = spring(stiffness = 400f),
-                    initialOffsetY = { it }
-                ) + fadeIn(tween(200)),
-                exit = slideOutVertically(
-                    animationSpec = spring(stiffness = 400f),
-                    targetOffsetY = { it }
-                ) + fadeOut(tween(200)),
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Bottom,
-                    modifier = Modifier.fillMaxSize()
-                ) {
-                    StickerWidget(
-                        context = context,
-                        gifImageLoader = gifImageLoader,
-                        onStickerClick = { stickerString ->
-                            currentEditingMessage?.let { editing ->
-                                chatViewModel.changeMessage(
-                                    chatId = chatId,
-                                    messageId = editing.messageId,
-                                    currentMessageType = editing.type,
-                                    typeOfChange = "sticker",
-                                    change = stickerString
-                                )
-                                currentEditingMessage = null
-                                isStickerWidgetVisible = false
-                                return@StickerWidget
-                            }
-                            chatViewModel.sendSticker(
-                                senderId = mineId,
-                                chatId = chatId,
-                                stickerPath = stickerString,
-                                replyData = currentMessageAnswer?.toReplyData(),
-                                targetUserId = penpalData?.uid ?: "",
-                                senderName = mineName,
-                                senderAvatar = mineData?.avatarUrl ?: "",
-                            )
-                            isStickerWidgetVisible = false
-                            currentMessageAnswer = null
-                        },
-                    )
-                }
-            }
             AnimatedVisibility(
                 visible = !isScrollToBottomVisible,
                 enter = fadeIn(tween(200)) + scaleIn(
@@ -949,7 +907,6 @@ private fun Content(
                     inputText = textState,
                     onValueChange = { textState = it },
                     onSendClick = {
-                        // Edit
                         currentEditingMessage?.let { editing ->
                             chatViewModel.changeMessage(
                                 chatId = chatId,
@@ -1028,6 +985,79 @@ private fun Content(
                     changeButton = { isVideoButton = !isVideoButton },
                     circleVideoDuration = circleVideoDuration,
                 )
+            }
+        }
+
+        Column(
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+        ) {
+            AnimatedVisibility(
+                visible = isStickerWidgetVisible,
+                enter = slideInVertically(
+                    animationSpec = spring(stiffness = 400f),
+                    initialOffsetY = { it }
+                ) + fadeIn(tween(200)),
+                exit = slideOutVertically(
+                    animationSpec = spring(stiffness = 400f),
+                    targetOffsetY = { it }
+                ) + fadeOut(tween(200)),
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Bottom,
+                    modifier = Modifier
+                        .fillMaxSize()
+                ) {
+                    StickerWidget(
+                        context = context,
+                        gifImageLoader = gifImageLoader,
+                        onStickerClick = { stickerString ->
+                            currentEditingMessage?.let { editing ->
+                                chatViewModel.changeMessage(
+                                    chatId = chatId,
+                                    messageId = editing.messageId,
+                                    currentMessageType = editing.type,
+                                    typeOfChange = "sticker",
+                                    change = stickerString
+                                )
+                                currentEditingMessage = null
+                                isStickerWidgetVisible = false
+                                return@StickerWidget
+                            }
+                            chatViewModel.sendSticker(
+                                senderId = mineId,
+                                chatId = chatId,
+                                stickerPath = stickerString,
+                                replyData = currentMessageAnswer?.toReplyData(),
+                                targetUserId = penpalData?.uid ?: "",
+                                senderName = mineName,
+                                senderAvatar = mineData?.avatarUrl ?: "",
+                            )
+                            isStickerWidgetVisible = false
+                            currentMessageAnswer = null
+                        },
+                        modifier = Modifier
+                            .offset { IntOffset(0, stickerDragOffset.roundToInt()) }
+                            .pointerInput(Unit) {
+                                detectVerticalDragGestures(
+                                    onDragEnd = {
+                                        if (stickerDragOffset > threshold) {
+                                            isStickerWidgetVisible = false
+                                        }
+                                        stickerDragOffset = 0f
+                                    },
+                                    onDragCancel = { stickerDragOffset = 0f },
+                                    onVerticalDrag = { change, dragAmount ->
+                                        change.consume()
+                                        stickerDragOffset =
+                                            (stickerDragOffset + dragAmount).coerceAtLeast(0f)
+                                    }
+                                )
+                            }
+                    )
+                }
             }
         }
 
@@ -1522,6 +1552,7 @@ private fun StickerWidget(
     context: Context,
     gifImageLoader: ImageLoader,
     onStickerClick: (String) -> Unit,
+    modifier: Modifier,
 ) {
     val list = listOf(
         R.raw.duck_greeting_sticker,
@@ -1531,7 +1562,7 @@ private fun StickerWidget(
     )
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .height(300.dp)
             .clip(RoundedCornerShape(16.dp))
