@@ -48,6 +48,8 @@ import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hydrogram.presentation.navigation.Screen
 
@@ -198,6 +200,7 @@ private fun InputPasswordField(
                 fontWeight = FontWeight.Normal,
                 color = Color.Black
             ),
+            visualTransformation = PasswordVisualTransformation(),
             modifier = Modifier
                 .padding(horizontal = 16.dp),
             decorationBox = { innerTextField ->
