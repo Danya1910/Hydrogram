@@ -113,7 +113,7 @@ fun VoiceWidget(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { true }
+        ?.filterValues { it != null }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
@@ -630,7 +630,7 @@ fun VoiceReplyWidget(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { true }
+        ?.filterValues { it != null }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()

@@ -103,7 +103,7 @@ fun PenpalImageMessage(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { true }
+        ?.filterValues { it != null }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
@@ -377,7 +377,7 @@ fun PenpalReplyImageMessage(
     }
 
     val validReactions = message.reactions
-        ?.filterValues { true }
+        ?.filterValues { it != null }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
@@ -794,7 +794,7 @@ fun MineImageMessage(
     )
 
     val validReactions = message.reactions
-        ?.filterValues { true }
+        ?.filterValues { it != null }
         ?: emptyMap()
 
     val haveReaction = validReactions.isNotEmpty()
@@ -1060,7 +1060,9 @@ fun MineReplyImageMessage(
         label = "SwipeOffset"
     )
 
-    val validReactions = message.reactions?.filterValues { true } ?: emptyMap()
+    val validReactions = message.reactions
+        ?.filterValues { it != null }
+        ?: emptyMap()
     val haveReaction = validReactions.isNotEmpty()
 
     var mineReactionEmoji: String? = null
