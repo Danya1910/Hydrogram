@@ -1806,6 +1806,43 @@ private fun FillSizeImageTopBar(
 }
 
 @Composable
+private fun FillSizeImageBottomBar(
+    senderData: User?,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .statusBarsPadding()
+            .fillMaxWidth()
+            .height(44.dp)
+            .padding(
+                horizontal = 16.dp
+            )
+    ) {
+        Box(
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            FillSizeImageTopBarButton(
+                icon = R.drawable.ic_reply,
+                onClick = {
+
+                },
+            )
+        }
+        Box(
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            FillSizeImageTopBarButton(
+                icon = R.drawable.ic_trashbox,
+                onClick = {
+
+                },
+            )
+        }
+    }
+}
+
+@Composable
 private fun FillSizeImageTopBarButton(
     icon: Int,
     onClick: () -> Unit,
@@ -1834,7 +1871,7 @@ private fun FillSizeImageTopBarButton(
         Icon(
             painter = painterResource(icon),
             contentDescription = null,
-            tint = Color.Black,
+            tint = Color.White,
         )
     }
 }
