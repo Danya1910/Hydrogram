@@ -1870,11 +1870,21 @@ private fun FullSizeImageTopBarButton(
         Spacer(
             modifier = Modifier
                 .matchParentSize()
+
                 .glassEffect(
-                    cornerRadius = 21.dp,
+                    cornerRadius = 22.dp,
                     frost = 14f,
                     refraction = 100f,
                     depth = 16f
+                )
+        )
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(1.5.dp)
+                .clip(CircleShape)
+                .background(
+                    color = LightBlack,
                 )
         )
         Icon(
@@ -1912,10 +1922,19 @@ private fun UserName(
             modifier = Modifier
                 .matchParentSize()
                 .glassEffect(
-                    cornerRadius = 21.dp,
+                    cornerRadius = 22.dp,
                     frost = 14f,
                     refraction = 100f,
                     depth = 16f
+                )
+        )
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(1.5.dp)
+                .clip(CircleShape)
+                .background(
+                    color = LightBlack,
                 )
         )
         Column(
