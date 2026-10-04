@@ -1821,7 +1821,7 @@ private fun FullSizeImageBottomBar(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .statusBarsPadding()
+            .navigationBarsPadding()
             .fillMaxWidth()
             .height(44.dp)
             .padding(
@@ -1872,16 +1872,18 @@ private fun FullSizeImageTopBarButton(
                 .matchParentSize()
 
                 .glassEffect(
+                    lightAngle = 0.45f,
                     cornerRadius = 22.dp,
                     frost = 14f,
                     refraction = 100f,
-                    depth = 16f
+                    depth = 16f,
+                    lightIntensity = 0.6f
                 )
         )
         Spacer(
             modifier = Modifier
                 .matchParentSize()
-                .padding(1.5.dp)
+                .padding(1.dp)
                 .clip(CircleShape)
                 .background(
                     color = LightBlack,
@@ -1931,7 +1933,7 @@ private fun UserName(
         Spacer(
             modifier = Modifier
                 .matchParentSize()
-                .padding(1.5.dp)
+                .padding(1.dp)
                 .clip(CircleShape)
                 .background(
                     color = LightBlack,
