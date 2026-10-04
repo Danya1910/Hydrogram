@@ -354,7 +354,7 @@ fun ChatScreen(
         }
     }
 
-    if(currentFullSizeImageUrl != null) {
+    if (currentFullSizeImageUrl != null) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -362,6 +362,18 @@ fun ChatScreen(
                     color = LightBlack,
                 )
         ) {
+
+            AsyncImage(
+                model = currentFullSizeImageUrl ?: "",
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+                onError = { state ->
+                    // state.result.throwable — причина ошибки
+                    Log.e("AsyncImage", "Ошибка загрузки: ${state.result.throwable.message}")
+                }
+            )
+
             Scaffold(
                 containerColor = Color.Transparent,
                 topBar = {
@@ -376,18 +388,10 @@ fun ChatScreen(
                 }
             ) { paddingValues ->
                 Box(
-                    contentAlignment = Alignment.Center,
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
-                ) {
-                    AsyncImage(
-                        model = currentFullSizeImageUrl ?: "",
-                        contentDescription = null,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                }
+                )
             }
         }
     }
