@@ -149,7 +149,7 @@ configurations.all {
         force("org.jetbrains.kotlin:kotlin-stdlib:2.0.21")
         force("org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.0.21")
         force("org.jetbrains.kotlin:kotlin-stdlib-jdk7:2.0.21")
-        force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-        force("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+        force("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
     }
 }
