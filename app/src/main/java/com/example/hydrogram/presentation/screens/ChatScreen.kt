@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,6 +45,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -86,6 +88,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
@@ -93,7 +96,6 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -121,6 +123,7 @@ import com.example.hydrogram.presentation.util.MessageData
 import com.example.hydrogram.presentation.util.formatHeaderDate
 import com.example.hydrogram.presentation.util.generateChatId
 import com.example.hydrogram.presentation.util.getStartOfDay
+import com.example.hydrogram.presentation.util.glassEffect
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
@@ -173,6 +176,10 @@ fun ChatScreen(
     val uiState by chatViewModel.uiState.collectAsStateWithLifecycle()
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
     val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
+
+    var currentFullSizeImageUrl by remember { mutableStateOf<String?>(null) }
+
+    var fullSizeImageSender by remember { mutableStateOf<User?>(null) }
 
     val context = LocalContext.current
     val cameraHolder = remember { CameraHolder(context) }
@@ -335,10 +342,46 @@ fun ChatScreen(
                                     mineData = mineUser,
                                     penpalData = penpalUser,
                                     hazeState = hazeState,
+                                    setCurrentFullSizeImageUrl = { url ->
+                                        currentFullSizeImageUrl = url
+                                    }
                                 )
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    if(currentFullSizeImageUrl != null) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    color = LightBlack,
+                )
+        ) {
+            Scaffold(
+                containerColor = Color.Transparent,
+                topBar = {
+                    FillSizeImageTopBar(
+                        senderData = fullSizeImageSender,
+                    )
+                },
+            ) { paddingValues ->
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                ) {
+                    AsyncImage(
+                        model = currentFullSizeImageUrl ?: "",
+                        contentDescription = null,
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
             }
         }
@@ -361,6 +404,7 @@ private fun Content(
     mineData: User?,
     penpalData: User?,
     hazeState: HazeState,
+    setCurrentFullSizeImageUrl: (String?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -726,6 +770,9 @@ private fun Content(
                                     currentReactingMessage = msg
                                 },
                                 onScrollToMessage = scrollToMessage,
+                                setCurrentFullSizeImageUrl = { url ->
+                                    setCurrentFullSizeImageUrl(url)
+                                }
                             )
                             Spacer(Modifier.height(4.dp))
                         }
@@ -1090,6 +1137,7 @@ private fun MessageItem(
     onAnswer: (Message) -> Unit,
     onLongClick: (Message, IntOffset, IntSize) -> Unit,
     onScrollToMessage: (String) -> Unit,
+    setCurrentFullSizeImageUrl: (String?) -> Unit,
 ) {
     var coordinates: LayoutCoordinates? = null
     val boxModifier = Modifier.onGloballyPositioned { coordinates = it }
@@ -1243,6 +1291,9 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
+                            setCurrentFullSizeImageUrl = { url ->
+                                setCurrentFullSizeImageUrl(url)
+                            },
                         )
                     } else {
                         MineReplyImageMessage(
@@ -1256,6 +1307,9 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
+                            setCurrentFullSizeImageUrl = { url ->
+                                setCurrentFullSizeImageUrl(url)
+                            },
                         )
                     }
                 }
@@ -1364,6 +1418,9 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
+                            setCurrentFullSizeImageUrl = { url ->
+                                setCurrentFullSizeImageUrl(url)
+                            },
                         )
                     } else {
                         PenpalReplyImageMessage(
@@ -1377,6 +1434,9 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
+                            setCurrentFullSizeImageUrl = { url ->
+                                setCurrentFullSizeImageUrl(url)
+                            },
                         )
                     }
                 }
@@ -1696,6 +1756,146 @@ private fun ScrollToBottomButton(onScrollToBottomClick: () -> Unit) {
             contentDescription = null,
             tint = LightBlack,
         )
+    }
+}
+
+@Composable
+private fun FillSizeImageTopBar(
+    senderData: User?,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .statusBarsPadding()
+            .fillMaxWidth()
+            .height(44.dp)
+            .padding(
+                horizontal = 16.dp
+            )
+    ) {
+        Box(
+            modifier = Modifier.align(Alignment.CenterStart)
+        ) {
+            FillSizeImageTopBarButton(
+                icon = R.drawable.ic_arrow_left,
+                onClick = {
+
+                },
+            )
+        }
+        Box(
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            UserName(
+                onUserClick = {
+                },
+                user = senderData,
+            )
+        }
+        Box(
+            modifier = Modifier.align(Alignment.CenterEnd)
+        ) {
+            FillSizeImageTopBarButton(
+                icon = R.drawable.ic_ellipsis,
+                onClick = {
+
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun FillSizeImageTopBarButton(
+    icon: Int,
+    onClick: () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .size(44.dp)
+            .clip(
+                shape = CircleShape
+            )
+            .clickable {
+                onClick()
+            }
+    ) {
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .glassEffect(
+                    cornerRadius = 21.dp,
+                    frost = 14f,
+                    refraction = 100f,
+                    depth = 16f
+                )
+        )
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = Color.Black,
+        )
+    }
+}
+
+@Composable
+private fun UserName(
+    onUserClick: () -> Unit,
+    user: User?,
+) {
+
+    val messageTime = formatHeaderDate(
+        timestamp = 0L
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxWidth(0.6f)
+            .height(44.dp)
+            .clip(
+                shape = CircleShape
+            )
+            .clickable {
+                onUserClick()
+            }
+            .padding(horizontal = 17.dp, vertical = 5.dp)
+    ) {
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .glassEffect(
+                    cornerRadius = 21.dp,
+                    frost = 14f,
+                    refraction = 100f,
+                    depth = 16f
+                )
+        )
+        Column(
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxHeight()
+        ) {
+            Text(
+                text = user?.name ?: "",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 15.sp,
+                letterSpacing = (-0.23).sp,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = messageTime,
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                color = Color.Gray,
+            )
+        }
     }
 }
 
