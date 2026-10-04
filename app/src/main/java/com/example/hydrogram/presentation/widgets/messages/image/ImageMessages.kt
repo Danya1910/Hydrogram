@@ -89,6 +89,7 @@ fun PenpalImageMessage(
     mineId: String,
     mineAvatar: String,
     penpalAvatar: String,
+    setCurrentFullSizeImageUrl: (String?) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format("HH:mm", Date(message.timestamp)).toString()
@@ -223,7 +224,9 @@ fun PenpalImageMessage(
                         .height(naturalHeightDp)
                         .clip(RoundedCornerShape(12.dp))
                         .combinedClickable(
-                            onClick = {},
+                            onClick = {
+                                setCurrentFullSizeImageUrl(message.image)
+                            },
                             onDoubleClick = {
                                 onDoubleClick(
                                     message.reactions?.get(mineId) != null
@@ -342,6 +345,7 @@ fun PenpalReplyImageMessage(
     mineId: String,
     mineAvatar: String,
     penpalAvatar: String,
+    setCurrentFullSizeImageUrl: (String?) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format("HH:mm", Date(message.timestamp)).toString()
@@ -506,7 +510,9 @@ fun PenpalReplyImageMessage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = {},
+                            onClick = {
+                                setCurrentFullSizeImageUrl(message.image)
+                            },
                             onDoubleClick = {
                                 onDoubleClick(
                                     message.reactions?.get(mineId) != null
@@ -778,6 +784,7 @@ fun MineImageMessage(
     mineId: String,
     mineAvatar: String,
     penpalAvatar: String,
+    setCurrentFullSizeImageUrl: (String?) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format(
@@ -916,7 +923,9 @@ fun MineImageMessage(
                         .width(naturalWidthDp)
                         .height(naturalHeightDp)
                         .combinedClickable(
-                            onClick = {},
+                            onClick = {
+                                setCurrentFullSizeImageUrl(message.image)
+                            },
                             onDoubleClick = {
                                 onDoubleClick(
                                     message.reactions?.get(mineId) != null
@@ -1047,6 +1056,7 @@ fun MineReplyImageMessage(
     mineId: String,
     mineAvatar: String,
     penpalAvatar: String,
+    setCurrentFullSizeImageUrl: (String?) -> Unit,
 ) {
 
     val formattedTime = DateFormat.format("HH:mm", Date(message.timestamp)).toString()
@@ -1181,7 +1191,9 @@ fun MineReplyImageMessage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .combinedClickable(
-                            onClick = {},
+                            onClick = {
+                                setCurrentFullSizeImageUrl(message.image)
+                            },
                             onDoubleClick = {
                                 onDoubleClick(message.reactions?.get(mineId) != null)
                             },
