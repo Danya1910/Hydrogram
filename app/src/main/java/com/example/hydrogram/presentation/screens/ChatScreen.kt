@@ -365,10 +365,15 @@ fun ChatScreen(
             Scaffold(
                 containerColor = Color.Transparent,
                 topBar = {
-                    FillSizeImageTopBar(
+                    FullSizeImageTopBar(
                         senderData = fullSizeImageSender,
                     )
                 },
+                bottomBar = {
+                    FullSizeImageBottomBar(
+                        senderData = fullSizeImageSender,
+                    )
+                }
             ) { paddingValues ->
                 Box(
                     contentAlignment = Alignment.Center,
@@ -1760,7 +1765,7 @@ private fun ScrollToBottomButton(onScrollToBottomClick: () -> Unit) {
 }
 
 @Composable
-private fun FillSizeImageTopBar(
+private fun FullSizeImageTopBar(
     senderData: User?,
 ) {
     Box(
@@ -1776,7 +1781,7 @@ private fun FillSizeImageTopBar(
         Box(
             modifier = Modifier.align(Alignment.CenterStart)
         ) {
-            FillSizeImageTopBarButton(
+            FullSizeImageTopBarButton(
                 icon = R.drawable.ic_arrow_left,
                 onClick = {
 
@@ -1795,7 +1800,7 @@ private fun FillSizeImageTopBar(
         Box(
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
-            FillSizeImageTopBarButton(
+            FullSizeImageTopBarButton(
                 icon = R.drawable.ic_ellipsis,
                 onClick = {
 
@@ -1806,7 +1811,7 @@ private fun FillSizeImageTopBar(
 }
 
 @Composable
-private fun FillSizeImageBottomBar(
+private fun FullSizeImageBottomBar(
     senderData: User?,
 ) {
     Box(
@@ -1822,7 +1827,7 @@ private fun FillSizeImageBottomBar(
         Box(
             modifier = Modifier.align(Alignment.CenterStart)
         ) {
-            FillSizeImageTopBarButton(
+            FullSizeImageTopBarButton(
                 icon = R.drawable.ic_reply,
                 onClick = {
 
@@ -1832,7 +1837,7 @@ private fun FillSizeImageBottomBar(
         Box(
             modifier = Modifier.align(Alignment.CenterEnd)
         ) {
-            FillSizeImageTopBarButton(
+            FullSizeImageTopBarButton(
                 icon = R.drawable.ic_trashbox,
                 onClick = {
 
@@ -1843,7 +1848,7 @@ private fun FillSizeImageBottomBar(
 }
 
 @Composable
-private fun FillSizeImageTopBarButton(
+private fun FullSizeImageTopBarButton(
     icon: Int,
     onClick: () -> Unit,
 ) {
