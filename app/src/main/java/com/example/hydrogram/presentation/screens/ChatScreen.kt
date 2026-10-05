@@ -177,9 +177,9 @@ fun ChatScreen(
     val mineId by chatViewModel.currentId.collectAsStateWithLifecycle()
     val presenceState by userViewModel.opponentPresenceState.collectAsStateWithLifecycle()
 
-    var currentFullSizeImageUrl by remember { mutableStateOf<String?>(null) }
-
-    var fullSizeImageSender by remember { mutableStateOf<User?>(null) }
+    var currentFullSizeImageData by remember {
+        mutableStateOf<FullSizeImageData?>(null)
+    }
 
     val context = LocalContext.current
     val cameraHolder = remember { CameraHolder(context) }
@@ -337,13 +337,17 @@ fun ChatScreen(
                                     bottomPadding = paddingValues.calculateBottomPadding(),
                                     mineId = mineId,
                                     chatId = chatId,
-                                    penpalName = penpalUser.name ?: "",
+                                    penpalName = penpalUser.name,
                                     mineName = mineUser?.name ?: "",
                                     mineData = mineUser,
                                     penpalData = penpalUser,
                                     hazeState = hazeState,
-                                    setCurrentFullSizeImageUrl = { url ->
-                                        currentFullSizeImageUrl = url
+                                    setCurrentFullSizeImage = { url, senderName, messageTimestamp ->
+                                        currentFullSizeImageData = FullSizeImageData(
+                                            imageUrl = url,
+                                            senderName = senderName,
+                                            messageTimestamp = messageTimestamp,
+                                        )
                                     }
                                 )
                             }
@@ -354,8 +358,9 @@ fun ChatScreen(
         }
     }
 
-    if (currentFullSizeImageUrl != null) {
+    if (currentFullSizeImageData != null) {
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
                 .background(
@@ -364,26 +369,25 @@ fun ChatScreen(
         ) {
 
             AsyncImage(
-                model = currentFullSizeImageUrl ?: "",
+                model = currentFullSizeImageData?.imageUrl ?: "",
                 contentDescription = null,
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize(),
-                onError = { state ->
-                    // state.result.throwable — причина ошибки
-                    Log.e("AsyncImage", "Ошибка загрузки: ${state.result.throwable.message}")
-                }
+                modifier = Modifier
+                    .fillMaxWidth()
             )
 
             Scaffold(
                 containerColor = Color.Transparent,
                 topBar = {
                     FullSizeImageTopBar(
-                        senderData = fullSizeImageSender,
+                        data = currentFullSizeImageData,
+                        onClose = {
+                            currentFullSizeImageData = null
+                        }
                     )
                 },
                 bottomBar = {
                     FullSizeImageBottomBar(
-                        senderData = fullSizeImageSender,
                     )
                 }
             ) { paddingValues ->
@@ -413,7 +417,7 @@ private fun Content(
     mineData: User?,
     penpalData: User?,
     hazeState: HazeState,
-    setCurrentFullSizeImageUrl: (String?) -> Unit,
+    setCurrentFullSizeImage: (String?, String?, Long?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -779,8 +783,10 @@ private fun Content(
                                     currentReactingMessage = msg
                                 },
                                 onScrollToMessage = scrollToMessage,
-                                setCurrentFullSizeImageUrl = { url ->
-                                    setCurrentFullSizeImageUrl(url)
+                                setCurrentFullSizeImage = { url, senderName, messageTimestamp ->
+                                    setCurrentFullSizeImage(
+                                        url, senderName, messageTimestamp
+                                    )
                                 }
                             )
                             Spacer(Modifier.height(4.dp))
@@ -1146,7 +1152,7 @@ private fun MessageItem(
     onAnswer: (Message) -> Unit,
     onLongClick: (Message, IntOffset, IntSize) -> Unit,
     onScrollToMessage: (String) -> Unit,
-    setCurrentFullSizeImageUrl: (String?) -> Unit,
+    setCurrentFullSizeImage: (String?, String?, Long?) -> Unit,
 ) {
     var coordinates: LayoutCoordinates? = null
     val boxModifier = Modifier.onGloballyPositioned { coordinates = it }
@@ -1300,8 +1306,11 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
-                            setCurrentFullSizeImageUrl = { url ->
-                                setCurrentFullSizeImageUrl(url)
+                            senderName = mineName,
+                            setCurrentFullSizeImage = { url, senderName, messageTimestamp ->
+                                setCurrentFullSizeImage(
+                                    url, senderName, messageTimestamp
+                                )
                             },
                         )
                     } else {
@@ -1316,8 +1325,11 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
-                            setCurrentFullSizeImageUrl = { url ->
-                                setCurrentFullSizeImageUrl(url)
+                            senderName = mineName,
+                            setCurrentFullSizeImage = { url, senderName, messageTimestamp ->
+                                setCurrentFullSizeImage(
+                                    url, senderName, messageTimestamp
+                                )
                             },
                         )
                     }
@@ -1427,8 +1439,11 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
-                            setCurrentFullSizeImageUrl = { url ->
-                                setCurrentFullSizeImageUrl(url)
+                            senderName = penpalName,
+                            setCurrentFullSizeImage = { url, senderName, messageTimestamp ->
+                                setCurrentFullSizeImage(
+                                    url, senderName, messageTimestamp
+                                )
                             },
                         )
                     } else {
@@ -1443,8 +1458,11 @@ private fun MessageItem(
                             mineId = mineId,
                             mineAvatar = messageData.mineAvatar,
                             penpalAvatar = messageData.penpalAvatar,
-                            setCurrentFullSizeImageUrl = { url ->
-                                setCurrentFullSizeImageUrl(url)
+                            senderName = penpalName,
+                            setCurrentFullSizeImage = { url, senderName, messageTimestamp ->
+                                setCurrentFullSizeImage(
+                                    url, senderName, messageTimestamp
+                                )
                             },
                         )
                     }
@@ -1770,7 +1788,8 @@ private fun ScrollToBottomButton(onScrollToBottomClick: () -> Unit) {
 
 @Composable
 private fun FullSizeImageTopBar(
-    senderData: User?,
+    data: FullSizeImageData?,
+    onClose: () -> Unit,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -1783,12 +1802,13 @@ private fun FullSizeImageTopBar(
             )
     ) {
         Box(
-            modifier = Modifier.align(Alignment.CenterStart)
+            modifier = Modifier
+                .align(Alignment.CenterStart)
         ) {
             FullSizeImageTopBarButton(
                 icon = R.drawable.ic_arrow_left,
                 onClick = {
-
+                    onClose()
                 },
             )
         }
@@ -1798,7 +1818,8 @@ private fun FullSizeImageTopBar(
             UserName(
                 onUserClick = {
                 },
-                user = senderData,
+                name = data?.senderName,
+                messageTimestamp = data?.messageTimestamp,
             )
         }
         Box(
@@ -1816,7 +1837,6 @@ private fun FullSizeImageTopBar(
 
 @Composable
 private fun FullSizeImageBottomBar(
-    senderData: User?,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -1900,11 +1920,12 @@ private fun FullSizeImageTopBarButton(
 @Composable
 private fun UserName(
     onUserClick: () -> Unit,
-    user: User?,
+    name: String?,
+    messageTimestamp: Long?,
 ) {
 
     val messageTime = formatHeaderDate(
-        timestamp = 0L
+        timestamp = messageTimestamp ?: 0L,
     )
 
     Box(
@@ -1946,7 +1967,7 @@ private fun UserName(
                 .fillMaxHeight()
         ) {
             Text(
-                text = user?.name ?: "",
+                text = name ?: "",
                 fontFamily = SfProText,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = 15.sp,
@@ -1965,6 +1986,12 @@ private fun UserName(
         }
     }
 }
+
+data class FullSizeImageData(
+    val imageUrl: String?,
+    val senderName: String?,
+    val messageTimestamp: Long?,
+)
 
 data class ContextMenuState(
     val message: Message,
