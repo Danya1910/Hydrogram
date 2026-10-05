@@ -26,6 +26,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -179,6 +180,10 @@ fun ChatScreen(
 
     var currentFullSizeImageData by remember {
         mutableStateOf<FullSizeImageData?>(null)
+    }
+
+    var showButtonsDuringViewingImages by remember {
+        mutableStateOf(true)
     }
 
     val context = LocalContext.current
@@ -379,21 +384,52 @@ fun ChatScreen(
             Scaffold(
                 containerColor = Color.Transparent,
                 topBar = {
-                    FullSizeImageTopBar(
-                        data = currentFullSizeImageData,
-                        onClose = {
-                            currentFullSizeImageData = null
-                        }
-                    )
+                    AnimatedVisibility(
+                        visible = showButtonsDuringViewingImages,
+                        enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
+                            initialOffsetY = { -it },
+                            animationSpec = tween(300)
+                        ),
+                        exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
+                            targetOffsetY = { -it },
+                            animationSpec = tween(300)
+                        ),
+                        modifier = Modifier.align(Alignment.TopCenter)
+                    ) {
+                        FullSizeImageTopBar(
+                            data = currentFullSizeImageData,
+                            onClose = {
+                                currentFullSizeImageData = null
+                            }
+                        )
+                    }
                 },
                 bottomBar = {
-                    FullSizeImageBottomBar(
-                    )
+                    AnimatedVisibility(
+                        visible = showButtonsDuringViewingImages,
+                        enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
+                            initialOffsetY = { it },
+                            animationSpec = tween(300)
+                        ),
+                        exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
+                            targetOffsetY = { it },
+                            animationSpec = tween(300)
+                        ),
+                        modifier = Modifier.align(Alignment.BottomCenter)
+                    ) {
+                        FullSizeImageBottomBar()
+                    }
                 }
             ) { paddingValues ->
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ){
+                            showButtonsDuringViewingImages = !showButtonsDuringViewingImages
+                        }
                         .padding(paddingValues)
                 )
             }
@@ -1895,7 +1931,7 @@ private fun FullSizeImageTopBarButton(
                     lightAngle = 0.45f,
                     cornerRadius = 22.dp,
                     frost = 14f,
-                    refraction = 100f,
+                    refraction = 20f,
                     depth = 16f,
                     lightIntensity = 0.6f
                 )
@@ -1906,7 +1942,7 @@ private fun FullSizeImageTopBarButton(
                 .padding(1.dp)
                 .clip(CircleShape)
                 .background(
-                    color = LightBlack,
+                    color = LightBlack.copy(alpha = 0.6f),
                 )
         )
         Icon(
@@ -1946,9 +1982,9 @@ private fun UserName(
                 .matchParentSize()
                 .glassEffect(
                     cornerRadius = 22.dp,
-                    frost = 14f,
-                    refraction = 100f,
-                    depth = 16f
+                    frost = 4f,
+                    refraction = 20f,
+                    depth = 6f,
                 )
         )
         Spacer(
@@ -1957,7 +1993,7 @@ private fun UserName(
                 .padding(1.dp)
                 .clip(CircleShape)
                 .background(
-                    color = LightBlack,
+                    color = LightBlack.copy(alpha = 0.6f),
                 )
         )
         Column(
