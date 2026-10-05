@@ -182,6 +182,39 @@ fun ChatScreen(
         mutableStateOf<FullSizeImageData?>(null)
     }
 
+    var chatsImages by remember {
+        mutableStateOf<List<FullSizeImageData?>?>(null)
+    }
+
+    val currentImageIndex by remember {
+        derivedStateOf {
+            chatsImages?.indexOfFirst { it?.imageUrl == currentFullSizeImageData?.imageUrl } ?: -1
+        }
+    }
+
+    val currentImageNumber by remember {
+        derivedStateOf {
+            if (currentImageIndex != -1) currentImageIndex + 1 else 0
+        }
+    }
+
+    val totalImagesCount by remember {
+        derivedStateOf {
+            chatsImages?.size ?: 0
+        }
+    }
+
+    val imageOfImagesText = if (currentImageNumber > 0)
+        "$currentImageNumber из $totalImagesCount" else ""
+
+    LaunchedEffect(chatsImages) {
+        if (!chatsImages.isNullOrEmpty()) {
+            Log.d("ChatImages", chatsImages.toString())
+            Log.d("ChatImages", "all images count: ${chatsImages!!.size}")
+            Log.d("ChatImages", "current image of all images ")
+        }
+    }
+
     var showButtonsDuringViewingImages by remember {
         mutableStateOf(true)
     }
@@ -353,6 +386,9 @@ fun ChatScreen(
                                             senderName = senderName,
                                             messageTimestamp = messageTimestamp,
                                         )
+                                    },
+                                    getAllImages = {
+                                        chatsImages = it
                                     }
                                 )
                             }
@@ -400,7 +436,8 @@ fun ChatScreen(
                             data = currentFullSizeImageData,
                             onClose = {
                                 currentFullSizeImageData = null
-                            }
+                            },
+                            text = imageOfImagesText
                         )
                     }
                 },
@@ -427,7 +464,7 @@ fun ChatScreen(
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null
-                        ){
+                        ) {
                             showButtonsDuringViewingImages = !showButtonsDuringViewingImages
                         }
                         .padding(paddingValues)
@@ -454,6 +491,7 @@ private fun Content(
     penpalData: User?,
     hazeState: HazeState,
     setCurrentFullSizeImage: (String?, String?, Long?) -> Unit,
+    getAllImages: (List<FullSizeImageData?>?) -> Unit,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -473,6 +511,7 @@ private fun Content(
     var circleVideoDuration by remember { mutableStateOf(0L) }
     var firstUnreadMessageId by remember { mutableStateOf<String?>(null) }
     var hasInitializedUnreadId by remember { mutableStateOf(false) }
+    var allChatsImages by remember { mutableStateOf<List<FullSizeImageData?>?>(null) }
 
 
     val isExpanded = currentMessageAnswer != null
@@ -602,6 +641,29 @@ private fun Content(
             onReady = { /* ничего, isReady уже обновился внутри */ },
             onError = { Log.e("ChatScreen", "Camera warmUp failed", it) },
         )
+    }
+
+    LaunchedEffect(messages) {
+        if (messages.isNotEmpty()) {
+            val imagesList = messages
+                .filter { it.type == "image" }
+                .map { message ->
+                    FullSizeImageData(
+                        imageUrl = (message as Message.Image).image,
+                        senderName = if (message.senderId == mineId) mineName else penpalName,
+                        messageTimestamp = message.timestamp,
+                    )
+                }
+            allChatsImages = imagesList
+        }
+    }
+
+    LaunchedEffect(allChatsImages) {
+        if (allChatsImages?.isNotEmpty() == true) {
+            getAllImages(
+                allChatsImages
+            )
+        }
     }
 
     LaunchedEffect(listState, messagesById, mineId, chatId) {
@@ -1826,6 +1888,7 @@ private fun ScrollToBottomButton(onScrollToBottomClick: () -> Unit) {
 private fun FullSizeImageTopBar(
     data: FullSizeImageData?,
     onClose: () -> Unit,
+    text: String,
 ) {
     Box(
         contentAlignment = Alignment.Center,
@@ -1837,35 +1900,44 @@ private fun FullSizeImageTopBar(
                 horizontal = 16.dp
             )
     ) {
-        Box(
-            modifier = Modifier
-                .align(Alignment.CenterStart)
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            FullSizeImageTopBarButton(
-                icon = R.drawable.ic_arrow_left,
-                onClick = {
-                    onClose()
-                },
-            )
-        }
-        Box(
-            modifier = Modifier.align(Alignment.Center)
-        ) {
-            UserName(
-                onUserClick = {
-                },
-                name = data?.senderName,
-                messageTimestamp = data?.messageTimestamp,
-            )
-        }
-        Box(
-            modifier = Modifier.align(Alignment.CenterEnd)
-        ) {
-            FullSizeImageTopBarButton(
-                icon = R.drawable.ic_ellipsis,
-                onClick = {
+            Box {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                ) {
+                    FullSizeImageTopBarButton(
+                        icon = R.drawable.ic_arrow_left,
+                        onClick = {
+                            onClose()
+                        },
+                    )
+                }
+                Box(
+                    modifier = Modifier.align(Alignment.Center)
+                ) {
+                    UserName(
+                        onUserClick = {
+                        },
+                        name = data?.senderName,
+                        messageTimestamp = data?.messageTimestamp,
+                    )
+                }
+                Box(
+                    modifier = Modifier.align(Alignment.CenterEnd)
+                ) {
+                    FullSizeImageTopBarButton(
+                        icon = R.drawable.ic_ellipsis,
+                        onClick = {
 
-                },
+                        },
+                    )
+                }
+            }
+            ImageOfAllImagesWidget(
+                text = text,
             )
         }
     }
@@ -2020,6 +2092,48 @@ private fun UserName(
                 color = Color.Gray,
             )
         }
+    }
+}
+
+@Composable
+private fun ImageOfAllImagesWidget(
+    text: String,
+) {
+    Box(
+        modifier = Modifier
+            .height(24.dp)
+            .clip(
+                shape = CircleShape
+            )
+    ) {
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .glassEffect(
+                    cornerRadius = 22.dp,
+                    frost = 4f,
+                    refraction = 20f,
+                    depth = 6f,
+                )
+        )
+        Spacer(
+            modifier = Modifier
+                .matchParentSize()
+                .padding(1.dp)
+                .clip(CircleShape)
+                .background(
+                    color = LightBlack.copy(alpha = 0.6f),
+                )
+        )
+        Text(
+            text = "text",
+            fontWeight = FontWeight.Normal,
+            fontFamily = SfProText,
+            fontSize = 14.sp,
+            color = Color.White,
+            modifier = Modifier
+                .padding(vertical = 8.dp)
+        )
     }
 }
 
