@@ -26,7 +26,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.Indication
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -206,6 +205,10 @@ fun ChatScreen(
 
     val imageOfImagesText = if (currentImageNumber > 0)
         "$currentImageNumber из $totalImagesCount" else ""
+
+    LaunchedEffect(imageOfImagesText) {
+        Log.d("ImageOfImages", imageOfImagesText)
+    }
 
     LaunchedEffect(chatsImages) {
         if (!chatsImages.isNullOrEmpty()) {
@@ -1895,7 +1898,6 @@ private fun FullSizeImageTopBar(
         modifier = Modifier
             .statusBarsPadding()
             .fillMaxWidth()
-            .height(44.dp)
             .padding(
                 horizontal = 16.dp
             )
@@ -1903,7 +1905,11 @@ private fun FullSizeImageTopBar(
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
@@ -1936,6 +1942,7 @@ private fun FullSizeImageTopBar(
                     )
                 }
             }
+            Spacer(modifier = Modifier.height(10.dp))
             ImageOfAllImagesWidget(
                 text = text,
             )
@@ -2100,6 +2107,7 @@ private fun ImageOfAllImagesWidget(
     text: String,
 ) {
     Box(
+        contentAlignment = Alignment.Center,
         modifier = Modifier
             .height(24.dp)
             .clip(
@@ -2126,13 +2134,13 @@ private fun ImageOfAllImagesWidget(
                 )
         )
         Text(
-            text = "text",
+            text = text,
             fontWeight = FontWeight.Normal,
             fontFamily = SfProText,
-            fontSize = 14.sp,
+            fontSize = 13.sp,
             color = Color.White,
             modifier = Modifier
-                .padding(vertical = 8.dp)
+                .padding(horizontal = 8.dp)
         )
     }
 }
