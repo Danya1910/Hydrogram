@@ -1962,6 +1962,7 @@ private fun FullSizeImageBottomBar(
             .padding(
                 horizontal = 16.dp
             )
+            .padding(bottom = 2.dp)
     ) {
         Box(
             modifier = Modifier.align(Alignment.CenterStart)
