@@ -1,8 +1,6 @@
 package com.example.hydrogram.presentation.widgets
 
-import android.util.Log
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -32,8 +29,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
-import com.example.hydrogram.presentation.util.GlassBackground
-import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.util.glassEffect
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProText
@@ -53,7 +49,7 @@ fun MessageActionMenu(
             Color.White,
             Color.White,
             Color.White,
-            Color(0xFFE5E4E4)
+            Color(0xFFEEEEEE)
         )
     )
 
@@ -90,6 +86,30 @@ fun MessageActionMenu(
                     alignment = Alignment.Start,
                 )
         ) {
+            Box() {
+                Spacer(
+                    modifier = Modifier
+                        .matchParentSize()
+
+                        .glassEffect(
+                            lightAngle = 0.45f,
+                            cornerRadius = 22.dp,
+                            frost = 14f,
+                            refraction = 20f,
+                            depth = 16f,
+                            lightIntensity = 0.6f
+                        )
+                )
+                Spacer(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .padding(1.dp)
+                        .clip(CircleShape)
+                        .background(
+                            color = LightBlack.copy(alpha = 0.6f),
+                        )
+                )
+            }
             listOfReactions.forEach { reaction ->
                 Text(
                     text = reaction,
@@ -111,15 +131,30 @@ fun MessageActionMenu(
                 .clip(
                     shape = RoundedCornerShape(34.dp),
                 )
-                .background(
-                    brush = GlassBackground
-                )
-                .border(
-                    width = 1.dp,
-                    brush = GlassBorder,
-                    shape = RoundedCornerShape(34.dp),
-                )
         ) {
+            Spacer(
+                modifier = Modifier
+                    .matchParentSize()
+                    .glassEffect(
+                        lightAngle = 0.45f,
+                        cornerRadius = 34.dp,
+                        frost = 14f,
+                        refraction = 20f,
+                        depth = 16f,
+                        lightIntensity = 0.6f
+                    )
+            )
+            Spacer(
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(1.dp)
+                    .clip(
+                        shape = RoundedCornerShape(34.dp)
+                    )
+                    .background(
+                        brush = rowGradient,
+                    )
+            )
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -180,6 +215,7 @@ private fun RowMessageAction(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
+            .fillMaxWidth()
             .height(40.dp)
             .clickable {
                 item.onClick()
