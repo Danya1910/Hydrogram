@@ -1,6 +1,7 @@
 package com.example.hydrogram.presentation.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -167,6 +168,7 @@ import kotlin.math.roundToInt
 
 
 @OptIn(ExperimentalHazeMaterialsApi::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.S)
 @Composable
 fun ChatScreen(
@@ -223,6 +225,8 @@ fun ChatScreen(
     var showButtonsDuringViewingImages by remember {
         mutableStateOf(true)
     }
+
+    val isGalleryOpen = currentFullSizeImageData != null
 
     val context = LocalContext.current
     val cameraHolder = remember { CameraHolder(context) }
@@ -404,37 +408,79 @@ fun ChatScreen(
         }
     }
 
-    if (currentFullSizeImageData != null && chatsImages?.isNotEmpty() == true) {
-        val startIndex = remember(chatsImages) {
+    if (isGalleryOpen && chatsImages?.isNotEmpty() == true) {
+
+        val startIndex = remember(currentFullSizeImageData, chatsImages) {
             chatsImages!!.indexOfFirst {
                 it?.imageUrl == currentFullSizeImageData?.imageUrl
             }.coerceAtLeast(0)
         }
 
+
         val pagerState = rememberPagerState(
             initialPage = startIndex,
-            pageCount = {chatsImages!!.size}
+            pageCount = { chatsImages!!.size }
         )
 
-        LaunchedEffect(pagerState.currentPage) {
-            currentFullSizeImageData = chatsImages!![pagerState.currentPage]
-        }
+        val activeImageData = chatsImages?.getOrNull(pagerState.currentPage)
 
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    color = LightBlack,
-                )
-        ) {
+        val liveImageNumber = pagerState.currentPage + 1
+        val liveTotalCount = chatsImages?.size ?: 0
+        val liveImageOfImagesText = "$liveImageNumber из $liveTotalCount"
 
+
+
+        Scaffold(
+            containerColor = LightBlack,
+            topBar = {
+                AnimatedVisibility(
+                    visible = showButtonsDuringViewingImages,
+                    enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
+                        initialOffsetY = { -it },
+                        animationSpec = tween(300)
+                    ),
+                    exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
+                        targetOffsetY = { -it },
+                        animationSpec = tween(300)
+                    ),
+                ) {
+                    FullSizeImageTopBar(
+                        data = activeImageData,
+                        onClose = {
+                            currentFullSizeImageData = null
+                        },
+                        text = liveImageOfImagesText,
+                    )
+                }
+            },
+            bottomBar = {
+                AnimatedVisibility(
+                    visible = showButtonsDuringViewingImages,
+                    enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
+                        initialOffsetY = { it },
+                        animationSpec = tween(300)
+                    ),
+                    exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
+                        targetOffsetY = { it },
+                        animationSpec = tween(300)
+                    ),
+                ) {
+                    FullSizeImageBottomBar()
+                }
+            }
+        ) { paddingValues ->
             HorizontalPager(
                 state = pagerState,
                 beyondViewportPageCount = 1,
                 modifier = Modifier
                     .fillMaxSize()
-            ) {page->
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ) {
+                        showButtonsDuringViewingImages = !showButtonsDuringViewingImages
+                    }
+            ) { page ->
                 val imageData = chatsImages!![page]
                 if (imageData != null) {
                     Box(
@@ -449,68 +495,6 @@ fun ChatScreen(
                         )
                     }
                 }
-            }
-
-//            AsyncImage(
-//                model = currentFullSizeImageData?.imageUrl ?: "",
-//                contentDescription = null,
-//                contentScale = ContentScale.Fit,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//            )
-
-            Scaffold(
-                containerColor = Color.Transparent,
-                topBar = {
-                    AnimatedVisibility(
-                        visible = showButtonsDuringViewingImages,
-                        enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
-                            initialOffsetY = { -it },
-                            animationSpec = tween(300)
-                        ),
-                        exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
-                            targetOffsetY = { -it },
-                            animationSpec = tween(300)
-                        ),
-                        modifier = Modifier.align(Alignment.TopCenter)
-                    ) {
-                        FullSizeImageTopBar(
-                            data = currentFullSizeImageData,
-                            onClose = {
-                                currentFullSizeImageData = null
-                            },
-                            text = imageOfImagesText
-                        )
-                    }
-                },
-                bottomBar = {
-                    AnimatedVisibility(
-                        visible = showButtonsDuringViewingImages,
-                        enter = fadeIn(animationSpec = tween(300)) + slideInVertically(
-                            initialOffsetY = { it },
-                            animationSpec = tween(300)
-                        ),
-                        exit = fadeOut(animationSpec = tween(300)) + slideOutVertically(
-                            targetOffsetY = { it },
-                            animationSpec = tween(300)
-                        ),
-                        modifier = Modifier.align(Alignment.BottomCenter)
-                    ) {
-                        FullSizeImageBottomBar()
-                    }
-                }
-            ) { paddingValues ->
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null
-                        ) {
-                            showButtonsDuringViewingImages = !showButtonsDuringViewingImages
-                        }
-                        .padding(paddingValues)
-                )
             }
         }
     }
