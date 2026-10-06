@@ -49,6 +49,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.modifier.modifierLocalOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -161,13 +162,7 @@ private fun Content(
                     isDragging = true
 
                     coroutineScope.launch {
-                        /*
-                         * Коэффициент 0.4 делает растягивание
-                         * немного "тяжелее" пальца.
-                         *
-                         * Если хочешь 1:1 с пальцем:
-                         * поставь 1f.
-                         */
+
                         val newValue =
                             (overScrollAnim.value + available.y * 0.45f)
                                 .coerceIn(0f, 400f)
@@ -181,10 +176,7 @@ private fun Content(
                     )
                 }
 
-                /*
-                 * Если фотография уже растянута,
-                 * свайп вверх уменьшает её.
-                 */
+
                 if (overScrollAnim.value > 0f && available.y < 0f) {
 
                     isDragging = true
@@ -866,7 +858,7 @@ private fun MenuRowItem(
 @Composable
 private fun ActionRow() {
     Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
         modifier = Modifier
             .fillMaxWidth()
     ) {
@@ -874,26 +866,36 @@ private fun ActionRow() {
             icon = R.drawable.ic_phone,
             title = "звонок",
             onClick = {},
+            modifier = Modifier
+                .weight(1f),
         )
         ActionRowItem(
             icon = R.drawable.ic_camera,
             title = "видео",
             onClick = {},
+            modifier = Modifier
+                .weight(1f),
         )
         ActionRowItem(
             icon = R.drawable.ic_bell,
             title = "звук",
             onClick = {},
+            modifier = Modifier
+                .weight(1f),
         )
         ActionRowItem(
             icon = R.drawable.ic_search_action_row,
             title = "поиск",
             onClick = {},
+            modifier = Modifier
+                .weight(1f),
         )
         ActionRowItem(
             icon = R.drawable.ic_ellipsis,
             title = "ещё",
             onClick = {},
+            modifier = Modifier
+                .weight(1f),
         )
     }
 }
@@ -904,12 +906,12 @@ private fun ActionRowItem(
     icon: Int,
     title: String,
     onClick: () -> Unit,
+    modifier: Modifier,
 ) {
     Box(
         contentAlignment = Alignment.Center,
-        modifier = Modifier
+        modifier = modifier
             .height(60.dp)
-            .width(67.6.dp)
             .shadow(
                 elevation = 12.dp,
                 shape = CircleShape,
