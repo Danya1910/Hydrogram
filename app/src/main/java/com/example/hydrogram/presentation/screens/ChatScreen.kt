@@ -53,6 +53,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -402,7 +404,22 @@ fun ChatScreen(
         }
     }
 
-    if (currentFullSizeImageData != null) {
+    if (currentFullSizeImageData != null && chatsImages?.isNotEmpty() == true) {
+        val startIndex = remember(chatsImages) {
+            chatsImages!!.indexOfFirst {
+                it?.imageUrl == currentFullSizeImageData?.imageUrl
+            }.coerceAtLeast(0)
+        }
+
+        val pagerState = rememberPagerState(
+            initialPage = startIndex,
+            pageCount = {chatsImages!!.size}
+        )
+
+        LaunchedEffect(pagerState.currentPage) {
+            currentFullSizeImageData = chatsImages!![pagerState.currentPage]
+        }
+
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -412,13 +429,35 @@ fun ChatScreen(
                 )
         ) {
 
-            AsyncImage(
-                model = currentFullSizeImageData?.imageUrl ?: "",
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
+            HorizontalPager(
+                state = pagerState,
+                beyondViewportPageCount = 1,
                 modifier = Modifier
-                    .fillMaxWidth()
-            )
+                    .fillMaxSize()
+            ) {page->
+                val imageData = chatsImages!![page]
+                if (imageData != null) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        AsyncImage(
+                            model = imageData.imageUrl,
+                            contentDescription = null,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+//            AsyncImage(
+//                model = currentFullSizeImageData?.imageUrl ?: "",
+//                contentDescription = null,
+//                contentScale = ContentScale.Fit,
+//                modifier = Modifier
+//                    .fillMaxWidth()
+//            )
 
             Scaffold(
                 containerColor = Color.Transparent,
