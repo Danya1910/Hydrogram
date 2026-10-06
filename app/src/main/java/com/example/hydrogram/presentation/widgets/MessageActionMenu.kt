@@ -86,7 +86,7 @@ fun MessageActionMenu(
                     alignment = Alignment.Start,
                 )
         ) {
-            Box() {
+            Box {
                 Spacer(
                     modifier = Modifier
                         .matchParentSize()
