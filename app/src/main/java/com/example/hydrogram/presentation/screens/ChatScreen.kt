@@ -3,11 +3,13 @@ package com.example.hydrogram.presentation.screens
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Base64
 import android.util.Log
 import android.widget.Toast
@@ -156,6 +158,8 @@ import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.PermissionStatus
+import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import dev.chrisbanes.haze.HazeDefaults
 import dev.chrisbanes.haze.HazeState
@@ -543,18 +547,36 @@ private fun Content(
 
     val isExpanded = currentMessageAnswer != null
 
-    val mediaPermissionsState = rememberMultiplePermissionsState(
+    var audioPermissionDenied by remember { mutableStateOf(false) }
+    var videoPermissionDenied by remember { mutableStateOf(false) }
+
+    var audioPermissionAsked by remember { mutableStateOf(false) }
+    var videoPermissionAsked by remember { mutableStateOf(false) }
+
+    val audioPermissionsState = rememberMultiplePermissionsState(
+        permissions = listOf(Manifest.permission.RECORD_AUDIO)
+    )
+
+    val videoPermissionsState = rememberMultiplePermissionsState(
         permissions = listOf(
             Manifest.permission.CAMERA,
             Manifest.permission.RECORD_AUDIO
         )
     )
 
-    LaunchedEffect(mediaPermissionsState.allPermissionsGranted, isVideoRecording) {
-        if (!mediaPermissionsState.allPermissionsGranted && isVideoRecording) {
-            mediaPermissionsState.launchMultiplePermissionRequest()
+    LaunchedEffect(audioPermissionsState.allPermissionsGranted) {
+        if (!audioPermissionsState.allPermissionsGranted &&
+            audioPermissionsState.permissions.any { it.status.isGranted.not() } &&
+            audioPermissionAsked
+        ) {
+            audioPermissionDenied = true
+        } else if (audioPermissionsState.allPermissionsGranted) {
+            audioPermissionDenied = false
         }
     }
+
+
+
 
     val voicePlayer = remember { ExoPlayer.Builder(context).build() }
     val videoPlayer = remember { ExoPlayer.Builder(context).build() }
@@ -1143,11 +1165,7 @@ private fun Content(
                     isVideoRecording = isVideoRecording,
                     changeRecordState = { isRecording = it },
                     onRecordStart = {
-                        if (mediaPermissionsState.allPermissionsGranted) {
-                            chatViewModel.startRecording()
-                        } else {
-                            mediaPermissionsState.launchMultiplePermissionRequest()
-                        }
+                        chatViewModel.startRecording()
                     },
                     onRecordStop = {
                         val reply = currentMessageAnswer
@@ -1173,6 +1191,39 @@ private fun Content(
                     isVideoButton = isVideoButton,
                     changeButton = { isVideoButton = !isVideoButton },
                     circleVideoDuration = circleVideoDuration,
+                    canStartAudioRecording = {
+                        audioPermissionsState.allPermissionsGranted
+                    },
+                    canStartVideoRecording = {
+                        videoPermissionsState.allPermissionsGranted
+                    },
+                    requestAudioPermission = {
+                        val perm = audioPermissionsState.permissions.firstOrNull()
+                        val deniedPermanently = audioPermissionAsked &&
+                                perm?.status is PermissionStatus.Denied &&
+                                !(perm.status as PermissionStatus.Denied).shouldShowRationale
+
+                        if (deniedPermanently) {
+                            openAppSettings(context)
+                        } else {
+                            audioPermissionAsked = true
+                            audioPermissionsState.launchMultiplePermissionRequest()
+                        }
+                    },
+                    requestVideoPermission = {
+                        val allDeniedPermanently = videoPermissionAsked &&
+                                videoPermissionsState.permissions.any {
+                                    it.status is PermissionStatus.Denied &&
+                                            !(it.status as PermissionStatus.Denied).shouldShowRationale
+                                }
+
+                        if (allDeniedPermanently) {
+                            openAppSettings(context)
+                        } else {
+                            videoPermissionAsked = true
+                            videoPermissionsState.launchMultiplePermissionRequest()
+                        }
+                    },
                 )
             }
         }
@@ -2169,6 +2220,16 @@ private fun ImageOfAllImagesWidget(
                 .padding(horizontal = 8.dp)
         )
     }
+}
+
+private fun openAppSettings(context: Context) {
+    val intent = Intent(
+        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+        Uri.fromParts("package", context.packageName, null)
+    ).apply {
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    }
+    context.startActivity(intent)
 }
 
 data class FullSizeImageData(
