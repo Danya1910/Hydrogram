@@ -120,6 +120,10 @@ fun ChatInputField(
     isVideoRecording: Boolean,
     changeButton: () -> Unit,
     circleVideoDuration: Long,
+    canStartAudioRecording: () -> Boolean,
+    canStartVideoRecording: () -> Boolean,
+    requestAudioPermission: () -> Unit,
+    requestVideoPermission: () -> Unit,
 ) {
 
     val isTextMessage = inputText.isNotEmpty()
@@ -257,7 +261,19 @@ fun ChatInputField(
                     },
                     changeButton = {
                         changeButton()
-                    }
+                    },
+                    canStartAudioRecording = {
+                        canStartAudioRecording()
+                    },
+                    canStartVideoRecording = {
+                        canStartVideoRecording()
+                    },
+                    requestAudioPermission = {
+                        requestAudioPermission()
+                    },
+                    requestVideoPermission = {
+                        requestVideoPermission()
+                    },
                 )
             }
         }
@@ -318,6 +334,10 @@ private fun SendButton(
     cancelVideo: () -> Unit,
     isVideoButton: Boolean,
     changeButton: () -> Unit,
+    canStartAudioRecording: () -> Boolean,
+    canStartVideoRecording: () -> Boolean,
+    requestAudioPermission: () -> Unit,
+    requestVideoPermission: () -> Unit,
 ) {
 
     var isPressed by remember { mutableStateOf(false) }
@@ -445,6 +465,25 @@ private fun SendButton(
 
                     if (longPressTimeout == null) {
                         isLongPress = true
+
+                        if (isVideoButton) {
+                            if (!canStartVideoRecording()) {
+                                requestVideoPermission()
+                                isPressed = false
+                                dragOffset = 0f
+                                return@awaitEachGesture
+                            }
+                            videoRecordingToggle(true)
+                        } else {
+                            if (!canStartAudioRecording()) {
+                                requestAudioPermission()
+                                isPressed = false
+                                dragOffset = 0f
+                                return@awaitEachGesture
+                            }
+                            changeRecordState(true)
+                            onRecordStart()
+                        }
 
                         if (isVideoButton) {
                             videoRecordingToggle(true)
