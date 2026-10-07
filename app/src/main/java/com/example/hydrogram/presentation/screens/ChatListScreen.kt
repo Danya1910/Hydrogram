@@ -167,14 +167,6 @@ private fun Content(
 
     val uiState by inboxViewModel.uiState.collectAsStateWithLifecycle()
 
-    LaunchedEffect(mineId) {
-        if (mineId.isNotBlank()) {
-            inboxViewModel.observeInboxChats(
-                userId = mineId,
-            )
-        }
-    }
-
     var contextMenuState by remember { mutableStateOf<ChatContextMenuState?>(null) }
     var selectedChatCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
     var selectedChat by remember { mutableStateOf<Chat?>(null) }
