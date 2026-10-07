@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil3.ImageLoader
@@ -67,9 +66,7 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.InboxUiState
-import com.example.hydrogram.presentation.states.UserState
 import com.example.hydrogram.presentation.viewModel.InboxViewModel
-import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.ChatItem
 import com.example.hydrogram.presentation.widgets.ChatListTopBar
