@@ -59,7 +59,6 @@ fun ChatItem(
     mineId: String,
     navController: NavController,
     onLongClick: () -> Unit = {},
-    userViewModel: UserViewModel = hiltViewModel(key = chat.chatId),
 ) {
 
     val penpalId = remember(chat.chatId, mineId) {
@@ -67,139 +66,113 @@ fun ChatItem(
         parts.firstOrNull { it != mineId } ?: parts.firstOrNull() ?: ""
     }
 
-    val userState by userViewModel.userState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(penpalId) {
-        if (penpalId.isNotBlank()) {
-            userViewModel.setTargetUserId(
-                uid = penpalId,
-            )
-        }
-    }
-
     val formattedTime = DateFormat.format(
         "HH:mm", Date(chat.lastMessageTimestamp)
     ).toString()
 
 
-    when (val state = userState) {
-        is UserState.Success -> {
-            val user = state.user ?: User(name = "Удаленный аккаунт")
+    val user = chat.user ?: User(name = "Удаленный аккаунт")
 
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier
-                    .height(78.dp)
-                    .fillMaxWidth()
-                    .combinedClickable(
-                        onClick = {
-                            navController.navigate(Screen.Chat.createRoute(id = penpalId))
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .height(78.dp)
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    navController.navigate(Screen.Chat.createRoute(id = penpalId))
 
-                        },
-                        onLongClick = {
-                            onLongClick()
-                        }
-                    )
-                    .padding(
-                        start = 10.dp,
-                        end = 16.dp,
-                    )
-                    .padding(vertical = 8.dp)
-            ) {
-
-                AsyncImage(
-                    model = user.avatarUrl,
-                    contentDescription = null,
-                    placeholder = painterResource(R.drawable.ic_avatar),
-                    error = painterResource(R.drawable.ic_avatar),
-                    contentScale = ContentScale.Crop,
-                    onError = { state ->
-                        // Выведет в лог конкретное исключение (например, UnknownHostException, HttpException)
-                        Log.e("CoilError", "Ошибка загрузки: ", state.result.throwable)
-                    },
-                    modifier = Modifier
-                        .size(62.dp)
-                        .clip(shape = CircleShape)
-                )
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(
-                    verticalArrangement = Arrangement.Top,
-                    modifier = Modifier
-                        .padding(top = 3.dp)
-                        .weight(1f)
-                ) {
-                    Text(
-                        text = user.name,
-                        fontFamily = SfProDisplay,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = chat.lastMessage,
-                        fontFamily = SfProText,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Gray,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                },
+                onLongClick = {
+                    onLongClick()
                 }
-                Column(
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(top = 3.dp, bottom = 5.dp)
-                        .weight(0.3f)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.End
-                    ) {
-                        if (chat.lastMessageStatus == "read") {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_read_status),
-                                contentDescription = null,
-                                tint = Green,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        } else if (chat.lastMessageStatus == "sent") {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_sent_status),
-                                contentDescription = null,
-                                tint = Green,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Text(
-                            text = formattedTime,
-                            fontFamily = SfProText,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal,
-                            color = Gray,
-                            maxLines = 1,
-                        )
-                    }
-                    if (chat.unreadCount != 0) {
-                        UnreadMessageWidget(
-                            count = chat.unreadCount.toString()
-                        )
-                    }
-                }
-            }
+            )
+            .padding(
+                start = 10.dp,
+                end = 16.dp,
+            )
+            .padding(vertical = 8.dp)
+    ) {
+
+        AsyncImage(
+            model = user.avatarUrl,
+            contentDescription = null,
+            placeholder = painterResource(R.drawable.ic_avatar),
+            error = painterResource(R.drawable.ic_avatar),
+            contentScale = ContentScale.Crop,
+            onError = { state ->
+                Log.e("CoilError", "Ошибка загрузки: ", state.result.throwable)
+            },
+            modifier = Modifier
+                .size(62.dp)
+                .clip(shape = CircleShape)
+        )
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .padding(top = 3.dp)
+                .weight(1f)
+        ) {
+            Text(
+                text = user.name,
+                fontFamily = SfProDisplay,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = chat.lastMessage,
+                fontFamily = SfProText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Normal,
+                color = Gray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-
-        else -> {
-            // Пока данные конкретного человека грузятся, показываем красивый скелетон-плейсхолдер
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.End,
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(top = 3.dp, bottom = 5.dp)
+                .weight(0.3f)
+        ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End
             ) {
-                Text(text = "Загрузка...", color = Color.LightGray)
+                if (chat.lastMessageStatus == "read") {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_read_status),
+                        contentDescription = null,
+                        tint = Green,
+                        modifier = Modifier.size(18.dp)
+                    )
+                } else if (chat.lastMessageStatus == "sent") {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_sent_status),
+                        contentDescription = null,
+                        tint = Green,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                Text(
+                    text = formattedTime,
+                    fontFamily = SfProText,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal,
+                    color = Gray,
+                    maxLines = 1,
+                )
+            }
+            if (chat.unreadCount != 0) {
+                UnreadMessageWidget(
+                    count = chat.unreadCount.toString()
+                )
             }
         }
     }
