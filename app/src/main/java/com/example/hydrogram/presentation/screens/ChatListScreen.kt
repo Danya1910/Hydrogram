@@ -2,7 +2,6 @@ package com.example.hydrogram.presentation.screens
 
 import android.content.Context
 import android.os.Build.VERSION.SDK_INT
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -66,6 +65,7 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.presentation.navigation.Screen
 import com.example.hydrogram.presentation.states.InboxUiState
+import com.example.hydrogram.presentation.util.ChatTimeFormatter
 import com.example.hydrogram.presentation.viewModel.InboxViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.ChatItem
@@ -77,7 +77,6 @@ import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.Red
 import com.example.hydrogram.ui.theme.SfProDisplay
 import com.example.hydrogram.ui.theme.SfProText
-import java.util.Date
 
 
 @Composable
@@ -510,10 +509,7 @@ fun FavoriteChatItem(
         parts.firstOrNull { it != mineId } ?: parts.firstOrNull() ?: ""
     }
 
-    val formattedTime = DateFormat.format(
-        "HH:mm", Date(chat.lastMessageTimestamp)
-    ).toString()
-
+    val formattedTime = ChatTimeFormatter.format(chat.lastMessageTimestamp)
 
     Row(
         verticalAlignment = Alignment.Top,
