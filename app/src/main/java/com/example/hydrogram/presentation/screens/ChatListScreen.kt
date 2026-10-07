@@ -574,7 +574,7 @@ fun FavoriteChatItem(
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(top = 3.dp, bottom = 5.dp)
-                .weight(0.15f)
+                .weight(0.35f)
         ) {
             Text(
                 text = formattedTime,

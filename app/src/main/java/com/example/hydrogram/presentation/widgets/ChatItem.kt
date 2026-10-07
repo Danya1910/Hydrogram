@@ -130,7 +130,7 @@ fun ChatItem(
             modifier = Modifier
                 .fillMaxHeight()
                 .padding(top = 3.dp, bottom = 5.dp)
-                .weight(0.3f)
+                .weight(0.35f)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
