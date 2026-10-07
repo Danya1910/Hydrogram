@@ -194,7 +194,7 @@ private fun Content(
                     .fillMaxSize()
                     .padding(paddingValues = paddingValues)
             ) {
-                if(chats.isEmpty()) {
+                if (chats.isEmpty()) {
                     EmptyChatList(
                         onEmptyChatsClick = {
                             navController.navigate(Screen.Contacts.route)
@@ -506,23 +506,11 @@ fun FavoriteChatItem(
     mineId: String,
     navController: NavController,
     onLongClick: () -> Unit = {},
-    userViewModel: UserViewModel = hiltViewModel(key = chat.chatId),
 ) {
 
     val penpalId = remember(chat.chatId, mineId) {
         val parts = chat.chatId.split("_")
-        // Ищем чужой ID, а если его нет — берем свой (чат с собой)
         parts.firstOrNull { it != mineId } ?: parts.firstOrNull() ?: ""
-    }
-
-    val userState by userViewModel.userState.collectAsStateWithLifecycle()
-
-    LaunchedEffect(penpalId) {
-        if (penpalId.isNotBlank()) {
-            userViewModel.setTargetUserId(
-                uid = penpalId,
-            )
-        }
     }
 
     val formattedTime = DateFormat.format(
@@ -530,95 +518,79 @@ fun FavoriteChatItem(
     ).toString()
 
 
-    when (val state = userState) {
-        is UserState.Success -> {
+    Row(
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier
+            .height(78.dp)
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = {
+                    navController.navigate(Screen.Chat.createRoute(id = penpalId))
 
-            Row(
-                verticalAlignment = Alignment.Top,
-                modifier = Modifier
-                    .height(78.dp)
-                    .fillMaxWidth()
-                    .combinedClickable(
-                        onClick = {
-                            navController.navigate(Screen.Chat.createRoute(id = penpalId))
-
-                        },
-                        onLongClick = {
-                            onLongClick()
-                        }
-                    )
-                    .padding(
-                        start = 10.dp,
-                        end = 16.dp,
-                    )
-                    .padding(vertical = 8.dp)
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_favorites),
-                    contentDescription = null,
-                    tint = Color.Unspecified,
-                    modifier = Modifier
-                        .size(62.dp)
-                        .clip(
-                            shape = CircleShape
-                        )
+                },
+                onLongClick = {
+                    onLongClick()
+                }
+            )
+            .padding(
+                start = 10.dp,
+                end = 16.dp,
+            )
+            .padding(vertical = 8.dp)
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.ic_favorites),
+            contentDescription = null,
+            tint = Color.Unspecified,
+            modifier = Modifier
+                .size(62.dp)
+                .clip(
+                    shape = CircleShape
                 )
+        )
 
-                Spacer(modifier = Modifier.width(10.dp))
-                Column(
-                    verticalArrangement = Arrangement.Top,
-                    modifier = Modifier
-                        .padding(top = 3.dp)
-                        .weight(1f)
-                ) {
-                    Text(
-                        text = "Избранное",
-                        fontFamily = SfProDisplay,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.Black,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        text = chat.lastMessage,
-                        fontFamily = SfProText,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Gray,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                Column(
-                    verticalArrangement = Arrangement.SpaceBetween,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .padding(top = 3.dp, bottom = 5.dp)
-                        .weight(0.15f)
-                ) {
-                    Text(
-                        text = formattedTime,
-                        fontFamily = SfProText,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Normal,
-                        color = Gray,
-                        maxLines = 1,
-                    )
-                }
-            }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column(
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier
+                .padding(top = 3.dp)
+                .weight(1f)
+        ) {
+            Text(
+                text = "Избранное",
+                fontFamily = SfProDisplay,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.Medium,
+                color = Color.Black,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = chat.lastMessage,
+                fontFamily = SfProText,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Normal,
+                color = Gray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
-
-        else -> {
-            // Пока данные конкретного человека грузятся, показываем красивый скелетон-плейсхолдер
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                Text(text = "Загрузка...", color = Color.LightGray)
-            }
+        Column(
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(top = 3.dp, bottom = 5.dp)
+                .weight(0.15f)
+        ) {
+            Text(
+                text = formattedTime,
+                fontFamily = SfProText,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Normal,
+                color = Gray,
+                maxLines = 1,
+            )
         }
     }
 }
