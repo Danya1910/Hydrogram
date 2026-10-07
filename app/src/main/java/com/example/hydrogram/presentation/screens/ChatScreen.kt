@@ -130,6 +130,7 @@ import com.example.hydrogram.presentation.util.formatHeaderDate
 import com.example.hydrogram.presentation.util.generateChatId
 import com.example.hydrogram.presentation.util.getStartOfDay
 import com.example.hydrogram.presentation.util.glassEffect
+import com.example.hydrogram.presentation.util.openAppSettings
 import com.example.hydrogram.presentation.viewModel.ChatViewModel
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.ChatInputField
@@ -2220,16 +2221,6 @@ private fun ImageOfAllImagesWidget(
                 .padding(horizontal = 8.dp)
         )
     }
-}
-
-private fun openAppSettings(context: Context) {
-    val intent = Intent(
-        Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-        Uri.fromParts("package", context.packageName, null)
-    ).apply {
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
-    context.startActivity(intent)
 }
 
 data class FullSizeImageData(
