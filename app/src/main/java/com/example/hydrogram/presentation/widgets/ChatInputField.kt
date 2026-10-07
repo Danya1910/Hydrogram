@@ -39,6 +39,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -167,6 +168,8 @@ fun ChatInputField(
 
     Log.d("ChatInput", "currentEditingMessage: $editingMessage, replyMessage: $replyMessage")
 
+    var sendButtonDragOffset by remember { mutableStateOf(0f) }
+
     Column(
         verticalArrangement = Arrangement.Bottom,
         horizontalAlignment = Alignment.End,
@@ -213,6 +216,7 @@ fun ChatInputField(
                 formattedTime = formattedTime,
                 formattedVideoTime = formattedVideoTime,
                 isTextMessage = isTextMessage,
+                sendButtonDragOffset = sendButtonDragOffset,
             )
             AnimatedVisibility(
                 visible = !isTextMessage,
@@ -274,6 +278,9 @@ fun ChatInputField(
                     requestVideoPermission = {
                         requestVideoPermission()
                     },
+                    setDragOffset = {
+                        sendButtonDragOffset = it
+                    }
                 )
             }
         }
@@ -330,6 +337,7 @@ private fun SendButton(
     onRecordStop: () -> Unit,
     onRecordCancel: () -> Unit,
     videoRecordingToggle: (Boolean) -> Unit,
+    setDragOffset: (Float) -> Unit,
     isVideoRecording: Boolean,
     cancelVideo: () -> Unit,
     isVideoButton: Boolean,
@@ -471,6 +479,7 @@ private fun SendButton(
                                 requestVideoPermission()
                                 isPressed = false
                                 dragOffset = 0f
+                                setDragOffset(0f)
                                 return@awaitEachGesture
                             }
                             videoRecordingToggle(true)
@@ -479,6 +488,7 @@ private fun SendButton(
                                 requestAudioPermission()
                                 isPressed = false
                                 dragOffset = 0f
+                                setDragOffset(0f)
                                 return@awaitEachGesture
                             }
                             changeRecordState(true)
@@ -501,6 +511,7 @@ private fun SendButton(
                                     val delta = change.position.x - change.previousPosition.x
                                     dragOffset =
                                         (dragOffset + delta).coerceIn(cancelThresholdPx, 0f)
+                                    setDragOffset(dragOffset)
 
                                     if (dragOffset <= cancelThresholdPx) {
                                         isCanceled = true
@@ -543,6 +554,7 @@ private fun SendButton(
 
                     isPressed = false
                     dragOffset = 0f
+                    setDragOffset(0f)
                     isHapticTriggered = false
                 }
             },
@@ -588,6 +600,7 @@ private fun MessageInputField(
     formattedTime: String,
     formattedVideoTime: String,
     isTextMessage: Boolean,
+    sendButtonDragOffset: Float,
 ) {
 
     val inputHeight by animateDpAsState(
@@ -625,6 +638,14 @@ private fun MessageInputField(
         )
         if (isRecording || isVideoRecording) {
             val timeToDisplay = if (isRecording) formattedTime else formattedVideoTime
+            Box(
+                modifier = Modifier
+            ) {
+                Spacer(modifier = Modifier.width(16.dp))
+                HelpText(
+                    sendButtonDragOffset = sendButtonDragOffset
+                )
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -636,8 +657,6 @@ private fun MessageInputField(
                 RecordingTime(
                     formattedTime = timeToDisplay,
                 )
-                Spacer(modifier = Modifier.width(16.dp))
-                HelpText()
             }
         } else {
             Column(
@@ -1094,36 +1113,49 @@ private fun RecordingTime(
         fontSize = 15.sp,
         fontFamily = SfProText,
         color = LightBlack,
+        modifier = Modifier
+            .width(58.dp)
     )
 
 }
 
 
 @Composable
-private fun HelpText() {
-
-    val infiniteTransition = rememberInfiniteTransition()
-
-    val animation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = -7f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = 1500,
-                easing = FastOutSlowInEasing,
-            ),
-            repeatMode = RepeatMode.Reverse,
-        )
-    )
+private fun HelpText(
+    sendButtonDragOffset: Float,
+) {
 
     val density = LocalDensity.current
+
+    val thresholdPx = with(LocalDensity.current) { 30.dp.toPx() }
+
+    val baseOffsetPx = with(density) { 110.dp.toPx() }
+
+    val dragOffsetAfterThreshold = (sendButtonDragOffset + thresholdPx)
+        .coerceAtMost(0f)
+
+    val translationXPx = baseOffsetPx + dragOffsetAfterThreshold
+
+    val maxDragDistancePx = with(LocalDensity.current) { -60.dp.toPx() }
+
+    val dragFraction = (sendButtonDragOffset / maxDragDistancePx).coerceIn(0f, 1f)
+
+    val animatedAlpha by animateFloatAsState(
+        targetValue = 1f - dragFraction,
+        animationSpec = tween(100),
+        label = "helpTextAlpha"
+    )
+
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .graphicsLayer {
-                translationX = animation * density.density
+                translationX = translationXPx
             }
+            .alpha(
+                animatedAlpha
+            )
     ) {
         Icon(
             painter = painterResource(R.drawable.ic_arrow_left),
