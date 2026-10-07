@@ -54,6 +54,7 @@ class InboxViewModel @Inject constructor(
             if (!result.isNullOrEmpty()) {
                 _currentId.value = result
                 startTrackingPresenceUseCase(uid = result)
+                observeInboxChats(userId = result)
             } else return@launch
         }
     }
@@ -61,14 +62,7 @@ class InboxViewModel @Inject constructor(
     fun observeInboxChats(
         userId: String,
     ) {
-        if (userId.isBlank()) {
-            _uiState.value = InboxUiState.Error("Пользователь не авторизирован")
-            return
-        }
-
-        if (inboxJob?.isActive == true) {
-            return
-        }
+        if (inboxJob != null) return
 
         inboxJob = viewModelScope.launch {
             Log.d("InboxViewModel", "collect started for userId=$userId")
