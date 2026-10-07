@@ -1127,7 +1127,7 @@ private fun HelpText(
 
     val density = LocalDensity.current
 
-    val thresholdPx = with(LocalDensity.current) { 30.dp.toPx() }
+    val thresholdPx = with(LocalDensity.current) { 10.dp.toPx() }
 
     val baseOffsetPx = with(density) { 110.dp.toPx() }
 
