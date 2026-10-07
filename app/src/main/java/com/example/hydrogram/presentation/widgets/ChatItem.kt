@@ -1,6 +1,5 @@
 package com.example.hydrogram.presentation.widgets
 
-import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -20,8 +19,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,16 +31,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Chat
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.presentation.navigation.Screen
-import com.example.hydrogram.presentation.states.UserState
-import com.example.hydrogram.presentation.viewModel.UserViewModel
+import com.example.hydrogram.presentation.util.ChatTimeFormatter
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Gray
 import com.example.hydrogram.ui.theme.Green
@@ -66,9 +60,7 @@ fun ChatItem(
         parts.firstOrNull { it != mineId } ?: parts.firstOrNull() ?: ""
     }
 
-    val formattedTime = DateFormat.format(
-        "HH:mm", Date(chat.lastMessageTimestamp)
-    ).toString()
+    val formattedTime = ChatTimeFormatter.format(chat.lastMessageTimestamp)
 
 
     val user = chat.user ?: User(name = "Удаленный аккаунт")
