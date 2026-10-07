@@ -10,4 +10,5 @@ data class Chat(
     val unreadCount: Int = 0,
     val members: List<String> = emptyList(),
     val lastMessageStatus: String = "",
+    val user: User? = null,
 )
