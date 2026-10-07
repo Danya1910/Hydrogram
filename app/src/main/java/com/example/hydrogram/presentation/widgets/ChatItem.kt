@@ -1,8 +1,6 @@
 package com.example.hydrogram.presentation.widgets
 
-import android.graphics.BitmapFactory
 import android.text.format.DateFormat
-import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
