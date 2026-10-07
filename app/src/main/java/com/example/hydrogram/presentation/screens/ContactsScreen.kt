@@ -1,5 +1,7 @@
 package com.example.hydrogram.presentation.screens
 
+import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.util.Base64
@@ -64,6 +66,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.inspectable
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -82,6 +85,7 @@ import com.example.hydrogram.presentation.states.SearchState
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.formatLastSeen
+import com.example.hydrogram.presentation.util.openAppSettings
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -137,6 +141,11 @@ private fun Content(
         }
     }
 
+    val hasContactsPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.READ_CONTACTS
+    ) == PackageManager.PERMISSION_GRANTED
+
     var filteredContacts = remember(query, contacts) {
         if (query.isBlank()) {
             contacts
@@ -168,13 +177,13 @@ private fun Content(
 
     LaunchedEffect(Unit) {
         val hasPermission = ContextCompat.checkSelfPermission(
-            context, android.Manifest.permission.READ_CONTACTS
+            context, Manifest.permission.READ_CONTACTS
         ) == PackageManager.PERMISSION_GRANTED
 
         if (hasPermission) {
             searchViewModel.syncContacts()
         } else {
-            permissionLauncher.launch(android.Manifest.permission.READ_CONTACTS)
+            permissionLauncher.launch(Manifest.permission.READ_CONTACTS)
         }
     }
 
@@ -211,6 +220,9 @@ private fun Content(
             }
         )
         Spacer(modifier = Modifier.height(10.dp))
+        if(!hasContactsPermission) {
+            AskContactsWidget(context = context)
+        }
 
         val rawGlobalUsers = (foundUserState as? SearchState.Success)?.users ?: emptyList()
 
@@ -852,6 +864,96 @@ private fun GlobalUserCard(
                 letterSpacing = (-0.23).sp
             )
         }
+    }
+}
+
+
+@Composable
+private fun AskContactsWidget(
+    context: Context,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+    ) {
+        SeparatorLine(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp
+                )
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(
+                    horizontal = 16.dp
+                )
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_warming_sign),
+                contentDescription = null,
+                tint = Color.Red,
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = "Доступ к контактам",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Medium,
+                fontSize = 18.sp,
+                color = LightBlack,
+            )
+        }
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Разрешите приложению доступ к контактам," +
+                    "чтобы сразу видеть в нем Ваших друзей",
+            fontFamily = SfProText,
+            fontWeight = FontWeight.Normal,
+            fontSize = 17.sp,
+            color = LightBlack,
+            modifier = Modifier
+                .padding(
+                    horizontal = 16.dp
+                )
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        SeparatorLine(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp
+                )
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp)
+                .clickable{
+                    openAppSettings(context)
+                }
+        ) {
+            Text(
+                text = "Разрешить вход в настройках",
+                fontFamily = SfProText,
+                fontWeight = FontWeight.Normal,
+                fontSize = 17.sp,
+                color = Blue,
+                modifier = Modifier
+                    .padding(
+                        horizontal = 20.dp
+                    )
+            )
+        }
+        SeparatorLine(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = 16.dp
+                )
+        )
     }
 }
 
