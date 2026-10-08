@@ -81,20 +81,15 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun RequestNotificationPermission() {
-    val context = LocalContext.current
 
-    // Создаем лаунчер для системного диалога запроса разрешений
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
-            // Пользователь разрешил уведомления
         } else {
-            // Пользователь отказал в доступе
         }
     }
 
-    // Запускаем проверку один раз при старте экрана
     LaunchedEffect(Unit) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
