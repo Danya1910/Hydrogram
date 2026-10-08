@@ -21,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,6 +46,7 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.OfflineStatusColor
 import com.example.hydrogram.ui.theme.SfProText
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -232,8 +235,21 @@ private fun UserName(
     presenceState: UserPresence,
 ) {
 
+    val now by produceState(
+        initialValue = System.currentTimeMillis(),
+        presenceState.isOnline,
+        presenceState.lastSeen,
+    ) {
+        if (presenceState.isOnline) return@produceState
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(30_000)
+        }
+    }
+
     val formattedLastSeenTime = formatLastSeen(
-        lastSeenTimestamp = presenceState.lastSeen
+        lastSeenTimestamp = presenceState.lastSeen,
+        now = now,
     )
 
     Box(
