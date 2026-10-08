@@ -48,7 +48,10 @@ import com.example.hydrogram.ui.theme.Separator
 import com.example.hydrogram.ui.theme.SfProText
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.hydrogram.presentation.navigation.Screen
@@ -200,7 +203,7 @@ private fun InputPasswordField(
                 fontWeight = FontWeight.Normal,
                 color = Color.Black
             ),
-            visualTransformation = PasswordVisualTransformation(),
+            visualTransformation = AsteriskVisualTransformation(),
             modifier = Modifier
                 .padding(horizontal = 16.dp),
             decorationBox = { innerTextField ->
@@ -275,6 +278,16 @@ private fun AcceptButton(
         }
     }
 
+}
+
+class AsteriskVisualTransformation : VisualTransformation {
+    override fun filter(text: AnnotatedString): TransformedText {
+        val masked = "*".repeat(text.text.length)
+        return TransformedText(
+            text = AnnotatedString(masked),
+            offsetMapping = OffsetMapping.Identity,
+        )
+    }
 }
 
 @Composable
