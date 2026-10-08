@@ -1,8 +1,12 @@
 package com.example.hydrogram.presentation.widgets
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,16 +24,20 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -69,12 +77,7 @@ fun BottomBar(
         ),
     )
 
-    val glassBrush = Brush.linearGradient(
-        colors = listOf(
-            Color.White.copy(alpha = 0.75f),
-            Color.White.copy(alpha = 0.45f),
-        )
-    )
+
 
     val borderBrush = Brush.linearGradient(
         colors = listOf(
@@ -84,7 +87,20 @@ fun BottomBar(
     )
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val rawRoute = navBackStackEntry?.destination?.route
+
+    var lastRoute by remember { mutableStateOf<String?>(null) }
+    val currentRoute = rawRoute ?: lastRoute
+
+    LaunchedEffect(rawRoute) {
+        if (rawRoute != null) lastRoute = rawRoute
+    }
+
+    DisposableEffect(Unit) {
+        println(">>> BottomBar CREATED")
+        onDispose { println(">>> BottomBar DISPOSED") }
+    }
+
 
 
     Row(
@@ -101,96 +117,105 @@ fun BottomBar(
             modifier = Modifier
                 .height(62.dp)
                 .weight(1f)
-                .shadow(
-                    elevation = 4.dp,
-                    shape = CircleShape,
-                    clip = true,
-                    ambientColor = Color.Black.copy(alpha = 0.5f),
-                    spotColor = Color.Black.copy(alpha = 0.4f),
-                )
-                .background(
-                    brush = glassBrush,
-                    shape = CircleShape
-                )
-                .border(
-                    width = 1.dp,
-                    brush = borderBrush,
-                    shape = CircleShape
-                )
-                .padding(all = 5.dp)
+                .shadow(4.dp, CircleShape, clip = true)
+                .background(Color.White, CircleShape)
+                .border(1.dp, borderBrush, CircleShape)
+                .padding(5.dp)
         ) {
             buttons.forEach { item ->
-                val isSelected = item.route == currentRoute
-
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier
-                        .height(56.dp)
-                        .clip(
-                            shape = CircleShape,
-                        )
-                        .weight(1f)
-                        .background(
-                            color = if (isSelected) SelectedItem else Color.Transparent,
-                            shape = CircleShape,
-                        )
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = ripple(color = Blue.copy(alpha = 0.2f)),
-                        ) {
-                            if (currentRoute != item.route) {
-                                navController.navigate(item.route)
-                            }
-                        }
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Box {
-                            Icon(
-                                painter = painterResource(item.icon),
-                                contentDescription = null,
-                                tint = if (isSelected) Blue else BottomNavItem,
-                            )
-                            val showBadge = !unreadCount.isNullOrBlank() && unreadCount != "0"
-
-                            if (showBadge && item.route == "Chats") {
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(start = 10.dp)
-                                        .height(16.dp)
-                                        .widthIn(min = 12.dp)
-                                        .clip(CircleShape)
-                                        .background(color = Red, shape = CircleShape)
-                                        .padding(horizontal = 4.dp),
-                                ) {
-                                    Text(
-                                        text = unreadCount,
-                                        fontFamily = SfProText,
-                                        fontWeight = FontWeight.Normal,
-                                        fontSize = 10.sp,
-                                        color = Color.White,
-                                        letterSpacing = -(0.23).sp,
-                                    )
+                BottomBarItem(
+                    item = item,
+                    isSelected = item.route == currentRoute,
+                    unreadCount = unreadCount,
+                    onClick = {
+                        if (currentRoute != item.route) {
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) {
+                                    saveState = true
                                 }
+                                launchSingleTop = true
+                                restoreState = true
                             }
                         }
-                        Spacer(modifier = Modifier.height(3.dp))
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        BottomSearch()
+    }
+}
+
+@Composable
+private fun BottomBarItem(
+    item: NavigationData,
+    isSelected: Boolean,
+    unreadCount: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val iconColor by animateColorAsState(
+        targetValue = if (isSelected) Blue else BottomNavItem,
+        animationSpec = tween(250, easing = FastOutSlowInEasing),
+        label = "iconColor",
+    )
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected) SelectedItem else Color.Transparent,
+        animationSpec = tween(250, easing = FastOutSlowInEasing),
+        label = "bgColor",
+    )
+
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .height(56.dp)
+            .clip(CircleShape)
+            .background(bgColor, CircleShape)
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { onClick() })
+            }
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Box {
+                Icon(
+                    painter = painterResource(item.icon),
+                    contentDescription = null,
+                    tint = iconColor,
+                )
+                val showBadge = !unreadCount.isNullOrBlank() && unreadCount != "0"
+                if (showBadge && item.route == "Chats") {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(start = 10.dp)
+                            .height(16.dp)
+                            .widthIn(min = 12.dp)
+                            .clip(CircleShape)
+                            .background(Red, CircleShape)
+                            .padding(horizontal = 4.dp),
+                    ) {
                         Text(
-                            text = item.title,
+                            text = unreadCount,
                             fontFamily = SfProText,
+                            fontWeight = FontWeight.Normal,
                             fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = if (isSelected) Blue else BottomNavItem,
+                            color = Color.White,
+                            letterSpacing = -(0.23).sp,
                         )
                     }
                 }
             }
+            Spacer(Modifier.height(3.dp))
+            Text(
+                text = item.title,
+                fontFamily = SfProText,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold,
+                color = iconColor,
+            )
         }
-        Spacer(modifier = Modifier.width(8.dp))
-        BottomSearch()
     }
 }
 
