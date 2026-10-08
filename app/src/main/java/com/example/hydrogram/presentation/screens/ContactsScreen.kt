@@ -51,6 +51,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -353,25 +354,32 @@ private fun ContactUserCard(
     onUserClick: () -> Unit,
 ) {
 
-    var tick by remember { mutableStateOf(0) }
 
-    if (contact?.user?.isOnline == false) {
-        LaunchedEffect(contact.user.uid) {
-            while (true) {
-                delay(30_000L)
-                tick++
-            }
+    val now by produceState(
+        initialValue = System.currentTimeMillis(),
+        contact?.user?.isOnline,
+        contact?.user?.lastSeen,
+    ) {
+        if (contact?.user?.isOnline != false) return@produceState
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(30_000)
         }
     }
 
-    val isOnline = remember(contact?.user?.isOnline, contact?.user?.lastSeen, tick) {
-        contact?.user?.isOnline?.let { isOnline ->
-            if (isOnline) {
-                "онлайн"
-            } else {
-                formatLastSeen(lastSeenTimestamp = contact.user.lastSeen)
-            }
-        } ?: "был(а) недавно"
+    val presenceText = remember(
+        contact?.user?.lastSeen,
+        now,
+    ) {
+        val user = contact?.user
+        when {
+            user == null -> "был(а) недавно"
+            user.isOnline -> "онлайн"
+            else -> formatLastSeen(
+                lastSeenTimestamp = user.lastSeen,
+                now = now,
+            )
+        }
     }
 
     val onlineTextColor = contact?.user?.isOnline?.let {
@@ -417,7 +425,7 @@ private fun ContactUserCard(
             )
             Spacer(modifier = Modifier.height(3.dp))
             Text(
-                text = isOnline,
+                text = presenceText,
                 fontFamily = SfProText,
                 fontWeight = FontWeight.Normal,
                 fontSize = 15.sp,
