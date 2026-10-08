@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -34,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -49,7 +49,6 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.layout
-import androidx.compose.ui.modifier.modifierLocalOf
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -77,6 +76,7 @@ import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 
@@ -512,10 +512,34 @@ private fun UserInfoHat(
                 ).coerceIn(0f, 1f)
 
 
-    val formattedLastSeenTime =
-        formatLastSeen(
-            lastSeenTimestamp = presenceState.lastSeen
-        )
+
+
+    val now by produceState(
+        initialValue = System.currentTimeMillis(),
+        presenceState.isOnline,
+        presenceState.lastSeen,
+        user,
+    ) {
+        if (presenceState.isOnline) return@produceState
+        while (true) {
+            value = System.currentTimeMillis()
+            delay(30_000)
+        }
+    }
+
+    val presenceText = remember(
+        presenceState.lastSeen,
+        now,
+    ) {
+        when {
+            user == null -> "был(а) недавно"
+            presenceState.isOnline -> "онлайн"
+            else -> formatLastSeen(
+                lastSeenTimestamp = presenceState.lastSeen,
+                now = now,
+            )
+        }
+    }
 
 
     Box(
@@ -685,7 +709,7 @@ private fun UserInfoHat(
                 Spacer(modifier = Modifier.height((4 - (collapseFraction * 1f)).dp))
 
                 Text(
-                    text = formattedLastSeenTime,
+                    text = presenceText,
                     fontFamily = SfProText,
                     fontSize = (15 - (collapseFraction * 3f)).sp,
                     color = Color.Gray,
