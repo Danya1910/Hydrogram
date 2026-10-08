@@ -61,7 +61,6 @@ class MainActivity : ComponentActivity() {
 
             val navController = rememberNavController()
 
-            // Просто передаем состояние id чата из уведомления прямо в граф навигации
             RootNavGraph(
                 startDescription = startDescription,
                 navController = navController,
