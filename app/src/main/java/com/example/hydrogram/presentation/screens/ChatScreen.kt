@@ -195,39 +195,6 @@ fun ChatScreen(
         mutableStateOf<List<FullSizeImageData?>?>(null)
     }
 
-    val currentImageIndex by remember {
-        derivedStateOf {
-            chatsImages?.indexOfFirst { it?.imageUrl == currentFullSizeImageData?.imageUrl } ?: -1
-        }
-    }
-
-    val currentImageNumber by remember {
-        derivedStateOf {
-            if (currentImageIndex != -1) currentImageIndex + 1 else 0
-        }
-    }
-
-    val totalImagesCount by remember {
-        derivedStateOf {
-            chatsImages?.size ?: 0
-        }
-    }
-
-    val imageOfImagesText = if (currentImageNumber > 0)
-        "$currentImageNumber из $totalImagesCount" else ""
-
-    LaunchedEffect(imageOfImagesText) {
-        Log.d("ImageOfImages", imageOfImagesText)
-    }
-
-    LaunchedEffect(chatsImages) {
-        if (!chatsImages.isNullOrEmpty()) {
-            Log.d("ChatImages", chatsImages.toString())
-            Log.d("ChatImages", "all images count: ${chatsImages!!.size}")
-            Log.d("ChatImages", "current image of all images ")
-        }
-    }
-
     var showButtonsDuringViewingImages by remember {
         mutableStateOf(true)
     }
