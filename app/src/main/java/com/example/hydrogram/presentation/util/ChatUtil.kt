@@ -15,11 +15,14 @@ fun generateChatId(userId1: String, userId2: String): String {
     }
 }
 
-fun formatLastSeen(lastSeenTimestamp: Long): String {
-    val now = Instant.now()
+fun formatLastSeen(
+    lastSeenTimestamp: Long,
+    now: Long = System.currentTimeMillis(),
+): String {
+    val nowInstant = Instant.ofEpochMilli(now)
     val lastSeenInstant = Instant.ofEpochMilli(lastSeenTimestamp)
 
-    val minutesAgo = ChronoUnit.MINUTES.between(lastSeenInstant, now)
+    val minutesAgo = ChronoUnit.MINUTES.between(lastSeenInstant, nowInstant)
 
     if (minutesAgo < 1) return "был(а) только что"
     if (minutesAgo < 60) return "был(а) $minutesAgo мин. назад"
