@@ -38,6 +38,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -47,6 +48,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.hydrogram.R
 import com.example.hydrogram.presentation.navigation.NavigationData
+import com.example.hydrogram.presentation.util.showToast
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.BottomNavItem
 import com.example.hydrogram.ui.theme.Red
@@ -240,6 +242,9 @@ fun BottomBarPreview() {
 
 @Composable
 private fun BottomSearch() {
+
+    val context = LocalContext.current
+
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -255,6 +260,11 @@ private fun BottomSearch() {
                 color = Color.White.copy(alpha = 0.6f),
                 shape = CircleShape
             )
+            .clickable{
+                context.showToast(
+                    message = "не должно работать"
+                )
+            }
 
     ) {
         Icon(

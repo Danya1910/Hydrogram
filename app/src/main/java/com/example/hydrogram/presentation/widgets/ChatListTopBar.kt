@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ModifierLocalBeyondBoundsLayout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.example.hydrogram.R
 import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
+import com.example.hydrogram.presentation.util.showToast
 import com.example.hydrogram.ui.theme.LightBlack
 import com.example.hydrogram.ui.theme.LightGrayBackground
 import com.example.hydrogram.ui.theme.SfProText
@@ -40,6 +42,8 @@ import com.example.hydrogram.ui.theme.SfProText
 fun ChatListTopBar(
 
 ) {
+
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -60,7 +64,11 @@ fun ChatListTopBar(
         ) {
             EditButton(
                 title = "Edit",
-                onClick = {},
+                onClick = {
+                    context.showToast(
+                        message = "не должно работать"
+                    )
+                },
             )
             Spacer(modifier = Modifier.width(40.dp))
             Box(
@@ -71,8 +79,16 @@ fun ChatListTopBar(
                 ChatListHat()
             }
             RowEdit(
-                onEditClick = {},
-                onHistoryClick = {},
+                onEditClick = {
+                    context.showToast(
+                        message = "не должно работать"
+                    )
+                },
+                onHistoryClick = {
+                    context.showToast(
+                        message = "не должно работать"
+                    )
+                },
             )
         }
     }

@@ -90,6 +90,7 @@ import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.formatLastSeen
 import com.example.hydrogram.presentation.util.openAppSettings
+import com.example.hydrogram.presentation.util.showToast
 import com.example.hydrogram.presentation.viewModel.SearchViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -248,6 +249,11 @@ private fun Content(
                     .height(52.dp)
                     .fillMaxWidth()
                     .padding(horizontal = 28.dp)
+                    .clickable{
+                        context.showToast(
+                            message = "не должно работать"
+                        )
+                    }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_add_friend),
@@ -676,6 +682,9 @@ private fun SearchField(
 @Composable
 private fun TopBar(
 ) {
+
+    val context = LocalContext.current
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -686,7 +695,11 @@ private fun TopBar(
     ) {
         SortButton(
             title = "Сорт.",
-            onClick = {},
+            onClick = {
+                context.showToast(
+                    message = "не должно работать"
+                )
+            },
         )
         Box(
             contentAlignment = Alignment.Center,
@@ -698,7 +711,11 @@ private fun TopBar(
         Spacer(modifier = Modifier.width(23.dp))
         AddButton(
             icon = R.drawable.ic_plus,
-            onClick = {},
+            onClick = {
+                context.showToast(
+                    message = "не должно работать"
+                )
+            },
         )
     }
 }
