@@ -1,7 +1,5 @@
 package com.example.hydrogram.presentation.screens
 
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,7 +31,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -41,6 +38,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -56,6 +54,7 @@ import com.example.hydrogram.presentation.util.GlassBackground
 import com.example.hydrogram.presentation.util.GlassBorder
 import com.example.hydrogram.presentation.util.MenuRowItem
 import com.example.hydrogram.presentation.util.formatPhoneNumber
+import com.example.hydrogram.presentation.util.showToast
 import com.example.hydrogram.presentation.viewModel.UserViewModel
 import com.example.hydrogram.presentation.widgets.BottomBar
 import com.example.hydrogram.presentation.widgets.SeparatorLine
@@ -292,22 +291,6 @@ private fun UserInfoHat(
 
     val userName = user?.userName
 
-    val avatarBitmap = remember(user?.avatarUrl) {
-        val url = user?.avatarUrl
-        if (!url.isNullOrBlank() && url.startsWith("data:image/jpeg;base64,")) {
-            try {
-                val base64String = url.substringAfter("base64,")
-                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            null
-        }
-    }
-
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -417,12 +400,20 @@ private fun GlassButton(
 private fun MenuRow(
     items: List<MenuRowItem>,
 ) {
+
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(
                 shape = RoundedCornerShape(26.dp)
             )
+            .clickable{
+                context.showToast(
+                    message = "не должно работать"
+                )
+            }
     ) {
         items.forEachIndexed { index, item ->
             MenuRowItem(
@@ -443,12 +434,19 @@ private fun MenuRow(
 private fun FakeMenuRow(
     items: List<MenuRowItem>,
 ) {
+
+    val context = LocalContext.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(
                 shape = RoundedCornerShape(26.dp)
             )
+            .clickable{
+                context.showToast(
+                    message = "не должно работать"
+                )
+            }
     ) {
         items.forEachIndexed { index, item ->
             FakeItem(
@@ -562,6 +560,8 @@ private fun TopBar(
     navController: NavController,
 ) {
 
+    val context = LocalContext.current
+
     val glassBrush = Brush.verticalGradient(
         colors = listOf(
             LightGrayBackground.copy(alpha = 0.8f),
@@ -584,7 +584,11 @@ private fun TopBar(
     ) {
         GlassButton(
             icon = R.drawable.ic_qr,
-            onClick = {},
+            onClick = {
+                context.showToast(
+                    message = "не должно работать"
+                )
+            },
         )
         Spacer(modifier = Modifier.weight(1f))
         GlassButton(
