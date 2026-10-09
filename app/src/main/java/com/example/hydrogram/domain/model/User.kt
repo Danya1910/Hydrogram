@@ -5,6 +5,7 @@ import com.google.firebase.firestore.PropertyName
 data class User(
     val uid: String = "",
     val name: String = "",
+    val nameLowercase: String = "",
     val avatarUrl: String = "",
     val email: String = "",
     @get:PropertyName("isOnline")
