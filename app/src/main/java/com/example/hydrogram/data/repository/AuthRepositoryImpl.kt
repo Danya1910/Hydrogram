@@ -72,6 +72,7 @@ class AuthRepositoryImpl @Inject constructor(
         val userMap = mapOf(
             "uid" to uid,
             "name" to name,
+            "nameLowercase" to name.toLowerCase(),
             "email" to email,
             "avatarUrl" to avatarUrl,
             "isOnline" to true,
