@@ -33,7 +33,6 @@ class UserRepositoryImpl @Inject constructor(
     override suspend fun saveUserName(uid: String, userName: String): Result<Unit> {
         return try {
             val userNameLowercase = userName.trim().lowercase()
-            Log.d("UserRepositoryImpl", "lowercase: $userNameLowercase")
             firestore.collection("users")
                 .document(uid)
                 .update(
