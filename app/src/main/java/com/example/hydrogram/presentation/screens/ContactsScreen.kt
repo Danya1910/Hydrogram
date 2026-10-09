@@ -236,11 +236,19 @@ private fun Content(
 
         val globalUsers = remember(rawGlobalUsers, filteredContacts) {
             rawGlobalUsers.filter { globalUser ->
-                filteredContacts.none { contact ->
-                    contact.user.phone == globalUser.phone
-                }
+                filteredContacts.none { it.user.phone == globalUser.phone }
             }
         }
+
+
+        LaunchedEffect(filteredContacts, rawGlobalUsers) {
+            Log.d("ContactsScreen", "query = '$query'")
+            Log.d("ContactsScreen", "filteredContacts = ${filteredContacts.map { it.contactName }}")
+            Log.d("ContactsScreen", "rawGlobalUsers = ${rawGlobalUsers.map { it.name }}")
+            Log.d("ContactsScreen", "globalUsers (after filter) = ${globalUsers.map { it.name }}")
+            Log.d("ContactsScreen", "searchState = $foundUserState")
+        }
+
 
         if ((filteredContacts.isEmpty() && globalUsers.isEmpty()) || query.isEmpty()) {
             Row(
