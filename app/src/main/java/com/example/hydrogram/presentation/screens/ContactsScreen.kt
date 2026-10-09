@@ -3,8 +3,6 @@ package com.example.hydrogram.presentation.screens
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
-import android.util.Base64
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -158,9 +156,12 @@ private fun Content(
         if (query.isBlank()) {
             contacts
         } else {
+            val q = query.trim().lowercase()
             contacts.filter { contact ->
-                contact.contactName.contains(query, ignoreCase = true) ||
-                        contact.user.phone.contains(query)
+                contact.contactName.lowercase().contains(q) ||
+                        contact.user.name.lowercase().contains(q) ||
+                        contact.user.userName.lowercase().contains(q) ||
+                        contact.user.phone.contains(q)
             }
         }
     }
@@ -234,20 +235,14 @@ private fun Content(
 
         val rawGlobalUsers = (foundUserState as? SearchState.Success)?.users ?: emptyList()
 
-        val globalUsers = remember(rawGlobalUsers, filteredContacts) {
+        val globalUsers = remember(rawGlobalUsers, contacts) {
             rawGlobalUsers.filter { globalUser ->
-                filteredContacts.none { it.user.phone == globalUser.phone }
+                contacts.none { it.user.phone == globalUser.phone }
             }
         }
 
 
-        LaunchedEffect(filteredContacts, rawGlobalUsers) {
-            Log.d("ContactsScreen", "query = '$query'")
-            Log.d("ContactsScreen", "filteredContacts = ${filteredContacts.map { it.contactName }}")
-            Log.d("ContactsScreen", "rawGlobalUsers = ${rawGlobalUsers.map { it.name }}")
-            Log.d("ContactsScreen", "globalUsers (after filter) = ${globalUsers.map { it.name }}")
-            Log.d("ContactsScreen", "searchState = $foundUserState")
-        }
+
 
 
         if ((filteredContacts.isEmpty() && globalUsers.isEmpty()) || query.isEmpty()) {
@@ -311,11 +306,9 @@ private fun Content(
                 }
 
                 is SearchState.Success -> {
-                    val users = state.users
-
-                    if (users.isNotEmpty()) {
+                    if (globalUsers.isNotEmpty()) {
                         GlobalSearchedList(
-                            users = users,
+                            users = globalUsers,
                             navController = navController,
                         )
                     }
@@ -742,6 +735,8 @@ private fun ContactsMatchingList(
             .fillMaxWidth()
     ) {
         Text(
+            modifier = Modifier
+                .padding(horizontal = 16.dp),
             text = "КОНТАКТЫ",
             fontFamily = SfProText,
             fontSize = 13.sp,
@@ -754,10 +749,6 @@ private fun ContactsMatchingList(
             itemsIndexed(
                 items = sortedContacts,
             ) { index, contact ->
-                Log.d(
-                    "ContactsData",
-                    "В КАРТОЧКЕ: ${contact.contactName} lastSeen: ${contact.user.lastSeen}"
-                )
                 ContactUserCard(
                     contact = contact,
                     onUserClick = {
@@ -837,22 +828,6 @@ private fun GlobalUserCard(
     user: User?,
     onUserClick: () -> Unit,
 ) {
-
-    val avatarBitmap = remember(user?.avatarUrl) {
-        val url = user?.avatarUrl
-        if (url != null && url.isNotBlank() && url.startsWith("data:image/jpeg;base64,")) {
-            try {
-                val base64String = url.substringAfter("base64,")
-                val imageBytes = Base64.decode(base64String, Base64.DEFAULT)
-                BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-        } else {
-            null
-        }
-    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
