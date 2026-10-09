@@ -1,5 +1,6 @@
 package com.example.hydrogram.domain.usecase
 
+import androidx.compose.ui.text.toLowerCase
 import com.example.hydrogram.domain.model.User
 import com.example.hydrogram.domain.repository.UserRepository
 import javax.inject.Inject
@@ -23,6 +24,7 @@ class SaveUserProfileUseCase @Inject constructor(
         val user = User(
             uid = uid,
             name = name,
+            nameLowercase = name.toLowerCase(),
             avatarUrl = avatarUrl,
             email = email,
             phone = phone,
