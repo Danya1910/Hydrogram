@@ -63,37 +63,63 @@ class UserRepositoryImpl @Inject constructor(
 
     override suspend fun findUsersByPhoneOrUserName(query: String): List<User> {
         return try {
-            val normalizedQuery = query.trim().removePrefix("@").lowercase()
+            val trimmed = query.trim().removePrefix("@")
+            val normalizedQuery = trimmed.lowercase()
 
-            Log.d("FIRESTORE", "Поиск пользователя (регистронезависимый): $normalizedQuery")
+            if (normalizedQuery.isEmpty()) return emptyList()
+
+            Log.d("FIRESTORE", "Поиск пользователя: '$normalizedQuery'")
 
             val foundUsers = mutableListOf<User>()
 
-            val phoneSnapshot = firestore.collection("users")
-                .whereEqualTo("phone", normalizedQuery)
-                .get()
-                .await()
+            // 1. Поиск по телефону (нормализуем ввод так же, как храним)
+            val phoneQuery = trimmed.filter { it.isDigit() }
+                .removePrefix("8")
+                .removePrefix("7")
+                .takeLast(10)
 
-            Log.d("FIRESTORE", "По номеру найдено документов: ${phoneSnapshot.size()}")
+            if (phoneQuery.isNotEmpty()) {
+                val phoneSnapshot = firestore.collection("users")
+                    .whereEqualTo("phone", phoneQuery)
+                    .limit(10)
+                    .get()
+                    .await()
 
-            for (document in phoneSnapshot.documents) {
-                document.toObject(User::class.java)?.let { foundUsers.add(it) }
+                Log.d("FIRESTORE", "По телефону ($phoneQuery) найдено: ${phoneSnapshot.size()}")
+                for (document in phoneSnapshot.documents) {
+                    document.toObject(User::class.java)?.let { foundUsers.add(it) }
+                }
             }
 
-            val nameSnapshot = firestore.collection("users")
+            // 2. Поиск по userNameLowercase
+            val userNameSnapshot = firestore.collection("users")
                 .whereGreaterThanOrEqualTo("userNameLowercase", normalizedQuery)
                 .whereLessThanOrEqualTo("userNameLowercase", normalizedQuery + "\uf8ff")
                 .limit(10)
                 .get()
                 .await()
 
+            Log.d("FIRESTORE", "По userNameLowercase найдено: ${userNameSnapshot.size()}")
+            for (document in userNameSnapshot.documents) {
+                document.toObject(User::class.java)?.let { foundUsers.add(it) }
+            }
+
+            // 3. Поиск по nameLowercase
+            val nameSnapshot = firestore.collection("users")
+                .whereGreaterThanOrEqualTo("nameLowercase", normalizedQuery)
+                .whereLessThanOrEqualTo("nameLowercase", normalizedQuery + "\uf8ff")
+                .limit(10)
+                .get()
+                .await()
+
+            Log.d("FIRESTORE", "По nameLowercase найдено: ${nameSnapshot.size()}")
             for (document in nameSnapshot.documents) {
                 document.toObject(User::class.java)?.let { foundUsers.add(it) }
             }
 
             val distinctUsers = foundUsers.distinctBy { it.uid }
 
-            Log.d("FIRESTORE", "Всего уникальных пользователей найдено: ${distinctUsers.size}")
+            Log.d("FIRESTORE", "Всего уникальных: ${distinctUsers.size}")
             distinctUsers
 
         } catch (e: Exception) {
