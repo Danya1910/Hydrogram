@@ -66,6 +66,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.AspectRatioFrameLayout
 import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.util.MessageCallbacks
@@ -492,14 +493,21 @@ private fun CircleVideoPlayer(
     ) {
         AndroidView(
             factory = { ctx ->
-                TextureView(ctx).apply {
+                AspectRatioFrameLayout(ctx).apply {
                     layoutParams = FrameLayout.LayoutParams(
                         FrameLayout.LayoutParams.MATCH_PARENT,
                         FrameLayout.LayoutParams.MATCH_PARENT,
                         Gravity.CENTER
                     )
-
-                    videoPlayer.setVideoTextureView(this)
+                    resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM // или FIT
+                    val texture = TextureView(ctx).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            FrameLayout.LayoutParams.MATCH_PARENT,
+                            FrameLayout.LayoutParams.MATCH_PARENT
+                        )
+                    }
+                    addView(texture)
+                    videoPlayer.setVideoTextureView(texture)
                 }
             },
             modifier = Modifier.fillMaxSize()
