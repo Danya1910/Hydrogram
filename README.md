@@ -1,8 +1,5 @@
 # 📱 [Hydrogram]
 
-[![Platform](https://shields.io)](https://android.com)
-[![Kotlin-Version](https://shields.io)](https://kotlinlang.org)
-[![UI](https://shields.io)](https://android.com/jetpack/compose)
 
 Hydrogram - это учебный клон мессенджера Telegram для Android. Проект создан с целью глубокого изучения внутренней архитектуры современных систем обмена сообщениями, работы с real-time данными и облачными хранилищами объектов.
 
