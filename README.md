@@ -78,7 +78,7 @@ com.example.hydrogram/
 
 В репозитории уже есть собранная release-версия приложения. Вы можете скачать и установить её прямо на свой Android-смартфон:
 
-1. [Скачать APK](https://github.com/Danya1910/Hydrogram/raw/main/app/release/apk-release.apk).
+1. [Скачать APK](https://github.com/Danya1910/Hydrogram/blob/main/app/release/app-release.apk).
 2. Разрешить установку приложения из неизвестных источников, если это потребуется.
 3. Установить и запустить Hydrogram.
 
