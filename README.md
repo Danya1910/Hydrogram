@@ -35,7 +35,6 @@
 * **Асинхронность**: Kotlin Coroutines & Flow
 * **Внедрение зависимостей**: Hilt
 * **Сеть и Backend**:
-  `Retrofit 2` для REST API запросов 
   `Firebase` для хранения структурированных данных пользователей и сессий,
   `Yandex Cloud (S3)` для надежного хранения и быстрой раздачи медиа файлов
 
@@ -78,7 +77,7 @@ com.example.hydrogram/
 
 В репозитории уже есть собранная release-версия приложения. Вы можете скачать и установить её прямо на свой Android-смартфон:
 
-1. [Скачать APK](https://github.com/Danya1910/Hydrogram/blob/main/app/release/app-release.apk).
+1. [📥 Скачать Hydrogram APK](https://github.com/Danya1910/Hydrogram/raw/main/app/release/app-release.apk)
 2. Разрешить установку приложения из неизвестных источников, если это потребуется.
 3. Установить и запустить Hydrogram.
 
