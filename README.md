@@ -40,6 +40,28 @@
 Зависимости между слоями организованы так, чтобы
 бизнес-логика не зависела от конкретных источников данных.
 
+com.example.hydrogram/
+├── data/
+│   ├── di/
+│   ├── dto/
+│   ├── repository/
+│   ├── service/
+│   ├── util/
+│   └── wrapper/
+├── domain/
+│   ├── model/
+│   ├── repository/
+│   └── usecase/
+└── presentation/
+    ├── navigation/
+    ├── screens/
+    ├── states/
+    ├── util/
+    ├── viewModel/
+    └── widgets/ 
+        └── messages/
+    
+
 ## 🚀 Как запустить проект
 
 В репозитории уже есть собранная release-версия приложения. Вы можете скачать и установить её прямо на свой Android-смартфон:
