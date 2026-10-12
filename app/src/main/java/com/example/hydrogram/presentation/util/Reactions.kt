@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
@@ -38,7 +39,7 @@ fun ReactionsBlock(
     penpalAvatar: String,
     onReactionClick: () -> Unit,
     mineColors: Pair<Color, Color>,
-    extraPadding: androidx.compose.ui.unit.Dp = 0.dp,
+    extraPadding: Dp = 0.dp,
 ) {
     var mineReactionEmoji: String? = null
     var penpalReactionEmoji: String? = null
@@ -75,6 +76,7 @@ fun ReactionsBlock(
 
     AnimatedVisibility(
         visible = haveReaction,
+        modifier = Modifier.padding(end = extraPadding),
         enter = fadeIn(animationSpec = tween(200)) +
                 expandVertically(
                     animationSpec = tween(200, easing = FastOutSlowInEasing),
