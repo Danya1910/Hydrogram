@@ -40,7 +40,6 @@ fun ReactionsBlock(
     mineColors: Pair<Color, Color>,
     extraPadding: androidx.compose.ui.unit.Dp = 0.dp,
 ) {
-    // Парсим текущие реакции
     var mineReactionEmoji: String? = null
     var penpalReactionEmoji: String? = null
     message.reactions?.forEach { (key, value) ->
