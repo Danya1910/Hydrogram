@@ -3,6 +3,7 @@ package com.example.hydrogram.presentation.widgets.messages.text
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -193,6 +194,9 @@ fun MineTextMessage(
                                 end = if (message.isEdited) 122.dp else 68.dp,
                                 bottom = 5.dp
                             )
+                            .animateContentSize(
+                                animationSpec = tween(200)
+                            )
                     ) {
                         Text(
                             text = message.text,
@@ -254,6 +258,9 @@ fun MineTextMessage(
                                 start = 10.dp,
                                 end = if (message.isEdited) 70.dp else 16.dp,
                                 bottom = 16.dp
+                            )
+                            .animateContentSize(
+                                animationSpec = tween(200)
                             )
                     ) {
                         Text(
@@ -423,7 +430,7 @@ fun MineReplyTextMessage(
     )
 
     val paddingAnimation by animateDpAsState(
-        targetValue = if (message.isEdited) 110.dp else 0.dp,
+        targetValue = if (message.isEdited) 110.dp else 35.dp,
         animationSpec = tween(
             delayMillis = 300,
         )
@@ -526,6 +533,9 @@ fun MineReplyTextMessage(
                     modifier = Modifier
                         .padding(
                             all = 9.dp,
+                        )
+                        .animateContentSize(
+                            animationSpec = tween(200),
                         )
                         .fillMaxWidth()
                         .height(41.dp)
@@ -728,7 +738,7 @@ fun MineReplyTextMessage(
                             penpalAvatar = messageData.penpalAvatar,
                             onReactionClick = { messageCallbacks.onReactionClick() },
                             mineColors = Color(0xFF40C13B) to Green,
-                            extraPadding = paddingAnimation,   // ← добавить
+                            extraPadding = paddingAnimation,
                         )
                     }
                     Row(
@@ -804,7 +814,7 @@ fun PenpalReplyTextMessage(
     )
 
     val paddingAnimation by animateDpAsState(
-        targetValue = if (message.isEdited) 35.dp else 0.dp,
+        targetValue = if (message.isEdited) 75.dp else 15.dp,
         animationSpec = tween(
             delayMillis = 300,
         )
@@ -908,6 +918,7 @@ fun PenpalReplyTextMessage(
                         .padding(
                             all = 9.dp,
                         )
+                        .animateContentSize(animationSpec = tween(200))
                         .fillMaxWidth()
                         .height(41.dp)
                         .clip(
@@ -1274,6 +1285,9 @@ fun PenpalTextMessage(
                                 end = if (message.isEdited) 98.dp else 42.dp,
                                 bottom = 5.dp
                             )
+                            .animateContentSize(
+                                animationSpec = tween(200)
+                            )
                     ) {
                         Text(
                             text = message.text,
@@ -1321,6 +1335,9 @@ fun PenpalTextMessage(
                                 start = 10.dp,
                                 end = if (message.isEdited) 70.dp else 16.dp,
                                 bottom = 16.dp
+                            )
+                            .animateContentSize(
+                                animationSpec = tween(200)
                             )
                     ) {
                         Text(
