@@ -6,17 +6,13 @@ import android.view.Gravity
 import android.view.TextureView
 import android.widget.FrameLayout
 import androidx.annotation.OptIn
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -29,7 +25,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
@@ -61,7 +56,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -71,10 +65,8 @@ import com.example.hydrogram.R
 import com.example.hydrogram.domain.model.Message
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
+import com.example.hydrogram.presentation.util.ReactionsBlock
 import com.example.hydrogram.presentation.util.VideoThumbnailExtractor
-import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
-import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
-import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.DateSeparatorGreen
 import com.example.hydrogram.ui.theme.Green
 import com.example.hydrogram.ui.theme.SfProText
@@ -109,18 +101,11 @@ fun CircleVideoMessage(
         label = "SwipeOffset"
     )
 
-    val validReactions = message.reactions
-        ?.filterValues { it != null }
-        ?: emptyMap()
-
-    val haveReaction = validReactions.isNotEmpty()
-
     var mineReactionId: String? = null
     var mineReactionEmoji: String? = null
     var penpalReactionId: String? = null
     var penpalReactionEmoji: String? = null
 
-    var reactions: MessageReactions? = null
 
     message.reactions?.entries?.forEach { entry ->
         if (entry.key == messageData.mineId) {
@@ -131,10 +116,6 @@ fun CircleVideoMessage(
             penpalReactionId = entry.key
             penpalReactionEmoji = entry.value
         }
-        reactions = MessageReactions(
-            mineReaction = mineReactionEmoji,
-            penpalReaction = penpalReactionEmoji,
-        )
         Log.d("Reaction", "$mineReactionId reacted with $mineReactionEmoji")
         Log.d("Reaction", "$penpalReactionId reacted with $penpalReactionEmoji")
     }
@@ -279,71 +260,22 @@ fun CircleVideoMessage(
                 }
             }
 
-                AnimatedVisibility(
-                    visible = haveReaction,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically(),
-                ) {
-                    val hasBothDifferentReactions = reactions?.mineReaction != null &&
-                            reactions.penpalReaction != null &&
-                            reactions.mineReaction != reactions.penpalReaction
-
-                    Box(
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                    ) {
-                    if (hasBothDifferentReactions) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            ReactionWidget(
-                                reactions = MessageReactions(
-                                    mineReaction = reactions.mineReaction,
-                                    penpalReaction = null
-                                ),
-                                color = Blue,
-                                onReactionClick = {
-                                    messageCallbacks.onReactionClick()
-                                },
-                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            ReactionWidget(
-                                reactions = MessageReactions(
-                                    mineReaction = null,
-                                    penpalReaction = reactions!!.penpalReaction
-                                ),
-                                color = Color(0xFFCCE3F8),
-                                onReactionClick = {
-                                    messageCallbacks.onReactionClick()
-                                },
-                                mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                            )
-                        }
-                    } else {
-                        if (reactions?.mineReaction == null && reactions?.penpalReaction != null) {
-                            ReactionWidget(
-                                reactions = reactions,
-                                color = Color(0xFFCCE3F8),
-                                onReactionClick = {
-                                    messageCallbacks.onReactionClick()
-                                },
-                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                            )
-                        } else {
-                            ReactionWidget(
-                                reactions = reactions,
-                                color = Blue,
-                                onReactionClick = {
-                                    messageCallbacks.onReactionClick()
-                                },
-                                mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                            )
-                        }
-                    }
-                }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        start = if(isMine) 0.dp else 16.dp
+                    ),
+                verticalAlignment = Alignment.Bottom,
+            ) {
+                ReactionsBlock(
+                    message = message,
+                    mineId = messageData.mineId,
+                    mineAvatar = messageData.mineAvatar,
+                    penpalAvatar = messageData.penpalAvatar,
+                    onReactionClick = { messageCallbacks.onReactionClick() },
+                    mineColors = Color(0xFF40C13B) to Green,
+                )
             }
         }
     }
@@ -447,7 +379,8 @@ private fun CircleVideoPlayer(
                     try {
                         videoPlayer.stop()
                         videoPlayer.clearMediaItems()
-                    } catch (e: Exception) {}
+                    } catch (e: Exception) {
+                    }
                     getCurrentDuration(0L)
                     setCurrentVideo("")
                 }

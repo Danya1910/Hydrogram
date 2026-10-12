@@ -17,16 +17,13 @@ import android.content.Context
 import android.text.format.DateFormat
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -81,7 +78,7 @@ import com.example.hydrogram.presentation.screens.PlaceholderContent
 import com.example.hydrogram.presentation.screens.decodeBase64Image
 import com.example.hydrogram.presentation.util.MessageCallbacks
 import com.example.hydrogram.presentation.util.MessageData
-import com.example.hydrogram.presentation.widgets.messages.ReactionWidget
+import com.example.hydrogram.presentation.util.ReactionsBlock
 import com.example.hydrogram.presentation.widgets.messages.text.MessageReactions
 import com.example.hydrogram.ui.theme.Blue
 import com.example.hydrogram.ui.theme.Green
@@ -153,8 +150,10 @@ fun VoiceWidget(
     DisposableEffect(audioPlayer, message.messageId) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                Log.d("VoiceDebug", "state changed: $playbackState," +
-                        " mediaId=${audioPlayer.currentMediaItem?.mediaId}, myId=${message.messageId}")
+                Log.d(
+                    "VoiceDebug", "state changed: $playbackState," +
+                            " mediaId=${audioPlayer.currentMediaItem?.mediaId}, myId=${message.messageId}"
+                )
                 if (
                     playbackState == Player.STATE_ENDED &&
                     audioPlayer.currentMediaItem?.mediaId == message.messageId
@@ -167,8 +166,10 @@ fun VoiceWidget(
             }
 
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
-                Log.d("VoiceDebug", "playWhenReady: $playWhenReady, reason=$reason," +
-                        " mediaId=${audioPlayer.currentMediaItem?.mediaId}, myId=${message.messageId}")
+                Log.d(
+                    "VoiceDebug", "playWhenReady: $playWhenReady, reason=$reason," +
+                            " mediaId=${audioPlayer.currentMediaItem?.mediaId}, myId=${message.messageId}"
+                )
                 val isThisItem = audioPlayer.currentMediaItem?.mediaId == message.messageId
                 if (isThisItem) {
                     isPlaying = playWhenReady
@@ -201,7 +202,8 @@ fun VoiceWidget(
                 try {
                     audioPlayer.stop()
                     audioPlayer.clearMediaItems()
-                } catch (_: Exception) {}
+                } catch (_: Exception) {
+                }
             }
         }
     }
@@ -299,9 +301,11 @@ fun VoiceWidget(
                 )
                 .pointerInput(Unit) {
                     detectTapGestures(
-                        onDoubleTap = { messageCallbacks.onDoubleClick(
-                            message.reactions?.get(messageData.mineId) != null
-                        ) },
+                        onDoubleTap = {
+                            messageCallbacks.onDoubleClick(
+                                message.reactions?.get(messageData.mineId) != null
+                            )
+                        },
                         onLongPress = { messageCallbacks.onLongClick(false) },
                     )
                 }
@@ -329,8 +333,10 @@ fun VoiceWidget(
                                 onClick = {
                                     val myId = message.messageId
                                     val currentId = audioPlayer.currentMediaItem?.mediaId
-                                    Log.d("VoiceDebug", "onClick: myId=$myId, currentId=$currentId," +
-                                            " state=${audioPlayer.playbackState}, playWhenReady=${audioPlayer.playWhenReady}")
+                                    Log.d(
+                                        "VoiceDebug", "onClick: myId=$myId, currentId=$currentId," +
+                                                " state=${audioPlayer.playbackState}, playWhenReady=${audioPlayer.playWhenReady}"
+                                    )
                                     if (currentId != myId) {
                                         videoPlayer.pause()
                                         videoPlayer.seekTo(0)
@@ -507,54 +513,14 @@ fun VoiceWidget(
                         horizontalArrangement = if (haveReaction) Arrangement.SpaceBetween else Arrangement.End,
                         verticalAlignment = Alignment.Bottom,
                     ) {
-                        AnimatedVisibility(
-                            visible = haveReaction,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically(),
-                        ) {
-                            val hasBothDifferentReactions = reactions?.mineReaction != null &&
-                                    reactions.penpalReaction != null &&
-                                    reactions.mineReaction != reactions.penpalReaction
-                            if (hasBothDifferentReactions) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = reactions.mineReaction,
-                                            penpalReaction = null
-                                        ),
-                                        color = Color(0xFF40C13B),
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = null,
-                                            penpalReaction = reactions.penpalReaction
-                                        ),
-                                        color = Green,
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                    )
-                                }
-                            } else {
-                                ReactionWidget(
-                                    reactions = reactions,
-                                    color = Color(0xFF40C13B),
-                                    onReactionClick = {
-                                        messageCallbacks.onReactionClick()
-                                    },
-                                    mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                    penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                )
-                            }
-                        }
+                        ReactionsBlock(
+                            message = message,
+                            mineId = messageData.mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                            onReactionClick = { messageCallbacks.onReactionClick() },
+                            mineColors = Color(0xFF40C13B) to Green,
+                        )
                     }
                 }
                 Row(
@@ -713,7 +679,8 @@ fun VoiceReplyWidget(
                 try {
                     audioPlayer.stop()
                     audioPlayer.clearMediaItems()
-                } catch (_: Exception) {}
+                } catch (_: Exception) {
+                }
             }
         }
     }
@@ -1201,54 +1168,14 @@ fun VoiceReplyWidget(
                         horizontalArrangement = if (haveReaction) Arrangement.SpaceBetween else Arrangement.End,
                         verticalAlignment = Alignment.Bottom,
                     ) {
-                        AnimatedVisibility(
-                            visible = haveReaction,
-                            enter = fadeIn() + expandVertically(),
-                            exit = fadeOut() + shrinkVertically(),
-                        ) {
-                            val hasBothDifferentReactions = reactions?.mineReaction != null &&
-                                    reactions.penpalReaction != null &&
-                                    reactions.mineReaction != reactions.penpalReaction
-                            if (hasBothDifferentReactions) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = reactions.mineReaction,
-                                            penpalReaction = null
-                                        ),
-                                        color = Color(0xFF40C13B),
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    ReactionWidget(
-                                        reactions = MessageReactions(
-                                            mineReaction = null,
-                                            penpalReaction = reactions.penpalReaction
-                                        ),
-                                        color = Green,
-                                        onReactionClick = {
-                                            messageCallbacks.onReactionClick()
-                                        },
-                                        mineAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                    )
-                                }
-                            } else {
-                                ReactionWidget(
-                                    reactions = reactions,
-                                    color = Color(0xFF40C13B),
-                                    onReactionClick = {
-                                        messageCallbacks.onReactionClick()
-                                    },
-                                    mineAvatar = if (mineReactionEmoji != null) messageData.mineAvatar else null,
-                                    penpalAvatar = if (penpalReactionEmoji != null) messageData.penpalAvatar else null,
-                                )
-                            }
-                        }
+                        ReactionsBlock(
+                            message = message,
+                            mineId = messageData.mineId,
+                            mineAvatar = messageData.mineAvatar,
+                            penpalAvatar = messageData.penpalAvatar,
+                            onReactionClick = { messageCallbacks.onReactionClick() },
+                            mineColors = Color(0xFF40C13B) to Green,
+                        )
                     }
                 }
                 Row(
