@@ -2099,10 +2099,10 @@ private fun UserName(
             .clickable {
                 onUserClick()
             }
-            .padding(horizontal = 17.dp, vertical = 5.dp)
     ) {
         Spacer(
             modifier = Modifier
+                .height(44.dp)
                 .matchParentSize()
                 .glassEffect(
                     cornerRadius = 22.dp,
@@ -2113,6 +2113,7 @@ private fun UserName(
         )
         Spacer(
             modifier = Modifier
+                .height(44.dp)
                 .matchParentSize()
                 .padding(1.dp)
                 .clip(CircleShape)
@@ -2125,6 +2126,7 @@ private fun UserName(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxHeight()
+                .padding(horizontal = 17.dp, vertical = 5.dp)
         ) {
             Text(
                 text = name ?: "",
