@@ -527,6 +527,9 @@ private fun UserInfoHat(
         }
     }
 
+    Log.d("LastSeen", "screen=X, lastSeen=${presenceState.lastSeen}, now=${System.currentTimeMillis()}")
+
+    Log.d("LastSeen", "BEFORE format: presenceState.lastSeen=${presenceState.lastSeen}, isOnline=${presenceState.isOnline}")
     val presenceText = remember(
         presenceState.lastSeen,
         now,
@@ -540,7 +543,7 @@ private fun UserInfoHat(
             )
         }
     }
-
+    Log.d("LastSeen", "AFTER format: '$presenceText'")
 
     Box(
         modifier = Modifier
