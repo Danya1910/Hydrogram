@@ -57,6 +57,9 @@ fun TopChatBar(
     presenceState: UserPresence,
     isFavorites: Boolean,
 ) {
+
+    Log.d("LastSeen", "screen=X, lastSeen=${presenceState.lastSeen}, now=${System.currentTimeMillis()}")
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -247,15 +250,17 @@ private fun UserName(
         }
     }
 
+    Log.d("LastSeen", "BEFORE format: presenceState.lastSeen=${presenceState.lastSeen}, isOnline=${presenceState.isOnline}")
     val formattedLastSeenTime = formatLastSeen(
         lastSeenTimestamp = presenceState.lastSeen,
         now = now,
     )
+    Log.d("LastSeen", "AFTER format: '$formattedLastSeenTime'")
 
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .fillMaxWidth(0.6f)
+            .fillMaxWidth(0.62f)
             .height(44.dp)
             .background(
                 brush = GlassBackground,
