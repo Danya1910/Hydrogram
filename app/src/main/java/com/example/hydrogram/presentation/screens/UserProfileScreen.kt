@@ -545,6 +545,14 @@ private fun UserInfoHat(
     }
     Log.d("LastSeen", "AFTER format: '$presenceText'")
 
+    val maxShiftPx = with(density) { 10.dp.toPx() }
+
+    val bottomPaddingPx = (overScrollY * 0.05f)
+        .coerceIn(0f, maxShiftPx)
+
+    var textWidthPx by remember { mutableStateOf(0f) }
+    var presenceTextWidthPx by remember { mutableStateOf(0f) }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -689,6 +697,13 @@ private fun UserInfoHat(
             ) {
                 Text(
                     text = user?.name ?: "Unknown",
+                    onTextLayout = { result ->
+                        if (result.lineCount > 0) {
+                            val lineLeft = result.getLineLeft(0)
+                            val lineRight = result.getLineRight(0)
+                            textWidthPx = lineRight - lineLeft
+                        }
+                    },
                     fontFamily = SfProText,
                     fontSize = (28 - (collapseFraction * 8f)).sp,
                     color = LightBlack,
@@ -699,20 +714,29 @@ private fun UserInfoHat(
                     modifier = Modifier
                         .fillMaxWidth()
                         .graphicsLayer {
+                            val containerWidthPx = size.width
+                            val fullShift = -(containerWidthPx - textWidthPx) / 2f
+
                             if (overScrollY == 0f) {
-                                val maxLeftShift = -(screenWidthPx * 0.40f)
-                                translationX = collapseFraction * maxLeftShift
+                                translationX = collapseFraction * fullShift
                             } else {
-                                val maxStretchShift = -(screenWidthPx * 0.35f)
-                                translationX = stretchProgress * maxStretchShift
+                                translationX = stretchProgress * fullShift
+                                translationY = -bottomPaddingPx
                             }
                         }
                 )
 
-                Spacer(modifier = Modifier.height((4 - (collapseFraction * 1f)).dp))
+                Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
                     text = presenceText,
+                    onTextLayout = { result ->
+                        if (result.lineCount > 0) {
+                            val lineLeft = result.getLineLeft(0)
+                            val lineRight = result.getLineRight(0)
+                            presenceTextWidthPx = lineRight - lineLeft
+                        }
+                    },
                     fontFamily = SfProText,
                     fontSize = (15 - (collapseFraction * 3f)).sp,
                     color = Color.Gray,
@@ -724,12 +748,19 @@ private fun UserInfoHat(
                         .fillMaxWidth()
                         .padding(bottom = 5.dp)
                         .graphicsLayer {
+                            val containerWidthPx = size.width
+
+                            val shiftName = -(containerWidthPx - textWidthPx) / 2f
+
+                            val presenceCompensation = (presenceTextWidthPx - textWidthPx) / 2f
+
+                            val fullShift = shiftName + presenceCompensation
+
                             if (overScrollY == 0f) {
-                                val maxLeftShift = -(screenWidthPx * 0.40f)
-                                translationX = collapseFraction * maxLeftShift
+                                translationX = collapseFraction * fullShift
                             } else {
-                                val maxStretchShift = -(screenWidthPx * 0.35f)
-                                translationX = stretchProgress * maxStretchShift
+                                translationX = stretchProgress * fullShift
+                                translationY = -bottomPaddingPx - 2.dp.toPx()
                             }
                         }
                 )
