@@ -21,9 +21,6 @@ fun formatLastSeen(
     now: Long = System.currentTimeMillis(),
 ): String {
 
-    Log.d("Locale", "ru = ${Locale("ru")}")
-    Log.d("Locale", "ru-RU = ${Locale("ru", "RU")}")
-    Log.d("Locale", "forLanguageTag = ${Locale.forLanguageTag("ru-RU")}")
 
     val nowInstant = Instant.ofEpochMilli(now)
     val lastSeenInstant = Instant.ofEpochMilli(lastSeenTimestamp)
@@ -35,11 +32,6 @@ fun formatLastSeen(
 
     val userZone = ZoneId.systemDefault()
     val ruLocale = Locale.forLanguageTag("ru-RU")
-
-    Log.d("Fmt", "ru: ${nowInstant.atZone(userZone).format(DateTimeFormatter.ofPattern("HH:mm", Locale("ru")))}")
-    Log.d("Fmt", "ru-RU: ${nowInstant.atZone(userZone).format(DateTimeFormatter.ofPattern("HH:mm", Locale("ru", "RU")))}")
-    Log.d("Fmt", "forLanguageTag: ${nowInstant.atZone(userZone).format(DateTimeFormatter.ofPattern("HH:mm", Locale.forLanguageTag("ru-RU")))}")
-
 
     val today = LocalDate.now(userZone)
     val lastSeenDate = lastSeenInstant.atZone(userZone).toLocalDate()
